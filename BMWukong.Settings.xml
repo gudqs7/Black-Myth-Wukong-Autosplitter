@@ -44,10 +44,10 @@
         <Setting Id="Dead_UGuid.LYS.SengMian02" Label="不白二阶段" State="true"/>
         <Setting Id="Boss_302002" Label="魔将·劫波" State="true"/>
         <Setting Id="Dead_UGuid.LYS.RBM" Label="马猴三阶段" State="false"/>
-        <Setting Id="Dead_UGuid.LYS.HuangMei.Small" Label="黄眉" State="true"/>
+        <Setting Id="Boss_303004" Label="黄眉" State="true"/>
         <Setting Id="Boss_302013" Label="魔将·莲眼" State="true"/>
         <Setting Id="Boss_302014" Label="魔将·妄相" State="true"/>
-        <Setting Id="Boss_302003" Label="无量蝠" State="true"/>
+        <Setting Id="Boss_302003" Label="无量蝠" State="false"/>
         <Setting Id="Boss_302015" Label="浪里个浪" State="true"/>
         <Setting Id="Boss_302016" Label="老人参精" State="true"/>
         <Setting Id="Boss_302010" Label="不净" State="true"/>
@@ -91,7 +91,7 @@
         <Setting Id="Dead_UGuid.HYS.ZhanChe.01c" Label="五行战车 3号" State="false"/>
         <Setting Id="Dead_UGuid.HYS.ZhanChe.01d" Label="五行战车 4号" State="false"/>
         <Setting Id="Dead_UGuid.HYS.JDS.05" Label="五行战车 5号" State="false"/>
-        <Setting Id="Boss_502003" Label="石父" State="true"/>
+        <Setting Id="Boss_502003" Label="石父" State="false"/>
         <Setting Id="Boss_502005" Label="兴烘掀、掀烘兴" State="true"/>
         <Setting Id="Boss_502009" Label="燧统领" State="true"/>
         <Setting Id="Boss_502008" Label="燧先锋" State="true"/>
@@ -99,7 +99,7 @@
         <Setting Id="Boss_502015" Label="波浪浪" State="true"/>
         <Setting Id="Boss_503001" Label="阴阳鱼" State="true"/>
         <Setting Id="Boss_703001" Label="璧水金睛兽" State="true"/>
-        <Setting Id="Boss_503002" Label="火焰山土地" State="true"/>
+        <Setting Id="Boss_503002" Label="火焰山土地" State="false"/>
         <Setting Id="Boss_502013" Label="皓斧力士" State="true"/>
     </Setting>
     <Setting Id="Chapter6Bosses" Label="第六章 - 花果山" State="true">
@@ -108,11 +108,11 @@
         <Setting Id="Boss_602002" Label="金甲犀" State="true"/>
         <Setting Id="Boss_602004" Label="步云鹿" State="true"/>
         <Setting Id="Boss_602003" Label="碧臂螂" State="true"/>
-        <Setting Id="Dead_UGuid.MGD.Yuan" Label="石猿" State="false"/>
+        <Setting Id="Dead_UGuid.MGD.Yuan" Label="石猿" State="true"/>
         <Setting Id="Dead_UGuid.MGD.JSDS.P2" Label="大圣残躯(需手动)" State="false"/>
         <Setting Id="Boss_602007" Label="石子" State="true"/>
         <Setting Id="Boss_602006" Label="毒统领" State="true"/>
-        <Setting Id="Boss_602009" Label="水木兽" State="true"/>
+        <Setting Id="Boss_602009" Label="水木兽" State="false"/>
         <Setting Id="Boss_103003" Label="跳浪蛟" State="true"/>
         <Setting Id="Boss_602008" Label="浪波波" State="true"/>
         <Setting Id="Boss_603001" Label="大石敢当" State="true"/>

@@ -26,6 +26,23 @@ init
     vars.unlockedBosses = new HashSet<int>();
     vars.deadBosses = new HashSet<string>();
     vars.achievementStates = new Dictionary<int, string>();
+    vars.kingRequirements = new HashSet<int>();
+    vars.kingIds = new HashSet<int>(new int[] {
+        103001, 103004, 103005, 103006, 103007,
+        203004, 202005, 202002, 203006, 203005, 213001,
+        303001, 303002, 302001, 302004, 303004,
+        403003, 803001, 803002, 402012, 403007,
+        503001, 503003, 503004, 703001, 603001
+    });
+    vars.eliteRequirements = new HashSet<int>();
+    vars.eliteIds = new HashSet<int>(new int[] {
+        102004, 102001, 102003, 202001, 202028, 203001, 203002, 202003, 202007, 202004,
+        203003, 203007, 202006, 302009, 302013, 302002, 302003, 300001, 302010, 302007,
+        302008, 301002, 302015, 302016, 403004, 403001, 403005, 400001, 403006, 400002,
+        402014, 402001, 402010, 402009, 402015, 402007, 502003, 502001, 502004, 502005,
+        502015, 502008, 502009, 502014, 502006, 602009, 602006, 602007, 103003, 602002,
+        602004, 602005, 602003, 602008, 302014
+    });
     vars.pendingBossSplits = new Queue<string>();
     vars.savePath = null;
     vars.lastSaveWrite = 0L;
@@ -369,6 +386,21 @@ init
         return result;
     });
 
+    vars.GetRequirementIds = (Func<string, HashSet<int>>) ((state) =>
+    {
+        HashSet<int> result = new HashSet<int>();
+        if (string.IsNullOrEmpty(state)) return result;
+        int separator = state.IndexOf('|');
+        if (separator < 0 || separator + 1 >= state.Length) return result;
+        string[] parts = state.Substring(separator + 1).Split(',');
+        foreach (string part in parts)
+        {
+            int value;
+            if (int.TryParse(part, out value)) result.Add(value);
+        }
+        return result;
+    });
+
     vars.Log = (Action<string>) ((message) =>
     {
         try
@@ -474,6 +506,8 @@ update
             vars.unlockedBosses = new HashSet<int>();
             vars.deadBosses = new HashSet<string>();
             vars.achievementStates = new Dictionary<int, string>();
+            vars.kingRequirements = new HashSet<int>();
+            vars.eliteRequirements = new HashSet<int>();
             ((Queue<string>)vars.pendingBossSplits).Clear();
         }
         else if (string.IsNullOrEmpty(detectedSavePath) && DateTime.UtcNow.Ticks >= ((long)vars.nextSaveLog))
@@ -499,6 +533,10 @@ update
                 HashSet<int> unlocked = ((Func<byte[], HashSet<int>>)vars.GetUnlockedBosses)(payload);
                 HashSet<string> deadBosses = ((Func<byte[], HashSet<string>>)vars.GetDeadBosses)(payload);
                 Dictionary<int, string> achievements = ((Func<byte[], Dictionary<int, string>>)vars.GetAchievementStates)(payload);
+                string kingAchievementState = achievements.ContainsKey(7403) ? achievements[7403] : null;
+                HashSet<int> kingRequirements = ((Func<string, HashSet<int>>)vars.GetRequirementIds)(kingAchievementState);
+                string eliteAchievementState = achievements.ContainsKey(7402) ? achievements[7402] : null;
+                HashSet<int> eliteRequirements = ((Func<string, HashSet<int>>)vars.GetRequirementIds)(eliteAchievementState);
                 if (unlocked != null && deadBosses != null && achievements != null)
                 {
                     if (!((bool)vars.saveReady))
@@ -506,13 +544,46 @@ update
                         vars.unlockedBosses = unlocked;
                         vars.deadBosses = deadBosses;
                         vars.achievementStates = achievements;
+                        vars.kingRequirements = kingRequirements;
+                    vars.eliteRequirements = eliteRequirements;
                         vars.saveReady = true;
                     }
                     else
                     {
+                        HashSet<int> oldEliteRequirements = (HashSet<int>)vars.eliteRequirements;
+                        foreach (int eliteId in eliteRequirements)
+                        {
+                            if (!oldEliteRequirements.Contains(eliteId))
+                            {
+                                string eliteSettingId = "Boss_" + eliteId;
+                                bool eliteEnabled = settings.ContainsKey(eliteSettingId) && settings[eliteSettingId];
+                                ((Action<string>)vars.Log)("new elite unlock (7402): " + eliteId + " setting=" + eliteSettingId + " enabled=" + eliteEnabled);
+                                if (eliteEnabled)
+                                {
+                                    ((Queue<string>)vars.pendingBossSplits).Enqueue(eliteSettingId);
+                                }
+                            }
+                        }
+
+                        HashSet<int> oldKingRequirements = (HashSet<int>)vars.kingRequirements;
+                        foreach (int kingId in kingRequirements)
+                        {
+                            if (!oldKingRequirements.Contains(kingId))
+                            {
+                                string kingSettingId = "Boss_" + kingId;
+                                bool kingEnabled = settings.ContainsKey(kingSettingId) && settings[kingSettingId];
+                                ((Action<string>)vars.Log)("new king unlock (7403): " + kingId + " setting=" + kingSettingId + " enabled=" + kingEnabled);
+                                if (kingEnabled)
+                                {
+                                    ((Queue<string>)vars.pendingBossSplits).Enqueue(kingSettingId);
+                                }
+                            }
+                        }
+
                         HashSet<int> oldUnlocked = (HashSet<int>)vars.unlockedBosses;
                         foreach (int bossId in unlocked)
                         {
+                            if (((HashSet<int>)vars.kingIds).Contains(bossId) || ((HashSet<int>)vars.eliteIds).Contains(bossId)) continue;
                             if (!oldUnlocked.Contains(bossId))
                             {
                                 string settingId = "Boss_" + bossId;
@@ -575,6 +646,8 @@ update
                         vars.unlockedBosses = unlocked;
                         vars.deadBosses = deadBosses;
                         vars.achievementStates = achievements;
+                        vars.kingRequirements = kingRequirements;
+                    vars.eliteRequirements = eliteRequirements;
                     }
                 }
             }
@@ -595,6 +668,8 @@ onStart
     vars.unlockedBosses = new HashSet<int>();
     vars.deadBosses = new HashSet<string>();
     vars.achievementStates = new Dictionary<int, string>();
+    vars.kingRequirements = new HashSet<int>();
+    vars.eliteRequirements = new HashSet<int>();
     vars.saveReady = false;
 
     if (!string.IsNullOrEmpty(vars.savePath))
@@ -606,6 +681,10 @@ onStart
             HashSet<int> currentUnlocked = ((Func<byte[], HashSet<int>>)vars.GetUnlockedBosses)(payload);
             HashSet<string> currentDead = ((Func<byte[], HashSet<string>>)vars.GetDeadBosses)(payload);
             Dictionary<int, string> currentAchievements = ((Func<byte[], Dictionary<int, string>>)vars.GetAchievementStates)(payload);
+            string currentKingState = currentAchievements.ContainsKey(7403) ? currentAchievements[7403] : null;
+            HashSet<int> currentKingRequirements = ((Func<string, HashSet<int>>)vars.GetRequirementIds)(currentKingState);
+            string currentEliteState = currentAchievements.ContainsKey(7402) ? currentAchievements[7402] : null;
+            HashSet<int> currentEliteRequirements = ((Func<string, HashSet<int>>)vars.GetRequirementIds)(currentEliteState);
             int completedAchievements = 0;
             foreach (KeyValuePair<int, string> pair in currentAchievements)
             {
@@ -614,8 +693,10 @@ onStart
             vars.unlockedBosses = currentUnlocked;
             vars.deadBosses = currentDead;
             vars.achievementStates = currentAchievements;
+            vars.kingRequirements = currentKingRequirements;
+            vars.eliteRequirements = currentEliteRequirements;
             vars.saveReady = true;
-            ((Action<string>)vars.Log)("onStart baseline portraits=" + currentUnlocked.Count + " deadUnits=" + currentDead.Count + " achievements=" + currentAchievements.Count + " complete=" + completedAchievements);
+            ((Action<string>)vars.Log)("onStart baseline portraits=" + currentUnlocked.Count + " deadUnits=" + currentDead.Count + " achievements=" + currentAchievements.Count + " complete=" + completedAchievements + " kings=" + currentKingRequirements.Count + " elites=" + currentEliteRequirements.Count);
         }
         catch (Exception ex)
         {
