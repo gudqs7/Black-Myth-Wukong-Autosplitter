@@ -25,6 +25,7 @@ init
     vars.completedSplits = new HashSet<string>();
     vars.unlockedBosses = new HashSet<int>();
     vars.deadBosses = new HashSet<string>();
+    vars.achievementStates = new Dictionary<int, string>();
     vars.pendingBossSplits = new Queue<string>();
     vars.savePath = null;
     vars.lastSaveWrite = 0L;
@@ -264,6 +265,110 @@ init
         return result;
     });
 
+    // Path: FUStBEDArchivesData(1) -> RoleData(1) -> RoleDataCS(10)
+    //       -> RoleAchievement(3) -> AchievementOne
+    vars.GetAchievementStates = (Func<byte[], Dictionary<int, string>>) ((data) =>
+    {
+        Dictionary<int, string> result = new Dictionary<int, string>();
+        if (data == null) return result;
+
+        byte[] roleData = ((Func<byte[], int, byte[]>)vars.GetMessageField)(data, 1);
+        if (roleData == null) return result;
+        byte[] roleCs = ((Func<byte[], int, byte[]>)vars.GetMessageField)(roleData, 1);
+        if (roleCs == null) return result;
+        byte[] achievementRoot = ((Func<byte[], int, byte[]>)vars.GetMessageField)(roleCs, 10);
+        if (achievementRoot == null) return result;
+
+        int[] p = new int[] { 0 };
+        while (p[0] < achievementRoot.Length)
+        {
+            int key = ((Func<byte[], int[], int>)vars.ReadVarint)(achievementRoot, p);
+            int field = key >> 3;
+            int wire = key & 7;
+            if (wire == 2)
+            {
+                int len = ((Func<byte[], int[], int>)vars.ReadVarint)(achievementRoot, p);
+                if (field == 3)
+                {
+                    byte[] achievement = new byte[len];
+                    Array.Copy(achievementRoot, p[0], achievement, 0, len);
+                    int achievementId = 0;
+                    bool isComplete = false;
+                    List<int> requirements = new List<int>();
+                    int[] q = new int[] { 0 };
+                    while (q[0] < achievement.Length)
+                    {
+                        int achievementKey = ((Func<byte[], int[], int>)vars.ReadVarint)(achievement, q);
+                        int achievementField = achievementKey >> 3;
+                        int achievementWire = achievementKey & 7;
+                        if (achievementWire == 0)
+                        {
+                            int value = ((Func<byte[], int[], int>)vars.ReadVarint)(achievement, q);
+                            if (achievementField == 2) requirements.Add(value);
+                            else if (achievementField == 3) isComplete = value != 0;
+                        }
+                        else if (achievementWire == 2)
+                        {
+                            int valueLen = ((Func<byte[], int[], int>)vars.ReadVarint)(achievement, q);
+                            if (achievementField == 1)
+                            {
+                                int[] c = new int[] { q[0] };
+                                int end = q[0] + valueLen;
+                                while (c[0] < end)
+                                {
+                                    int configKey = ((Func<byte[], int[], int>)vars.ReadVarint)(achievement, c);
+                                    int configField = configKey >> 3;
+                                    int configWire = configKey & 7;
+                                    if (configWire == 0)
+                                    {
+                                        int configValue = ((Func<byte[], int[], int>)vars.ReadVarint)(achievement, c);
+                                        if (configField == 1) achievementId = configValue;
+                                    }
+                                    else if (configWire == 2) { int configLen = ((Func<byte[], int[], int>)vars.ReadVarint)(achievement, c); c[0] += configLen; }
+                                    else if (configWire == 1) { c[0] += 8; }
+                                    else if (configWire == 5) { c[0] += 4; }
+                                    else { break; }
+                                }
+                            }
+                            else if (achievementField == 2)
+                            {
+                                int[] r = new int[] { q[0] };
+                                int end = q[0] + valueLen;
+                                while (r[0] < end)
+                                {
+                                    requirements.Add(((Func<byte[], int[], int>)vars.ReadVarint)(achievement, r));
+                                }
+                            }
+                            q[0] += valueLen;
+                        }
+                        else if (achievementWire == 1) { q[0] += 8; }
+                        else if (achievementWire == 5) { q[0] += 4; }
+                        else { break; }
+                    }
+                    if (achievementId != 0)
+                    {
+                        string requirementText = "";
+                        foreach (int requirement in requirements)
+                        {
+                            if (requirementText.Length > 0) requirementText += ",";
+                            requirementText += requirement;
+                        }
+                        result[achievementId] = (isComplete ? "1" : "0") + "|" + requirementText;
+                    }
+                }
+                else
+                {
+                    p[0] += len;
+                }
+            }
+            else if (wire == 0) { ((Func<byte[], int[], int>)vars.ReadVarint)(achievementRoot, p); }
+            else if (wire == 1) { p[0] += 8; }
+            else if (wire == 5) { p[0] += 4; }
+            else { break; }
+        }
+        return result;
+    });
+
     vars.Log = (Action<string>) ((message) =>
     {
         try
@@ -368,6 +473,7 @@ update
             vars.lastSaveLength = -1L;
             vars.unlockedBosses = new HashSet<int>();
             vars.deadBosses = new HashSet<string>();
+            vars.achievementStates = new Dictionary<int, string>();
             ((Queue<string>)vars.pendingBossSplits).Clear();
         }
         else if (string.IsNullOrEmpty(detectedSavePath) && DateTime.UtcNow.Ticks >= ((long)vars.nextSaveLog))
@@ -392,12 +498,14 @@ update
                 byte[] payload = ((Func<byte[], byte[]>)vars.ExtractPayload)(saveBytes);
                 HashSet<int> unlocked = ((Func<byte[], HashSet<int>>)vars.GetUnlockedBosses)(payload);
                 HashSet<string> deadBosses = ((Func<byte[], HashSet<string>>)vars.GetDeadBosses)(payload);
-                if (unlocked != null && deadBosses != null)
+                Dictionary<int, string> achievements = ((Func<byte[], Dictionary<int, string>>)vars.GetAchievementStates)(payload);
+                if (unlocked != null && deadBosses != null && achievements != null)
                 {
                     if (!((bool)vars.saveReady))
                     {
                         vars.unlockedBosses = unlocked;
                         vars.deadBosses = deadBosses;
+                        vars.achievementStates = achievements;
                         vars.saveReady = true;
                     }
                     else
@@ -432,8 +540,41 @@ update
                             }
                         }
 
+                        Dictionary<int, string> oldAchievements = (Dictionary<int, string>)vars.achievementStates;
+                        foreach (KeyValuePair<int, string> pair in achievements)
+                        {
+                            int achievementId = pair.Key;
+                            string newState = pair.Value;
+                            string oldState = null;
+                            if (oldAchievements.ContainsKey(achievementId)) oldState = oldAchievements[achievementId];
+
+                            if (oldState == null)
+                            {
+                                if (newState.StartsWith("1"))
+                                {
+                                    ((Action<string>)vars.Log)("achievement complete(new): " + achievementId + " state=" + newState);
+                                }
+                                else
+                                {
+                                    ((Action<string>)vars.Log)("achievement new: " + achievementId + " state=" + newState);
+                                }
+                            }
+                            else if (oldState != newState)
+                            {
+                                if (newState.StartsWith("1") && !oldState.StartsWith("1"))
+                                {
+                                    ((Action<string>)vars.Log)("achievement complete: " + achievementId + " state=" + newState + " old=" + oldState);
+                                }
+                                else
+                                {
+                                    ((Action<string>)vars.Log)("achievement change: " + achievementId + " old=" + oldState + " new=" + newState);
+                                }
+                            }
+                        }
+
                         vars.unlockedBosses = unlocked;
                         vars.deadBosses = deadBosses;
+                        vars.achievementStates = achievements;
                     }
                 }
             }
@@ -453,6 +594,7 @@ onStart
     vars.pendingBossSplits = new Queue<string>();
     vars.unlockedBosses = new HashSet<int>();
     vars.deadBosses = new HashSet<string>();
+    vars.achievementStates = new Dictionary<int, string>();
     vars.saveReady = false;
 
     if (!string.IsNullOrEmpty(vars.savePath))
@@ -463,10 +605,17 @@ onStart
             byte[] payload = ((Func<byte[], byte[]>)vars.ExtractPayload)(saveBytes);
             HashSet<int> currentUnlocked = ((Func<byte[], HashSet<int>>)vars.GetUnlockedBosses)(payload);
             HashSet<string> currentDead = ((Func<byte[], HashSet<string>>)vars.GetDeadBosses)(payload);
+            Dictionary<int, string> currentAchievements = ((Func<byte[], Dictionary<int, string>>)vars.GetAchievementStates)(payload);
+            int completedAchievements = 0;
+            foreach (KeyValuePair<int, string> pair in currentAchievements)
+            {
+                if (pair.Value.StartsWith("1")) completedAchievements++;
+            }
             vars.unlockedBosses = currentUnlocked;
             vars.deadBosses = currentDead;
+            vars.achievementStates = currentAchievements;
             vars.saveReady = true;
-            ((Action<string>)vars.Log)("onStart baseline portraits=" + currentUnlocked.Count + " deadUnits=" + currentDead.Count);
+            ((Action<string>)vars.Log)("onStart baseline portraits=" + currentUnlocked.Count + " deadUnits=" + currentDead.Count + " achievements=" + currentAchievements.Count + " complete=" + completedAchievements);
         }
         catch (Exception ex)
         {
