@@ -623,22 +623,22 @@ update
                             {
                                 if (newState.StartsWith("1"))
                                 {
-                                    ((Action<string>)vars.Log)("achievement complete(new): " + achievementId + " state=" + newState);
+                                    // ((Action<string>)vars.Log)("achievement complete(new): " + achievementId + " state=" + newState);
                                 }
                                 else
                                 {
-                                    ((Action<string>)vars.Log)("achievement new: " + achievementId + " state=" + newState);
+                                    // ((Action<string>)vars.Log)("achievement new: " + achievementId + " state=" + newState);
                                 }
                             }
                             else if (oldState != newState)
                             {
                                 if (newState.StartsWith("1") && !oldState.StartsWith("1"))
                                 {
-                                    ((Action<string>)vars.Log)("achievement complete: " + achievementId + " state=" + newState + " old=" + oldState);
+                                    // ((Action<string>)vars.Log)("achievement complete: " + achievementId + " state=" + newState + " old=" + oldState);
                                 }
                                 else
                                 {
-                                    ((Action<string>)vars.Log)("achievement change: " + achievementId + " old=" + oldState + " new=" + newState);
+                                    // ((Action<string>)vars.Log)("achievement change: " + achievementId + " old=" + oldState + " new=" + newState);
                                 }
                             }
                         }
