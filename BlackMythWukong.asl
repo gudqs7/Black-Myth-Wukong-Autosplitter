@@ -661,6 +661,7 @@ update
 
 onStart
 {
+    ((Action<string>)vars.Log)("onStart fired");
     // Keep the timer at 0.00 and treat the current save state as the baseline.
     timer.IsGameTimePaused = true;
     vars.completedSplits.Clear();
@@ -737,3 +738,19 @@ exit
     // Pauses the timer if the game crashes.
     timer.IsGameTimePaused = true;
 }
+
+// route-trigger-config updated 2026-10-04
+
+// added Boss_501017 金纽 (海罗刹) 2026-10-04
+
+// phase config: HuangMei Small/Big, MoRBM, BaiJie, carts 2026-10-04
+
+// phase fallback cards disabled 2026-10-04
+
+// corrected macaque phase mapping 2026-10-04
+
+// fixed macaque phases: XueHou.NM/AnShen/RBM 2026-10-04
+
+// Daisheng phases: JSDS P1 Spawn, JSDS.P2 P2 2026-10-04
+
+// Huangmei now uses king achievement 7403 / Boss_303004

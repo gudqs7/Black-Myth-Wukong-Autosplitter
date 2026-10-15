@@ -72,7 +72,7 @@
         <Setting Id="Boss_403005" Label="三姐" State="false"/>
         <Setting Id="Boss_403004" Label="大姐" State="false"/>
         <Setting Id="Boss_402014" Label="琴螂仙" State="true"/>
-        <Setting Id="Boss_402001" Label="百足虫" State="true"/>
+        <Setting Id="Boss_402001" Label="百足虫" State="false"/>
         <Setting Id="Boss_402009" Label="虫总兵" State="true"/>
         <Setting Id="Boss_402007" Label="靡道人" State="true"/>
         <Setting Id="Boss_402012" Label="小黄龙" State="true"/>
