@@ -28,7 +28,6 @@ init
     vars.pendingBossSplits = new Queue<string>();
     vars.savePath = null;
     vars.lastSaveWrite = 0L;
-    vars.lastSaveLength = -1L;
     vars.nextSaveSearch = 0L;
     vars.nextSaveLog = 0L;
     vars.gameExePath = "";
@@ -344,8 +343,7 @@ update
         // game is rewriting the save momentarily: keep the path, just retry soon
         vars.nextSaveSearch = 0L;
         vars.lastSaveWrite = 0L;
-        vars.lastSaveLength = -1L;
-    }
+        }
 
     if (DateTime.UtcNow.Ticks >= ((long)vars.nextSaveSearch))
     {
@@ -367,8 +365,7 @@ update
             vars.savePath = detectedSavePath;
             vars.saveReady = false;
             vars.lastSaveWrite = 0L;
-            vars.lastSaveLength = -1L;
-            vars.unlockedBosses = new HashSet<int>();
+                    vars.unlockedBosses = new HashSet<int>();
             vars.deadBosses = new HashSet<string>();
             ((Queue<string>)vars.pendingBossSplits).Clear();
         }
@@ -384,8 +381,7 @@ update
         try
         {
             long writeTicks = File.GetLastWriteTimeUtc(vars.savePath).Ticks;
-            long fileLength = new FileInfo(vars.savePath).Length;
-            if (writeTicks != ((long)vars.lastSaveWrite) || fileLength != ((long)vars.lastSaveLength))
+            if (writeTicks != ((long)vars.lastSaveWrite))
             {
                 byte[] saveBytes = File.ReadAllBytes(vars.savePath);
                 byte[] payload = ((Func<byte[], byte[]>)vars.ExtractPayload)(saveBytes);
@@ -437,7 +433,6 @@ update
                 }
 
                 vars.lastSaveWrite = writeTicks;
-                vars.lastSaveLength = fileLength;
             }
         }
         catch (System.IO.FileNotFoundException)
