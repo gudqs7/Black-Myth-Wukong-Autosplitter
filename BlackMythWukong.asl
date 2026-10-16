@@ -25,24 +25,6 @@ init
     vars.completedSplits = new HashSet<string>();
     vars.unlockedBosses = new HashSet<int>();
     vars.deadBosses = new HashSet<string>();
-    vars.achievementStates = new Dictionary<int, string>();
-    vars.kingRequirements = new HashSet<int>();
-    vars.kingIds = new HashSet<int>(new int[] {
-        103001, 103004, 103005, 103006, 103007,
-        203004, 202005, 202002, 203006, 203005, 213001,
-        303001, 303002, 302001, 302004, 303004,
-        403003, 803001, 803002, 402012, 403007,
-        503001, 503003, 503004, 703001, 603001
-    });
-    vars.eliteRequirements = new HashSet<int>();
-    vars.eliteIds = new HashSet<int>(new int[] {
-        102004, 102001, 102003, 202001, 202028, 203001, 203002, 202003, 202007, 202004,
-        203003, 203007, 202006, 302009, 302013, 302002, 302003, 300001, 302010, 302007,
-        302008, 301002, 302015, 302016, 403004, 403001, 403005, 400001, 403006, 400002,
-        402014, 402001, 402010, 402009, 402015, 402007, 502003, 502001, 502004, 502005,
-        502015, 502008, 502009, 502014, 502006, 602009, 602006, 602007, 103003, 602002,
-        602004, 602005, 602003, 602008, 302014
-    });
     vars.pendingBossSplits = new Queue<string>();
     vars.savePath = null;
     vars.lastSaveWrite = 0L;
@@ -282,125 +264,6 @@ init
         return result;
     });
 
-    // Path: FUStBEDArchivesData(1) -> RoleData(1) -> RoleDataCS(10)
-    //       -> RoleAchievement(3) -> AchievementOne
-    vars.GetAchievementStates = (Func<byte[], Dictionary<int, string>>) ((data) =>
-    {
-        Dictionary<int, string> result = new Dictionary<int, string>();
-        if (data == null) return result;
-
-        byte[] roleData = ((Func<byte[], int, byte[]>)vars.GetMessageField)(data, 1);
-        if (roleData == null) return result;
-        byte[] roleCs = ((Func<byte[], int, byte[]>)vars.GetMessageField)(roleData, 1);
-        if (roleCs == null) return result;
-        byte[] achievementRoot = ((Func<byte[], int, byte[]>)vars.GetMessageField)(roleCs, 10);
-        if (achievementRoot == null) return result;
-
-        int[] p = new int[] { 0 };
-        while (p[0] < achievementRoot.Length)
-        {
-            int key = ((Func<byte[], int[], int>)vars.ReadVarint)(achievementRoot, p);
-            int field = key >> 3;
-            int wire = key & 7;
-            if (wire == 2)
-            {
-                int len = ((Func<byte[], int[], int>)vars.ReadVarint)(achievementRoot, p);
-                if (field == 3)
-                {
-                    byte[] achievement = new byte[len];
-                    Array.Copy(achievementRoot, p[0], achievement, 0, len);
-                    int achievementId = 0;
-                    bool isComplete = false;
-                    List<int> requirements = new List<int>();
-                    int[] q = new int[] { 0 };
-                    while (q[0] < achievement.Length)
-                    {
-                        int achievementKey = ((Func<byte[], int[], int>)vars.ReadVarint)(achievement, q);
-                        int achievementField = achievementKey >> 3;
-                        int achievementWire = achievementKey & 7;
-                        if (achievementWire == 0)
-                        {
-                            int value = ((Func<byte[], int[], int>)vars.ReadVarint)(achievement, q);
-                            if (achievementField == 2) requirements.Add(value);
-                            else if (achievementField == 3) isComplete = value != 0;
-                        }
-                        else if (achievementWire == 2)
-                        {
-                            int valueLen = ((Func<byte[], int[], int>)vars.ReadVarint)(achievement, q);
-                            if (achievementField == 1)
-                            {
-                                int[] c = new int[] { q[0] };
-                                int end = q[0] + valueLen;
-                                while (c[0] < end)
-                                {
-                                    int configKey = ((Func<byte[], int[], int>)vars.ReadVarint)(achievement, c);
-                                    int configField = configKey >> 3;
-                                    int configWire = configKey & 7;
-                                    if (configWire == 0)
-                                    {
-                                        int configValue = ((Func<byte[], int[], int>)vars.ReadVarint)(achievement, c);
-                                        if (configField == 1) achievementId = configValue;
-                                    }
-                                    else if (configWire == 2) { int configLen = ((Func<byte[], int[], int>)vars.ReadVarint)(achievement, c); c[0] += configLen; }
-                                    else if (configWire == 1) { c[0] += 8; }
-                                    else if (configWire == 5) { c[0] += 4; }
-                                    else { break; }
-                                }
-                            }
-                            else if (achievementField == 2)
-                            {
-                                int[] r = new int[] { q[0] };
-                                int end = q[0] + valueLen;
-                                while (r[0] < end)
-                                {
-                                    requirements.Add(((Func<byte[], int[], int>)vars.ReadVarint)(achievement, r));
-                                }
-                            }
-                            q[0] += valueLen;
-                        }
-                        else if (achievementWire == 1) { q[0] += 8; }
-                        else if (achievementWire == 5) { q[0] += 4; }
-                        else { break; }
-                    }
-                    if (achievementId != 0)
-                    {
-                        string requirementText = "";
-                        foreach (int requirement in requirements)
-                        {
-                            if (requirementText.Length > 0) requirementText += ",";
-                            requirementText += requirement;
-                        }
-                        result[achievementId] = (isComplete ? "1" : "0") + "|" + requirementText;
-                    }
-                }
-                else
-                {
-                    p[0] += len;
-                }
-            }
-            else if (wire == 0) { ((Func<byte[], int[], int>)vars.ReadVarint)(achievementRoot, p); }
-            else if (wire == 1) { p[0] += 8; }
-            else if (wire == 5) { p[0] += 4; }
-            else { break; }
-        }
-        return result;
-    });
-
-    vars.GetRequirementIds = (Func<string, HashSet<int>>) ((state) =>
-    {
-        HashSet<int> result = new HashSet<int>();
-        if (string.IsNullOrEmpty(state)) return result;
-        int separator = state.IndexOf('|');
-        if (separator < 0 || separator + 1 >= state.Length) return result;
-        string[] parts = state.Substring(separator + 1).Split(',');
-        foreach (string part in parts)
-        {
-            int value;
-            if (int.TryParse(part, out value)) result.Add(value);
-        }
-        return result;
-    });
-
     vars.Log = (Action<string>) ((message) =>
     {
         try
@@ -478,8 +341,10 @@ update
 
     if (!string.IsNullOrEmpty(vars.savePath) && !File.Exists(vars.savePath))
     {
-        vars.savePath = null;
+        // game is rewriting the save momentarily: keep the path, just retry soon
         vars.nextSaveSearch = 0L;
+        vars.lastSaveWrite = 0L;
+        vars.lastSaveLength = -1L;
     }
 
     if (DateTime.UtcNow.Ticks >= ((long)vars.nextSaveSearch))
@@ -505,9 +370,6 @@ update
             vars.lastSaveLength = -1L;
             vars.unlockedBosses = new HashSet<int>();
             vars.deadBosses = new HashSet<string>();
-            vars.achievementStates = new Dictionary<int, string>();
-            vars.kingRequirements = new HashSet<int>();
-            vars.eliteRequirements = new HashSet<int>();
             ((Queue<string>)vars.pendingBossSplits).Clear();
         }
         else if (string.IsNullOrEmpty(detectedSavePath) && DateTime.UtcNow.Ticks >= ((long)vars.nextSaveLog))
@@ -525,65 +387,23 @@ update
             long fileLength = new FileInfo(vars.savePath).Length;
             if (writeTicks != ((long)vars.lastSaveWrite) || fileLength != ((long)vars.lastSaveLength))
             {
-                vars.lastSaveWrite = writeTicks;
-                vars.lastSaveLength = fileLength;
-
                 byte[] saveBytes = File.ReadAllBytes(vars.savePath);
                 byte[] payload = ((Func<byte[], byte[]>)vars.ExtractPayload)(saveBytes);
                 HashSet<int> unlocked = ((Func<byte[], HashSet<int>>)vars.GetUnlockedBosses)(payload);
                 HashSet<string> deadBosses = ((Func<byte[], HashSet<string>>)vars.GetDeadBosses)(payload);
-                Dictionary<int, string> achievements = ((Func<byte[], Dictionary<int, string>>)vars.GetAchievementStates)(payload);
-                string kingAchievementState = achievements.ContainsKey(7403) ? achievements[7403] : null;
-                HashSet<int> kingRequirements = ((Func<string, HashSet<int>>)vars.GetRequirementIds)(kingAchievementState);
-                string eliteAchievementState = achievements.ContainsKey(7402) ? achievements[7402] : null;
-                HashSet<int> eliteRequirements = ((Func<string, HashSet<int>>)vars.GetRequirementIds)(eliteAchievementState);
-                if (unlocked != null && deadBosses != null && achievements != null)
+                if (unlocked != null && deadBosses != null)
                 {
                     if (!((bool)vars.saveReady))
                     {
                         vars.unlockedBosses = unlocked;
                         vars.deadBosses = deadBosses;
-                        vars.achievementStates = achievements;
-                        vars.kingRequirements = kingRequirements;
-                    vars.eliteRequirements = eliteRequirements;
                         vars.saveReady = true;
                     }
                     else
                     {
-                        HashSet<int> oldEliteRequirements = (HashSet<int>)vars.eliteRequirements;
-                        foreach (int eliteId in eliteRequirements)
-                        {
-                            if (!oldEliteRequirements.Contains(eliteId))
-                            {
-                                string eliteSettingId = "Boss_" + eliteId;
-                                bool eliteEnabled = settings.ContainsKey(eliteSettingId) && settings[eliteSettingId];
-                                ((Action<string>)vars.Log)("new elite unlock (7402): " + eliteId + " setting=" + eliteSettingId + " enabled=" + eliteEnabled);
-                                if (eliteEnabled)
-                                {
-                                    ((Queue<string>)vars.pendingBossSplits).Enqueue(eliteSettingId);
-                                }
-                            }
-                        }
-
-                        HashSet<int> oldKingRequirements = (HashSet<int>)vars.kingRequirements;
-                        foreach (int kingId in kingRequirements)
-                        {
-                            if (!oldKingRequirements.Contains(kingId))
-                            {
-                                string kingSettingId = "Boss_" + kingId;
-                                bool kingEnabled = settings.ContainsKey(kingSettingId) && settings[kingSettingId];
-                                ((Action<string>)vars.Log)("new king unlock (7403): " + kingId + " setting=" + kingSettingId + " enabled=" + kingEnabled);
-                                if (kingEnabled)
-                                {
-                                    ((Queue<string>)vars.pendingBossSplits).Enqueue(kingSettingId);
-                                }
-                            }
-                        }
-
                         HashSet<int> oldUnlocked = (HashSet<int>)vars.unlockedBosses;
                         foreach (int bossId in unlocked)
                         {
-                            if (((HashSet<int>)vars.kingIds).Contains(bossId) || ((HashSet<int>)vars.eliteIds).Contains(bossId)) continue;
                             if (!oldUnlocked.Contains(bossId))
                             {
                                 string settingId = "Boss_" + bossId;
@@ -611,46 +431,20 @@ update
                             }
                         }
 
-                        Dictionary<int, string> oldAchievements = (Dictionary<int, string>)vars.achievementStates;
-                        foreach (KeyValuePair<int, string> pair in achievements)
-                        {
-                            int achievementId = pair.Key;
-                            string newState = pair.Value;
-                            string oldState = null;
-                            if (oldAchievements.ContainsKey(achievementId)) oldState = oldAchievements[achievementId];
-
-                            if (oldState == null)
-                            {
-                                if (newState.StartsWith("1"))
-                                {
-                                    // ((Action<string>)vars.Log)("achievement complete(new): " + achievementId + " state=" + newState);
-                                }
-                                else
-                                {
-                                    // ((Action<string>)vars.Log)("achievement new: " + achievementId + " state=" + newState);
-                                }
-                            }
-                            else if (oldState != newState)
-                            {
-                                if (newState.StartsWith("1") && !oldState.StartsWith("1"))
-                                {
-                                    // ((Action<string>)vars.Log)("achievement complete: " + achievementId + " state=" + newState + " old=" + oldState);
-                                }
-                                else
-                                {
-                                    // ((Action<string>)vars.Log)("achievement change: " + achievementId + " old=" + oldState + " new=" + newState);
-                                }
-                            }
-                        }
-
                         vars.unlockedBosses = unlocked;
                         vars.deadBosses = deadBosses;
-                        vars.achievementStates = achievements;
-                        vars.kingRequirements = kingRequirements;
-                    vars.eliteRequirements = eliteRequirements;
                     }
                 }
+
+                vars.lastSaveWrite = writeTicks;
+                vars.lastSaveLength = fileLength;
             }
+        }
+        catch (System.IO.FileNotFoundException)
+        {
+        }
+        catch (System.IO.DirectoryNotFoundException)
+        {
         }
         catch (Exception ex)
         {
@@ -661,16 +455,12 @@ update
 
 onStart
 {
-    ((Action<string>)vars.Log)("onStart fired");
     // Keep the timer at 0.00 and treat the current save state as the baseline.
     timer.IsGameTimePaused = true;
     vars.completedSplits.Clear();
     vars.pendingBossSplits = new Queue<string>();
     vars.unlockedBosses = new HashSet<int>();
     vars.deadBosses = new HashSet<string>();
-    vars.achievementStates = new Dictionary<int, string>();
-    vars.kingRequirements = new HashSet<int>();
-    vars.eliteRequirements = new HashSet<int>();
     vars.saveReady = false;
 
     if (!string.IsNullOrEmpty(vars.savePath))
@@ -681,23 +471,10 @@ onStart
             byte[] payload = ((Func<byte[], byte[]>)vars.ExtractPayload)(saveBytes);
             HashSet<int> currentUnlocked = ((Func<byte[], HashSet<int>>)vars.GetUnlockedBosses)(payload);
             HashSet<string> currentDead = ((Func<byte[], HashSet<string>>)vars.GetDeadBosses)(payload);
-            Dictionary<int, string> currentAchievements = ((Func<byte[], Dictionary<int, string>>)vars.GetAchievementStates)(payload);
-            string currentKingState = currentAchievements.ContainsKey(7403) ? currentAchievements[7403] : null;
-            HashSet<int> currentKingRequirements = ((Func<string, HashSet<int>>)vars.GetRequirementIds)(currentKingState);
-            string currentEliteState = currentAchievements.ContainsKey(7402) ? currentAchievements[7402] : null;
-            HashSet<int> currentEliteRequirements = ((Func<string, HashSet<int>>)vars.GetRequirementIds)(currentEliteState);
-            int completedAchievements = 0;
-            foreach (KeyValuePair<int, string> pair in currentAchievements)
-            {
-                if (pair.Value.StartsWith("1")) completedAchievements++;
-            }
             vars.unlockedBosses = currentUnlocked;
             vars.deadBosses = currentDead;
-            vars.achievementStates = currentAchievements;
-            vars.kingRequirements = currentKingRequirements;
-            vars.eliteRequirements = currentEliteRequirements;
             vars.saveReady = true;
-            ((Action<string>)vars.Log)("onStart baseline portraits=" + currentUnlocked.Count + " deadUnits=" + currentDead.Count + " achievements=" + currentAchievements.Count + " complete=" + completedAchievements + " kings=" + currentKingRequirements.Count + " elites=" + currentEliteRequirements.Count);
+            ((Action<string>)vars.Log)("onStart baseline portraits=" + currentUnlocked.Count + " deadUnits=" + currentDead.Count);
         }
         catch (Exception ex)
         {
@@ -738,19 +515,3 @@ exit
     // Pauses the timer if the game crashes.
     timer.IsGameTimePaused = true;
 }
-
-// route-trigger-config updated 2026-10-04
-
-// added Boss_501017 金纽 (海罗刹) 2026-10-04
-
-// phase config: HuangMei Small/Big, MoRBM, BaiJie, carts 2026-10-04
-
-// phase fallback cards disabled 2026-10-04
-
-// corrected macaque phase mapping 2026-10-04
-
-// fixed macaque phases: XueHou.NM/AnShen/RBM 2026-10-04
-
-// Daisheng phases: JSDS P1 Spawn, JSDS.P2 P2 2026-10-04
-
-// Huangmei now uses king achievement 7403 / Boss_303004

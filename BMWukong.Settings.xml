@@ -3,23 +3,23 @@
         <Setting Id="Dead_UGuid.MGD.yangjian.start" Label="二郎神" State="true"/>
     </Setting>
     <Setting Id="Chapter1Bosses" Label="第一章 - 黑风山" State="true">
-        <Setting Id="Boss_102004" Label="轱护院" State="true"/>
-        <Setting Id="Boss_102001" Label="广智" State="true"/>
+        <Setting Id="Dead_UGuid.HFS.Niu.Teacher" Label="轱护院" State="true"/>
+        <Setting Id="Dead_UGuid.HFS.GuangZhi" Label="广智" State="true"/>
         <Setting Id="Dead_UGuid.HFS.TongChi01" Label="幽魂" State="true"/>
-        <Setting Id="Boss_103001" Label="灵虚子" State="true"/>
-        <Setting Id="Boss_102003" Label="广谋" State="true"/>
-        <Setting Id="Boss_103002" Label="白衣秀士" State="true"/>
-        <Setting Id="Boss_103004" Label="黑风大王" State="true"/>
-        <Setting Id="Boss_103005" Label="黑熊精" State="true"/>
+        <Setting Id="Dead_UGuid.HFS.DBL0" Label="灵虚子" State="true"/>
+        <Setting Id="Dead_UGuid.HFS.GuangM0" Label="广谋" State="true"/>
+        <Setting Id="Dead_UGuid.HFS.BaiyiT2" Label="白衣秀士" State="true"/>
+        <Setting Id="Dead_UGuid.HFS.XiongR0" Label="黑风大王" State="true"/>
+        <Setting Id="Dead_UGuid.HFS.XiongX0" Label="黑熊精" State="true"/>
         <Setting Id="Boss_202001" Label="波里个浪" State="true"/>
         <Setting Id="Boss_103007" Label="赤髯龙" State="true"/>
         <Setting Id="Boss_103006" Label="金池长老" State="true"/>
     </Setting>
     <Setting Id="Chapter2Bosses" Label="第二章 - 黄风岭" State="true">
-        <Setting Id="Boss_203001" Label="沙二郎" State="true"/>
-        <Setting Id="Boss_202005" Label="石先锋" State="true"/>
-        <Setting Id="Boss_203004" Label="虎先锋" State="true"/>
-        <Setting Id="Boss_203005" Label="黄风大圣" State="true"/>
+        <Setting Id="Dead_UGuid.HFM.FuZiShu.ZS0" Label="沙二郎" State="true"/>
+        <Setting Id="Dead_UGuid.HFM.ShiXianFeng" Label="石先锋" State="true"/>
+        <Setting Id="Dead_UGuid.HFM.HuXianFeng.Hu0" Label="虎先锋" State="true"/>
+        <Setting Id="Dead_UGuid.HFM.HFDS.H0" Label="黄风大圣" State="true"/>
         <Setting Id="Boss_202006" Label="浪里个波" State="true"/>
         <Setting Id="Boss_202028" Label="地狼" State="true"/>
         <Setting Id="Boss_203002" Label="沙大郎" State="true"/>
@@ -37,14 +37,14 @@
     <Setting Id="Chapter3Bosses" Label="第三章 - 小西天" State="true">
         <Setting Id="Dead_UGuid.LYS.XueHou.NM" Label="马猴一阶段" State="true"/>
         <Setting Id="Dead_UGuid.LYS.XueHou.AnShen" Label="马猴二阶段" State="true"/>
-        <Setting Id="Boss_303001" Label="亢金龙" State="true"/>
-        <Setting Id="Boss_302001" Label="魔将·妙音" State="true"/>
-        <Setting Id="Boss_303002" Label="亢金星君" State="true"/>
+        <Setting Id="Dead_UGuid.LYS.KJL.Long" Label="亢金龙" State="true"/>
+        <Setting Id="Dead_UGuid.LYS.Mo_01" Label="魔将·妙音" State="true"/>
+        <Setting Id="Dead_UGuid.LYS.KJL.Women" Label="亢金星君" State="true"/>
         <Setting Id="Dead_UGuid.LYS.SengMian" Label="不白一阶段" State="false"/>
         <Setting Id="Dead_UGuid.LYS.SengMian02" Label="不白二阶段" State="true"/>
-        <Setting Id="Boss_302002" Label="魔将·劫波" State="true"/>
+        <Setting Id="Dead_UGuid.LYS.Mo2" Label="魔将·劫波" State="true"/>
         <Setting Id="Dead_UGuid.LYS.RBM" Label="马猴三阶段" State="false"/>
-        <Setting Id="Boss_303004" Label="黄眉" State="true"/>
+        <Setting Id="Dead_UGuid.LYS.HuangMei.Small" Label="黄眉" State="true"/>
         <Setting Id="Boss_302013" Label="魔将·莲眼" State="true"/>
         <Setting Id="Boss_302014" Label="魔将·妄相" State="true"/>
         <Setting Id="Boss_302003" Label="无量蝠" State="false"/>
@@ -59,13 +59,13 @@
         <Setting Id="Boss_300005" Label="寅虎" State="true"/>
     </Setting>
     <Setting Id="Chapter4Bosses" Label="第四章 - 盘丝岭" State="true">
-        <Setting Id="Boss_403001" Label="二姐" State="true"/>
-        <Setting Id="Boss_402010" Label="右手虫" State="true"/>
-        <Setting Id="Boss_402015" Label="毒蛙" State="true"/>
+        <Setting Id="Dead_UGuid.PSD.Erjie.Village" Label="二姐" State="true"/>
+        <Setting Id="Dead_UGuid.PSD.FSC01.foshouchong" Label="右手虫" State="true"/>
+        <Setting Id="Dead_UGuid.PSD.Wa.01" Label="毒蛙" State="true"/>
         <Setting Id="Dead_UGuid.PSD.BaJie.Mo" Label="八戒一阶段" State="false"/>
         <Setting Id="Dead_UGuid.PSD.BaJie.Ye" Label="八戒二阶段" State="true"/>
-        <Setting Id="Boss_403003" Label="紫蛛儿" State="true"/>
-        <Setting Id="Boss_403007" Label="百眼魔君" State="true"/>
+        <Setting Id="Dead_UGuid.PSD.LaoZhiZhu" Label="紫蛛儿" State="true"/>
+        <Setting Id="Dead_UGuid.PSD.BaiYanMoJun" Label="百眼魔君" State="true"/>
         <Setting Id="Boss_400002" Label="六妹" State="false"/>
         <Setting Id="Boss_403006" Label="五妹" State="false"/>
         <Setting Id="Boss_400001" Label="四姐" State="false"/>
@@ -81,17 +81,17 @@
         <Setting Id="Boss_402011" Label="黑手道人" State="true"/>
     </Setting>
     <Setting Id="Chapter5Bosses" Label="第五章 - 火焰山" State="true">
-        <Setting Id="Boss_502001" Label="急如火·快如风" State="true"/>
-        <Setting Id="Boss_502004" Label="云里雾·雾里云" State="true"/>
+        <Setting Id="Dead_UGuid.HYS.KuaiRuFeng01" Label="急如火·快如风" State="true"/>
+        <Setting Id="Dead_UGuid.HYS.WuLiYun" Label="云里雾·雾里云" State="true"/>
         <Setting Id="Boss_501017" Label="金纽" State="true"/>
-        <Setting Id="Boss_503003" Label="红孩儿" State="false"/>
-        <Setting Id="Boss_503004" Label="夜叉王" State="true"/>
-        <Setting Id="Dead_UGuid.HYS.ZhanChe.01a" Label="五行战车 1号" State="false"/>
-        <Setting Id="Dead_UGuid.HYS.ZhanChe.01b" Label="五行战车 2号" State="false"/>
-        <Setting Id="Dead_UGuid.HYS.ZhanChe.01c" Label="五行战车 3号" State="false"/>
-        <Setting Id="Dead_UGuid.HYS.ZhanChe.01d" Label="五行战车 4号" State="false"/>
-        <Setting Id="Dead_UGuid.HYS.JDS.05" Label="五行战车 5号" State="false"/>
-        <Setting Id="Boss_502003" Label="石父" State="false"/>
+        <Setting Id="Dead_UGuid.HYS.HongHaiEr" Label="红孩儿" State="false"/>
+        <Setting Id="Dead_UGuid.HYS.YeChaWang" Label="夜叉王" State="true"/>
+        <Setting Id="Dead_UGuid.HYS.ZhanChe.01a" Label="五行战车 1号" State="true"/>
+        <Setting Id="Dead_UGuid.HYS.ZhanChe.01b" Label="五行战车 2号" State="true"/>
+        <Setting Id="Dead_UGuid.HYS.ZhanChe.01c" Label="五行战车 3号" State="true"/>
+        <Setting Id="Dead_UGuid.HYS.ZhanChe.01d" Label="五行战车 4号" State="true"/>
+        <Setting Id="Dead_UGuid.HYS.JDS.05" Label="五行战车 5号" State="true"/>
+        <Setting Id="Dead_UGuid.HYS.HMS.Outside" Label="石父" State="false"/>
         <Setting Id="Boss_502005" Label="兴烘掀、掀烘兴" State="true"/>
         <Setting Id="Boss_502009" Label="燧统领" State="true"/>
         <Setting Id="Boss_502008" Label="燧先锋" State="true"/>
@@ -103,10 +103,10 @@
         <Setting Id="Boss_502013" Label="皓斧力士" State="true"/>
     </Setting>
     <Setting Id="Chapter6Bosses" Label="第六章 - 花果山" State="true">
-        <Setting Id="Boss_602001" Label="王灵官" State="true"/>
+        <Setting Id="Dead_UGuid.BYS.WLG.01" Label="王灵官" State="true"/>
         <Setting Id="Boss_602005" Label="凤翅将军" State="false"/>
-        <Setting Id="Boss_602002" Label="金甲犀" State="true"/>
-        <Setting Id="Boss_602004" Label="步云鹿" State="true"/>
+        <Setting Id="Dead_UGuid.BYS.Xiniu" Label="金甲犀" State="true"/>
+        <Setting Id="Dead_UGuid.BYS.Xuelu" Label="步云鹿" State="true"/>
         <Setting Id="Boss_602003" Label="碧臂螂" State="true"/>
         <Setting Id="Dead_UGuid.MGD.Yuan" Label="石猿" State="true"/>
         <Setting Id="Dead_UGuid.MGD.JSDS.P2" Label="大圣残躯(需手动)" State="false"/>
