@@ -27,10 +27,32 @@ $xmlPaths = @(
     (Join-Path $components "BMWukong.Settings.en.xml")
 )
 $aslHelpPath = Join-Path $components "asl-help"
+$repositoryAslPath = Join-Path $RepositoryRoot "BlackMythWukong.asl"
+$repositoryXmlPaths = @(
+    (Join-Path $RepositoryRoot "BMWukong.Settings.xml"),
+    (Join-Path $RepositoryRoot "BMWukong.Settings.en.xml")
+)
 
 Assert-CSharpCommentsRemoved -Path $aslPath
 foreach ($xmlPath in $xmlPaths) {
     Assert-XmlCommentsRemoved -Path $xmlPath
+}
+Assert-CSharpCommentsRemoved -Path $repositoryAslPath
+foreach ($xmlPath in $repositoryXmlPaths) {
+    Assert-XmlCommentsRemoved -Path $xmlPath
+}
+
+$mirrorPairs = @(
+    @($aslPath, $repositoryAslPath),
+    @($xmlPaths[0], $repositoryXmlPaths[0]),
+    @($xmlPaths[1], $repositoryXmlPaths[1])
+)
+foreach ($pair in $mirrorPairs) {
+    $componentHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $pair[0]).Hash
+    $repositoryHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $pair[1]).Hash
+    if ($componentHash -ne $repositoryHash) {
+        throw "Repository-root mirror differs from Components: $($pair[1])"
+    }
 }
 
 if (-not (Test-Path -LiteralPath $aslHelpPath -PathType Leaf)) {

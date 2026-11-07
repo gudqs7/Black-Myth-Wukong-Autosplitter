@@ -6,8 +6,9 @@ comment-free runtime distribution.
 ## Runtime contract
 
 - Editable ASL and settings XML live under `Source/Runtime`.
-- Repository `Components`, release archives, and the local LiveSplit
-  `Components` directory are generated outputs and must contain no comments.
+- Repository `Components`, repository-root ASL/XML mirrors, release
+  archives, and the local LiveSplit `Components` directory are generated
+  outputs and must contain no comments.
 - `Components/asl-help` is the required binary runtime dependency.
 - Do not edit generated runtime ASL or XML under `Components`; regenerate
   them from `Source/Runtime`.
@@ -27,7 +28,10 @@ comment-free runtime distribution.
   verification.
 - `Source/comment_tools.ps1`: shared comment removal and verification helpers.
 - `Source/AslParseProbe.cs`: loads LiveSplit's ASL parser for tests.
-- `Components/*.asl` and `Components/*.xml`: generated runtime files. Do not edit them directly. `Components/asl-help` is the fixed binary dependency.
+- `Components/*.asl` and `Components/*.xml`: generated runtime files. Do not
+  edit them directly. `Components/asl-help` is the fixed binary dependency.
+- Root `BlackMythWukong.asl`, `BMWukong.Settings.xml`, and
+  `BMWukong.Settings.en.xml`: generated mirrors that must match `Components`.
 
 ## Runtime synchronization
 
@@ -38,7 +42,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File .\Source\build_wukong_runtime.ps1 -SyncLiveSplit
 ```
 
-The command regenerates comment-free files in `Components`, then synchronizes
+The command regenerates comment-free files in `Components` and the repository
+root, then synchronizes
 `BlackMythWukong.asl`, both settings XML files, and `asl-help` to
 `D:\soft\e-game\LiveSplit_1.8.29\Components`.
 

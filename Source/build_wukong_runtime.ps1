@@ -6,7 +6,7 @@
 BMW_AutoSplitter 仓库根目录，默认是本脚本目录的上级目录。
 
 .PARAMETER OutputDirectory
-目标 Components 目录，默认是仓库中的 Components 目录。
+目标 Components 目录，默认是仓库中的 Components 目录。生成结果同时镜像到仓库根目录。
 
 .PARAMETER LiveSplitComponentsPath
 指定 -SyncLiveSplit 时使用的本机 LiveSplit Components 目录。
@@ -50,7 +50,15 @@ $runtimeAssets = @(
     }
 )
 
-New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
+$outputDirectories = @($OutputDirectory)
+$normalizedOutput = [IO.Path]::GetFullPath($OutputDirectory)
+$normalizedRepositoryRoot = [IO.Path]::GetFullPath($RepositoryRoot)
+if ($normalizedOutput -ne $normalizedRepositoryRoot) {
+    $outputDirectories += $RepositoryRoot
+}
+foreach ($directory in $outputDirectories) {
+    New-Item -ItemType Directory -Force -Path $directory | Out-Null
+}
 
 foreach ($asset in $runtimeAssets) {
     $sourcePath = Join-Path $runtimeSourceRoot $asset.SourceName
@@ -67,17 +75,19 @@ foreach ($asset in $runtimeAssets) {
     }
     $runtimeText = Normalize-CommentStrippedText -Text $runtimeText
 
-    $targetPath = Join-Path $OutputDirectory $asset.TargetName
-    Write-Utf8NoBom -Path $targetPath -Text $runtimeText
+    foreach ($directory in $outputDirectories) {
+        $targetPath = Join-Path $directory $asset.TargetName
+        Write-Utf8NoBom -Path $targetPath -Text $runtimeText
 
-    if ($asset.CommentType -eq "CSharp") {
-        Assert-CSharpCommentsRemoved -Path $targetPath
-    }
-    else {
-        Assert-XmlCommentsRemoved -Path $targetPath
-    }
+        if ($asset.CommentType -eq "CSharp") {
+            Assert-CSharpCommentsRemoved -Path $targetPath
+        }
+        else {
+            Assert-XmlCommentsRemoved -Path $targetPath
+        }
 
-    Write-Output "runtime generated: $targetPath"
+        Write-Output "runtime generated: $targetPath"
+    }
 }
 
 if (-not $SyncLiveSplit) {

@@ -13,6 +13,16 @@
 
 ASL 和 XML 由 `Source/Runtime` 生成，不直接编辑；`asl-help` 是同步用的固定二进制依赖。ASL 会按当前系统语言优先加载完整区域名，再尝试基础语言名，最后回退到中文默认设置。
 
+## 根目录镜像
+
+生成时还会把以下无注释文件同步到仓库根目录，方便直接引用：
+
+- `BlackMythWukong.asl`
+- `BMWukong.Settings.xml`
+- `BMWukong.Settings.en.xml`
+
+根目录副本是生成输出，不要直接编辑；请修改 `Source/Runtime` 后重新生成。
+
 ## 开发
 
 可编辑源码：
