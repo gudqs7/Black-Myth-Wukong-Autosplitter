@@ -1,0 +1,121 @@
+<Settings>
+    <Setting Id="AutoSplitEnabled" Label="Auto Splits Enabled" State="false" />
+    <Setting Id="Prologue" Label="Prologue - Mount Huaguo" State="true">
+        <Setting Id="Dead_UGuid.MGD.yangjian.start" Label="Erlang, Sacred Divinity (Recommended: Fight Manually)" State="false" />
+    </Setting>
+    <Setting Id="Chapter1Bosses" Label="Chapter 1 - Black Wind Mountain" State="true">
+        <Setting Id="Dead_UGuid.HFS.Niu.Teacher" Label="Bullguard" State="true" />
+        <Setting Id="Dead_UGuid.HFS.GuangZhi" Label="Guangzhi" State="true" />
+        <Setting Id="Dead_UGuid.HFS.TongChi01" Label="Wandering Wight" State="true" />
+        <Setting Id="Dead_UGuid.HFS.DBL0" Label="Lingxuzi" State="true" />
+        <Setting Id="Dead_UGuid.HFS.GuangM0" Label="Guangmou" State="true" />
+        <Setting Id="Dead_UGuid.HFS.BaiyiT2" Label="Whiteclad Noble" State="true" />
+        <Setting Id="Dead_UGuid.HFS.XiongR0" Label="Black Wind King" State="true" />
+        <Setting Id="Dead_UGuid.HFS.XiongX0" Label="Black Bear Guai" State="true" />
+        <Setting Id="Boss_202001" Label="Baw-Li-Guhh-Lang" State="true" />
+        <Setting Id="Boss_103007" Label="Red Loong" State="true" />
+        <Setting Id="Boss_103006" Label="Elder Jinchi" State="true" />
+    </Setting>
+    <Setting Id="Chapter2Bosses" Label="Chapter 2 - Yellow Wind Ridge" State="true">
+        <Setting Id="Dead_UGuid.HFM.FuZiShu.ZS0" Label="Second Prince of Flowing Sands" State="true" />
+        <Setting Id="Dead_UGuid.HFM.ShiXianFeng" Label="Stone Vanguard" State="true" />
+        <Setting Id="Dead_UGuid.HFM.HuXianFeng.Hu0" Label="Tiger Vanguard" State="true" />
+        <Setting Id="Dead_UGuid.HFM.HFDS.H0" Label="Yellow Wind Sage" State="true" />
+        <Setting Id="Boss_202006" Label="Lang-Li-Guhh-Baw" State="true" />
+        <Setting Id="Boss_202028" Label="Earth Wolf" State="true" />
+        <Setting Id="Boss_203002" Label="First Prince of Flowing Sands" State="true" />
+        <Setting Id="Boss_202007" Label="Mother of Stones" State="true" />
+        <Setting Id="Boss_202003" Label="Tiger's Acolyte" State="true" />
+        <Setting Id="Boss_202004" Label="Gore-Eye Daoist" State="true" />
+        <Setting Id="Boss_203003" Label="Mad Tiger" State="true" />
+        <Setting Id="Boss_203007" Label="&quot;Tiger Vanguard&quot;" State="true" />
+        <Setting Id="Boss_202002" Label="Shigandang" State="true" />
+        <Setting Id="Boss_203006" Label="Black Loong" State="true" />
+        <Setting Id="Boss_213001" Label="Fuban" State="true" />
+        <Setting Id="Boss_200006" Label="Man-in-Stone" State="true" />
+        <Setting Id="Boss_200001" Label="Yellow-Robed Squire" State="true" />
+    </Setting>
+    <Setting Id="Chapter3Bosses" Label="Chapter 3 - New West" State="true">
+        <Setting Id="Dead_UGuid.LYS.XueHou.NM" Label="Macaque Chief (Phase 1)" State="true" />
+        <Setting Id="Dead_UGuid.LYS.XueHou.AnShen" Label="Macaque Chief (Phase 2)" State="true" />
+        <Setting Id="Dead_UGuid.LYS.KJL.Long" Label="Kang-Jin Loong" State="true" />
+        <Setting Id="Dead_UGuid.LYS.Mo_01" Label="Captain Wise-Voice" State="true" />
+        <Setting Id="Dead_UGuid.LYS.KJL.Women" Label="Kang-Jin Star" State="true" />
+        <Setting Id="Dead_UGuid.LYS.SengMian" Label="Non-White (Phase 1)" State="false" />
+        <Setting Id="Dead_UGuid.LYS.SengMian02" Label="Non-White (Phase 2)" State="true" />
+        <Setting Id="Dead_UGuid.LYS.Mo2" Label="Captain Kalpa-Wave" State="true" />
+        <Setting Id="Dead_UGuid.LYS.RBM" Label="Macaque Chief (Phase 3)" State="false" />
+        <Setting Id="Dead_UGuid.LYS.HuangMei.Small" Label="Yellowbrow" State="true" />
+        <Setting Id="Boss_302013" Label="Captain Lotus-Vision" State="true" />
+        <Setting Id="Boss_302014" Label="Captain Void-Illusion" State="true" />
+        <Setting Id="Boss_302003" Label="Apramana Bat" State="false" />
+        <Setting Id="Boss_302015" Label="Lang-Li-Guhh-Lang" State="true" />
+        <Setting Id="Boss_302016" Label="Old Ginseng Guai" State="true" />
+        <Setting Id="Boss_302010" Label="Non-Pure" State="true" />
+        <Setting Id="Boss_302007" Label="Non-Able" State="true" />
+        <Setting Id="Boss_300001" Label="Non-Void" State="true" />
+        <Setting Id="Boss_301002" Label="Monk from the Sea" State="true" />
+        <Setting Id="Boss_302004" Label="Cyan Loong" State="true" />
+        <Setting Id="Boss_302012" Label="Green-Capped Martialist" State="true" />
+        <Setting Id="Boss_300005" Label="Yin Tiger" State="true" />
+    </Setting>
+    <Setting Id="Chapter4Bosses" Label="Chapter 4 - Webbed Hollow" State="true">
+        <Setting Id="Dead_UGuid.PSD.Erjie.Village" Label="The Second Sister" State="true" />
+        <Setting Id="Dead_UGuid.PSD.FSC01.foshouchong" Label="Buddha's Right Hand" State="true" />
+        <Setting Id="Dead_UGuid.PSD.Wa.01" Label="Baw-Li-Guhh-Baw" State="true" />
+        <Setting Id="Dead_UGuid.PSD.BaJie.Mo" Label="Zhu Bajie (Phase 1)" State="false" />
+        <Setting Id="Dead_UGuid.PSD.BaJie.Ye" Label="Zhu Bajie (Phase 2)" State="true" />
+        <Setting Id="Dead_UGuid.PSD.LaoZhiZhu" Label="Violet Spider" State="true" />
+        <Setting Id="Dead_UGuid.PSD.BaiYanMoJun" Label="Hundred-Eyed Daoist Master" State="true" />
+        <Setting Id="Boss_400002" Label="The Sixth Sister" State="false" />
+        <Setting Id="Boss_403006" Label="The Fifth Sister" State="false" />
+        <Setting Id="Boss_400001" Label="The Fourth Sister" State="false" />
+        <Setting Id="Boss_403005" Label="The Third Sister" State="false" />
+        <Setting Id="Boss_403004" Label="The First Sister" State="false" />
+        <Setting Id="Boss_402014" Label="Elder Amourworm" State="true" />
+        <Setting Id="Boss_402001" Label="Centipede Guai" State="false" />
+        <Setting Id="Boss_402009" Label="Commander Beetle" State="true" />
+        <Setting Id="Boss_402007" Label="Daoist Mi" State="true" />
+        <Setting Id="Boss_402012" Label="Yellow Loong" State="true" />
+        <Setting Id="Boss_803001" Label="The Scorpionlord" State="true" />
+        <Setting Id="Boss_803002" Label="The Duskveil" State="true" />
+        <Setting Id="Boss_402011" Label="Venom Daoist" State="true" />
+    </Setting>
+    <Setting Id="Chapter5Bosses" Label="Chapter 5 - Flaming Mountains" State="true">
+        <Setting Id="Dead_UGuid.HYS.KuaiRuFeng01" Label="Quick as Fire, Fast as Wind" State="true" />
+        <Setting Id="Dead_UGuid.HYS.WuLiYun" Label="Cloudy Mist, Misty Cloud" State="true" />
+        <Setting Id="Boss_501017" Label="Golden Button (Sea Rakshasa)" State="true" />
+        <Setting Id="Dead_UGuid.HYS.HongHaiEr" Label="Red Boy" State="false" />
+        <Setting Id="Dead_UGuid.HYS.YeChaWang" Label="Yaksha King" State="true" />
+        <Setting Id="Dead_UGuid.HYS.ZhanChe.01a" Label="Five Elemental Cart 1" State="false" />
+        <Setting Id="Dead_UGuid.HYS.ZhanChe.01b" Label="Five Elemental Cart 2" State="false" />
+        <Setting Id="Dead_UGuid.HYS.ZhanChe.01c" Label="Five Elemental Cart 3" State="false" />
+        <Setting Id="Dead_UGuid.HYS.ZhanChe.01d" Label="Five Elemental Cart 4" State="false" />
+        <Setting Id="Dead_UGuid.HYS.JDS.05" Label="Five Elemental Cart 5" State="false" />
+        <Setting Id="Dead_UGuid.HYS.HMS.Outside" Label="Father of Stones" State="false" />
+        <Setting Id="Boss_502005" Label="Top Takes Bottom, Bottom Takes Top" State="true" />
+        <Setting Id="Boss_502009" Label="Flint Chief" State="true" />
+        <Setting Id="Boss_502008" Label="Flint Vanguard" State="true" />
+        <Setting Id="Boss_502014" Label="Mother of Flamlings" State="true" />
+        <Setting Id="Boss_502015" Label="Baw-Lang-Lang" State="true" />
+        <Setting Id="Boss_503001" Label="Yin-Yang Fish" State="true" />
+        <Setting Id="Boss_703001" Label="Bishui Golden-Eyed Beast" State="true" />
+        <Setting Id="Boss_503002" Label="Keeper of Flaming Mountains" State="false" />
+        <Setting Id="Boss_502013" Label="Pale-Axe Stalwart" State="true" />
+    </Setting>
+    <Setting Id="Chapter6Bosses" Label="Chapter 6 - Mount Huaguo" State="true">
+        <Setting Id="Dead_UGuid.BYS.WLG.01" Label="Supreme Inspector" State="true" />
+        <Setting Id="Boss_602005" Label="Feng-Tail General" State="false" />
+        <Setting Id="Dead_UGuid.BYS.Xiniu" Label="Gold Armored Rhino" State="true" />
+        <Setting Id="Dead_UGuid.BYS.Xuelu" Label="Cloudtreading Deer" State="true" />
+        <Setting Id="Boss_602003" Label="Emerald-Armed Mantis" State="true" />
+        <Setting Id="Dead_UGuid.MGD.Yuan" Label="The Stone Monkey" State="true" />
+        <Setting Id="Dead_UGuid.MGD.JSDS.P2" Label="The Great Sage's Broken Shell (Manual)" State="false" />
+        <Setting Id="Boss_602007" Label="Son of Stones" State="true" />
+        <Setting Id="Boss_602006" Label="Poison Chief" State="true" />
+        <Setting Id="Boss_602009" Label="Water-Wood Beast" State="false" />
+        <Setting Id="Boss_103003" Label="Jiao-Loong of Waves" State="true" />
+        <Setting Id="Boss_602008" Label="Lang-Baw-Baw" State="true" />
+        <Setting Id="Boss_603001" Label="Giant Shigandang" State="true" />
+    </Setting>
+</Settings>

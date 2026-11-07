@@ -5,8 +5,42 @@ startup
 {
     string componentDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Components");
     Assembly.Load(File.ReadAllBytes(Path.Combine(componentDir, "asl-help"))).CreateInstance("Basic");
-    vars.Helper.Settings.CreateFromXml(Path.Combine(componentDir, "BMWukong.Settings.xml"));
     vars.Helper.GameName = "Black Myth: Wukong (2024)";
+
+    vars.SettingsLoaded = false;
+    vars.SettingsCulture = "";
+    vars.SettingsPath = "";
+    vars.SettingsLoadError = "";
+    vars.LoadSettings = (Action)(() =>
+    {
+        if (!(bool)vars.SettingsLoaded)
+        {
+            try
+            {
+                string culture = System.Globalization.CultureInfo.CurrentCulture.Name;
+                string settingsPath = Path.Combine(componentDir, "BMWukong.Settings." + culture + ".xml");
+                if (!File.Exists(settingsPath))
+                {
+                    string language = culture.Split('-')[0];
+                    settingsPath = Path.Combine(componentDir, "BMWukong.Settings." + language + ".xml");
+                }
+                if (!File.Exists(settingsPath))
+                {
+                    settingsPath = Path.Combine(componentDir, "BMWukong.Settings.xml");
+                }
+
+                vars.Helper.Settings.CreateFromXml(settingsPath);
+                vars.SettingsLoaded = true;
+                vars.SettingsCulture = culture;
+                vars.SettingsPath = settingsPath;
+            }
+            catch (Exception ex)
+            {
+                vars.SettingsLoadError = ex.Message;
+            }
+        }
+    });
+    ((Action)vars.LoadSettings)();
 }
 
 init
@@ -28,13 +62,12 @@ init
     vars.pendingBossSplits = new Queue<string>();
     vars.savePath = null;
     vars.lastSaveWrite = 0L;
+    vars.lastSaveLength = -1L;
     vars.nextSaveSearch = 0L;
     vars.nextSaveLog = 0L;
     vars.gameExePath = "";
     vars.saveReady = false;
 
-    // Minimal Protobuf reader. The game stores the archive payload in field 2
-    // of the outer ArchiveFile message and XORs it with this 8-byte key.
     vars.ReadVarint = (Func<byte[], int[], int>) ((buf, ptr) =>
     {
         int value = 0;
@@ -109,9 +142,6 @@ init
         return null;
     });
 
-    // Path: FUStBEDArchivesData(1) -> RoleData(1) -> RoleDataCS(8)
-    //       -> RoleCollection / repeated MonsterCollectionList(1)
-    //       -> MonsterCollection{ Id(1), PortraitStatus(4) }
     vars.GetUnlockedBosses = (Func<byte[], HashSet<int>>) ((data) =>
     {
         HashSet<int> result = new HashSet<int>();
@@ -175,8 +205,6 @@ init
         return result;
     });
 
-    // Path: FUStBEDArchivesData(2) -> LevelArchiveData(1)
-    //       -> LevelBaseData(3) -> DeadUnitData{ Uid(1), ResetType(2) }
     vars.GetDeadBosses = (Func<byte[], HashSet<string>>) ((data) =>
     {
         HashSet<string> result = new HashSet<string>();
@@ -278,6 +306,24 @@ init
 
     ((Action<string>)vars.Log)("init: BlackMythWukong save splitter loaded");
 
+    if ((bool)vars.SettingsLoaded)
+    {
+        ((Action<string>)vars.Log)("settings loaded: culture=" + vars.SettingsCulture + " file=" + vars.SettingsPath);
+    }
+    else
+    {
+        ((Action<string>)vars.Log)("settings load failed: " + vars.SettingsLoadError);
+    }
+
+    vars.IsAutoSplitEnabled = (Func<bool>)(() =>
+    {
+        try
+        {
+            return settings.ContainsKey("AutoSplitEnabled") && (bool)settings["AutoSplitEnabled"];
+        }
+        catch { return false; }
+    });
+
     vars.FindSavePath = (Func<string, string>) ((gameExePath) =>
     {
         try
@@ -340,10 +386,11 @@ update
 
     if (!string.IsNullOrEmpty(vars.savePath) && !File.Exists(vars.savePath))
     {
-        // game is rewriting the save momentarily: keep the path, just retry soon
+
         vars.nextSaveSearch = 0L;
         vars.lastSaveWrite = 0L;
-        }
+        vars.lastSaveLength = -1L;
+    }
 
     if (DateTime.UtcNow.Ticks >= ((long)vars.nextSaveSearch))
     {
@@ -365,7 +412,8 @@ update
             vars.savePath = detectedSavePath;
             vars.saveReady = false;
             vars.lastSaveWrite = 0L;
-                    vars.unlockedBosses = new HashSet<int>();
+            vars.lastSaveLength = -1L;
+            vars.unlockedBosses = new HashSet<int>();
             vars.deadBosses = new HashSet<string>();
             ((Queue<string>)vars.pendingBossSplits).Clear();
         }
@@ -381,12 +429,14 @@ update
         try
         {
             long writeTicks = File.GetLastWriteTimeUtc(vars.savePath).Ticks;
-            if (writeTicks != ((long)vars.lastSaveWrite))
+            long fileLength = new FileInfo(vars.savePath).Length;
+            if (writeTicks != ((long)vars.lastSaveWrite) || fileLength != ((long)vars.lastSaveLength))
             {
                 byte[] saveBytes = File.ReadAllBytes(vars.savePath);
                 byte[] payload = ((Func<byte[], byte[]>)vars.ExtractPayload)(saveBytes);
                 HashSet<int> unlocked = ((Func<byte[], HashSet<int>>)vars.GetUnlockedBosses)(payload);
                 HashSet<string> deadBosses = ((Func<byte[], HashSet<string>>)vars.GetDeadBosses)(payload);
+                bool autoSplitEnabled = ((Func<bool>)vars.IsAutoSplitEnabled)();
                 if (unlocked != null && deadBosses != null)
                 {
                     if (!((bool)vars.saveReady))
@@ -404,8 +454,8 @@ update
                             {
                                 string settingId = "Boss_" + bossId;
                                 bool enabled = settings.ContainsKey(settingId) && settings[settingId];
-                                ((Action<string>)vars.Log)("new portrait unlock: " + bossId + " enabled=" + enabled);
-                                if (enabled)
+                                ((Action<string>)vars.Log)("new portrait unlock: " + bossId + " enabled=" + enabled + " autoSplit=" + autoSplitEnabled);
+                                if (enabled && autoSplitEnabled)
                                 {
                                     ((Queue<string>)vars.pendingBossSplits).Enqueue(settingId);
                                 }
@@ -419,8 +469,8 @@ update
                             {
                                 string settingId = "Dead_" + uid;
                                 bool enabled = settings.ContainsKey(settingId) && settings[settingId];
-                                ((Action<string>)vars.Log)("new dead-unit: " + uid + " setting=" + settingId + " enabled=" + enabled);
-                                if (enabled && vars.completedSplits.Add(settingId))
+                                ((Action<string>)vars.Log)("new dead-unit: " + uid + " setting=" + settingId + " enabled=" + enabled + " autoSplit=" + autoSplitEnabled);
+                                if (enabled && autoSplitEnabled && vars.completedSplits.Add(settingId))
                                 {
                                     ((Queue<string>)vars.pendingBossSplits).Enqueue(settingId);
                                 }
@@ -433,6 +483,7 @@ update
                 }
 
                 vars.lastSaveWrite = writeTicks;
+                vars.lastSaveLength = fileLength;
             }
         }
         catch (System.IO.FileNotFoundException)
@@ -450,7 +501,7 @@ update
 
 onStart
 {
-    // Keep the timer at 0.00 and treat the current save state as the baseline.
+
     timer.IsGameTimePaused = true;
     vars.completedSplits.Clear();
     vars.pendingBossSplits = new Queue<string>();
@@ -486,6 +537,11 @@ start
 split
 {
     Queue<string> pending = (Queue<string>)vars.pendingBossSplits;
+    if (!((Func<bool>)vars.IsAutoSplitEnabled)())
+    {
+        pending.Clear();
+        return false;
+    }
     while (pending.Count > 0)
     {
         string bossSetting = pending.Dequeue();
@@ -496,7 +552,6 @@ split
         }
     }
 
-    // All boss triggers are now config-driven through the pending queue.
     return false;
 }
 
@@ -507,6 +562,6 @@ isLoading
 
 exit
 {
-    // Pauses the timer if the game crashes.
+
     timer.IsGameTimePaused = true;
 }

@@ -1,6 +1,8 @@
 <Settings>
+    <Setting Id="AutoSplitEnabled" Label="自动打点总开关" State="false"/>
+
     <Setting Id="Prologue" Label="序章 - 花果山" State="true">
-        <Setting Id="Dead_UGuid.MGD.yangjian.start" Label="二郎神" State="true"/>
+        <Setting Id="Dead_UGuid.MGD.yangjian.start" Label="二郎神(推荐自己打)" State="false"/>
     </Setting>
     <Setting Id="Chapter1Bosses" Label="第一章 - 黑风山" State="true">
         <Setting Id="Dead_UGuid.HFS.Niu.Teacher" Label="轱护院" State="true"/>
@@ -86,11 +88,11 @@
         <Setting Id="Boss_501017" Label="金纽" State="true"/>
         <Setting Id="Dead_UGuid.HYS.HongHaiEr" Label="红孩儿" State="false"/>
         <Setting Id="Dead_UGuid.HYS.YeChaWang" Label="夜叉王" State="true"/>
-        <Setting Id="Dead_UGuid.HYS.ZhanChe.01a" Label="五行战车 1号" State="true"/>
-        <Setting Id="Dead_UGuid.HYS.ZhanChe.01b" Label="五行战车 2号" State="true"/>
-        <Setting Id="Dead_UGuid.HYS.ZhanChe.01c" Label="五行战车 3号" State="true"/>
-        <Setting Id="Dead_UGuid.HYS.ZhanChe.01d" Label="五行战车 4号" State="true"/>
-        <Setting Id="Dead_UGuid.HYS.JDS.05" Label="五行战车 5号" State="true"/>
+        <Setting Id="Dead_UGuid.HYS.ZhanChe.01a" Label="五行战车 1号" State="false"/>
+        <Setting Id="Dead_UGuid.HYS.ZhanChe.01b" Label="五行战车 2号" State="false"/>
+        <Setting Id="Dead_UGuid.HYS.ZhanChe.01c" Label="五行战车 3号" State="false"/>
+        <Setting Id="Dead_UGuid.HYS.ZhanChe.01d" Label="五行战车 4号" State="false"/>
+        <Setting Id="Dead_UGuid.HYS.JDS.05" Label="五行战车 5号" State="false"/>
         <Setting Id="Dead_UGuid.HYS.HMS.Outside" Label="石父" State="false"/>
         <Setting Id="Boss_502005" Label="兴烘掀、掀烘兴" State="true"/>
         <Setting Id="Boss_502009" Label="燧统领" State="true"/>
@@ -116,6 +118,5 @@
         <Setting Id="Boss_103003" Label="跳浪蛟" State="true"/>
         <Setting Id="Boss_602008" Label="浪波波" State="true"/>
         <Setting Id="Boss_603001" Label="大石敢当" State="true"/>
-        <Setting Id="Boss_603003" Label="二郎显圣真君" State="true"/>
     </Setting>
 </Settings>
