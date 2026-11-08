@@ -45,7 +45,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 The command regenerates comment-free files in `Components` and the repository
 root, then synchronizes
 `BlackMythWukong.asl`, both settings XML files, and `asl-help` to
-`D:\soft\e-game\LiveSplit_1.8.29\Components`.
+`D:\soft\e-game\LiveSplit_1.8.37\Components`.
 
 Before overwriting a local runtime file, the script compares SHA-256 and
 `LastWriteTime`. A newer differing local file must be inspected and merged back
