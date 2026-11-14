@@ -5,3 +5,4 @@
 *.xml text eol=crlf
 *.md text eol=lf
 asl-help binary
+uhara10-PBZ binary

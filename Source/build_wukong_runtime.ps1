@@ -102,7 +102,8 @@ $syncNames = @(
     "BlackMythWukong.asl",
     "BMWukong.Settings.xml",
     "BMWukong.Settings.en.xml",
-    "asl-help"
+    "asl-help",
+    "uhara10-PBZ"
 )
 
 foreach ($name in $syncNames) {

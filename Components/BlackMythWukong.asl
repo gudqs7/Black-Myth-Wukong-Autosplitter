@@ -1,567 +1,853 @@
-state("b1-Win64-Shipping"){}
-state("b1-WinGDK-Shipping"){}
+state("b1-Win64-Shipping") {}
+state("b1-WinGDK-Shipping") {}
 
 startup
 {
     string componentDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Components");
-    Assembly.Load(File.ReadAllBytes(Path.Combine(componentDir, "asl-help"))).CreateInstance("Basic");
-    vars.Helper.GameName = "Black Myth: Wukong (2024)";
 
-    vars.SettingsLoaded = false;
-    vars.SettingsCulture = "";
-    vars.SettingsPath = "";
-    vars.SettingsLoadError = "";
-    vars.LoadSettings = (Action)(() =>
+    vars.LogPath = Path.Combine(
+        AppDomain.CurrentDomain.BaseDirectory,
+        "Logs",
+        "BMW-Hook-AutoSplitter.log");
+    vars.Log = (Action<string>)(message =>
     {
-        if (!(bool)vars.SettingsLoaded)
+        try
         {
-            try
-            {
-                string culture = System.Globalization.CultureInfo.CurrentCulture.Name;
-                string settingsPath = Path.Combine(componentDir, "BMWukong.Settings." + culture + ".xml");
-                if (!File.Exists(settingsPath))
-                {
-                    string language = culture.Split('-')[0];
-                    settingsPath = Path.Combine(componentDir, "BMWukong.Settings." + language + ".xml");
-                }
-                if (!File.Exists(settingsPath))
-                {
-                    settingsPath = Path.Combine(componentDir, "BMWukong.Settings.xml");
-                }
-
-                vars.Helper.Settings.CreateFromXml(settingsPath);
-                vars.SettingsLoaded = true;
-                vars.SettingsCulture = culture;
-                vars.SettingsPath = settingsPath;
-            }
-            catch (Exception ex)
-            {
-                vars.SettingsLoadError = ex.Message;
-            }
+            Directory.CreateDirectory(Path.GetDirectoryName((string)vars.LogPath));
+            File.AppendAllText(
+                (string)vars.LogPath,
+                DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + " " + message + Environment.NewLine);
         }
+        catch {}
     });
-    ((Action)vars.LoadSettings)();
+
+    try
+    {
+        Assembly.Load(File.ReadAllBytes(Path.Combine(componentDir, "uhara10-PBZ"))).CreateInstance("Main");
+    }
+    catch (Exception ex)
+    {
+        ((Action<string>)vars.Log)("[BMW-loading] uhara load failed: " + ex.ToString());
+        throw;
+    }
+
+    string culture = System.Globalization.CultureInfo.CurrentCulture.Name;
+    string settingsPath = Path.Combine(componentDir, "BMWukong.Settings." + culture + ".xml");
+    if (!File.Exists(settingsPath))
+    {
+        string language = culture.Split('-')[0];
+        settingsPath = Path.Combine(componentDir, "BMWukong.Settings." + language + ".xml");
+    }
+    if (!File.Exists(settingsPath))
+        settingsPath = Path.Combine(componentDir, "BMWukong.Settings.xml");
+
+    vars.SettingsPath = settingsPath;
+    vars.Uhara.Settings.CreateFromXml(settingsPath);
+    ((Action<string>)vars.Log)("[BMW-loading] settings loaded: " + settingsPath);
 }
 
 init
 {
-    IntPtr gEngine = vars.Helper.ScanRel(3, "48 89 05 ???????? 48 85 c9 74 ?? e8 ???????? 48 8d 4d");
-    IntPtr Loading = vars.Helper.ScanRel(3, "48 89 35 ???????? 48 89 74 24 ?? e8 ???????? 48 8b 4c 24 ?? 8d 7e");
 
-    vars.Helper["Level"] = vars.Helper.MakeString(gEngine, 0x910, 0x24);
-    vars.Helper["Level"].FailAction = MemoryWatcher.ReadFailAction.SetZeroOrNull;
-
-    vars.Helper["localPlayer"] = vars.Helper.Make<long>(gEngine, 0xDB8, 0x38, 0x0, 0x30);
-    vars.Helper["localPlayer"].FailAction = MemoryWatcher.ReadFailAction.SetZeroOrNull;
-
-    vars.Helper["isLoading"] = vars.Helper.Make<byte>(Loading, 0x240);
-
-    vars.completedSplits = new HashSet<string>();
-    vars.unlockedBosses = new HashSet<int>();
-    vars.deadBosses = new HashSet<string>();
-    vars.pendingBossSplits = new Queue<string>();
-    vars.savePath = null;
-    vars.lastSaveWrite = 0L;
-    vars.lastSaveLength = -1L;
-    vars.nextSaveSearch = 0L;
-    vars.nextSaveLog = 0L;
-    vars.gameExePath = "";
-    vars.saveReady = false;
-
-    vars.ReadVarint = (Func<byte[], int[], int>) ((buf, ptr) =>
+    vars.Utils = vars.Uhara.CreateTool("UnrealEngine", "Utilities");
+    if (vars.Utils.GWorld == IntPtr.Zero
+        || vars.Utils.GEngine == IntPtr.Zero
+        || vars.Utils.FNames == IntPtr.Zero)
     {
-        int value = 0;
-        int shift = 0;
-        while (true)
-        {
-            byte b = buf[ptr[0]++];
-            value |= (b & 0x7F) << shift;
-            if ((b & 0x80) == 0) return value;
-            shift += 7;
-        }
+        throw new Exception("Unreal utilities could not resolve GWorld/GEngine/FNames");
+    }
+
+    vars.Events = vars.Uhara.CreateTool("UnrealEngine", "Events");
+    if (vars.Events == null)
+        throw new Exception("Unreal events tool could not be created");
+
+    vars.LoadingStateSlot = vars.Uhara.ScanRel(
+        3,
+        "48 8B 05 ?? ?? ?? ?? C3 CC CC CC CC CC CC CC CC 48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 48 8B 81 E8 00 00 00");
+    if (vars.LoadingStateSlot == IntPtr.Zero)
+        throw new Exception("BGWGameInstance loading state slot was not found");
+
+    vars.ReadClassName = (Func<IntPtr, string>)(obj =>
+    {
+        if (obj == IntPtr.Zero) return "";
+        IntPtr classPtr = vars.Resolver.Read<IntPtr>((IntPtr)((long)obj + 0x10));
+        if (classPtr == IntPtr.Zero) return "";
+        return vars.Utils.FNameToString(
+            vars.Resolver.Read<ulong>((IntPtr)((long)classPtr + 0x18)));
     });
 
-    vars.GetMessageField = (Func<byte[], int, byte[]>) ((buf, targetField) =>
+    vars.ReadUnrealFString = (Func<IntPtr, string>)(address =>
     {
-        if (buf == null) return null;
-        int[] pos = new int[] { 0 };
-        while (pos[0] < buf.Length)
+        if (address == IntPtr.Zero) return "";
+        IntPtr data = vars.Resolver.Read<IntPtr>(address);
+        int length = vars.Resolver.Read<int>((IntPtr)((long)address + 8));
+        if (data == IntPtr.Zero || length <= 0 || length > 512) return "";
+        byte[] raw = (byte[])vars.Resolver.ReadBytes(data, length * 2);
+        if (raw == null || raw.Length == 0) return "";
+        return System.Text.Encoding.Unicode.GetString(raw).TrimEnd('\0');
+    });
+
+    vars.ReadSequenceStatus = (Func<IntPtr, byte>)(player =>
+    {
+        if (player == IntPtr.Zero) return 0;
+        return vars.Resolver.Read<byte>((IntPtr)((long)player + 0x288));
+    });
+
+    vars.ReadCutsceneDisableCameraCuts = (Func<IntPtr, bool>)(node =>
+    {
+        string nodeClass = ((Func<IntPtr, string>)vars.ReadClassName)(node);
+        if (nodeClass == "BAN_GSPlayLevelSequence")
+            return (vars.Resolver.Read<byte>((IntPtr)((long)node + 0x62)) & 1) != 0;
+        if (nodeClass == "BED_ProcessStateNode_PlayLevelSequence")
+            return (vars.Resolver.Read<byte>((IntPtr)((long)node + 0x2B4)) & 1) != 0;
+        if (nodeClass == "BED_QuestNode_PlayLevelSequence")
+            return (vars.Resolver.Read<byte>((IntPtr)((long)node + 0x2C0)) & 1) != 0;
+
+        return true;
+    });
+
+    vars.FindAnimation = (Func<IntPtr, IntPtr>)(actor =>
+    {
+        IntPtr mesh = vars.Resolver.Read<IntPtr>((IntPtr)((long)actor + 0x308));
+        IntPtr anim = mesh == IntPtr.Zero
+            ? IntPtr.Zero
+            : vars.Resolver.Read<IntPtr>((IntPtr)((long)mesh + 0x850));
+        if (anim != IntPtr.Zero) return anim;
+
+        IntPtr dataComp = vars.Resolver.Read<IntPtr>((IntPtr)((long)actor + 0x620));
+        if (dataComp == IntPtr.Zero) return IntPtr.Zero;
+        IntPtr componentItems = vars.Resolver.Read<IntPtr>((IntPtr)((long)dataComp + 0xC0));
+        int componentCount = vars.Resolver.Read<int>((IntPtr)((long)dataComp + 0xC8));
+        if (componentItems == IntPtr.Zero || componentCount <= 0 || componentCount > 64)
+            return IntPtr.Zero;
+
+        for (int index = 0; index < componentCount; index++)
         {
-            int key = ((Func<byte[], int[], int>)vars.ReadVarint)(buf, pos);
-            int field = key >> 3;
-            int wire = key & 7;
-            if (wire == 2)
+            IntPtr component = vars.Resolver.Read<IntPtr>(
+                (IntPtr)((long)componentItems + index * 8));
+            if (component == IntPtr.Zero) continue;
+            string componentClass = ((Func<IntPtr, string>)vars.ReadClassName)(component);
+            if (!componentClass.Contains("ACharacterComponent")) continue;
+
+            mesh = vars.Resolver.Read<IntPtr>((IntPtr)((long)component + 0x40));
+            anim = mesh == IntPtr.Zero
+                ? IntPtr.Zero
+                : vars.Resolver.Read<IntPtr>((IntPtr)((long)mesh + 0x850));
+            if (anim != IntPtr.Zero) return anim;
+        }
+        return IntPtr.Zero;
+    });
+
+    vars.HasDeathMontage = (Func<IntPtr, bool>)(anim =>
+    {
+        if (anim == IntPtr.Zero) return false;
+        IntPtr montages = vars.Resolver.Read<IntPtr>((IntPtr)((long)anim + 0x88));
+        int montageCount = vars.Resolver.Read<int>((IntPtr)((long)anim + 0x90));
+        if (montages == IntPtr.Zero || montageCount <= 0 || montageCount > 16)
+            return false;
+
+        for (int index = 0; index < montageCount; index++)
+        {
+            IntPtr montage = vars.Resolver.Read<IntPtr>(
+                (IntPtr)((long)montages + index * 0x1C8));
+            if (montage == IntPtr.Zero) continue;
+            string montageName = vars.Utils.FNameToString(
+                vars.Resolver.Read<ulong>((IntPtr)((long)montage + 0x18)));
+            if (string.IsNullOrEmpty(montageName)) continue;
+
+            string lowerName = montageName.ToLowerInvariant();
+            if (lowerName.Contains("_die")
+                || lowerName.Contains("_dead")
+                || lowerName.Contains("death")
+                || lowerName.Contains("suicide"))
             {
-                int len = ((Func<byte[], int[], int>)vars.ReadVarint)(buf, pos);
-                if (field == targetField)
-                {
-                    byte[] value = new byte[len];
-                    Array.Copy(buf, pos[0], value, 0, len);
-                    return value;
-                }
-                pos[0] += len;
+                return true;
             }
-            else if (wire == 0) { ((Func<byte[], int[], int>)vars.ReadVarint)(buf, pos); }
-            else if (wire == 1) { pos[0] += 8; }
-            else if (wire == 5) { pos[0] += 4; }
-            else { return null; }
         }
-        return null;
+        return false;
     });
 
-    vars.ExtractPayload = (Func<byte[], byte[]>) ((bytes) =>
-    {
-        if (bytes == null) return null;
-        int[] pos = new int[] { 0 };
-        while (pos[0] < bytes.Length)
-        {
-            int key = ((Func<byte[], int[], int>)vars.ReadVarint)(bytes, pos);
-            int field = key >> 3;
-            int wire = key & 7;
-            if (wire == 2)
-            {
-                int len = ((Func<byte[], int[], int>)vars.ReadVarint)(bytes, pos);
-                if (field == 2)
-                {
-                    byte[] payload = new byte[len];
-                    Array.Copy(bytes, pos[0], payload, 0, len);
-                    byte[] keyBytes = new byte[] { 0x7B, 0x5C, 0xDA, 0x91, 0x3E, 0xFC, 0xDA, 0x37 };
-                    for (int i = 0; i < payload.Length; i++)
-                    {
-                        payload[i] ^= keyBytes[i % keyBytes.Length];
-                    }
-                    return payload;
-                }
-                pos[0] += len;
-            }
-            else if (wire == 0) { ((Func<byte[], int[], int>)vars.ReadVarint)(bytes, pos); }
-            else if (wire == 1) { pos[0] += 8; }
-            else if (wire == 5) { pos[0] += 4; }
-            else { return null; }
-        }
-        return null;
-    });
+    vars.CompletedSplits = new HashSet<string>();
+    vars.ActorSeen = new Dictionary<string, long[]>();
+    vars.PendingSplits = new Queue<string>();
+    vars.ObservedActors = new HashSet<string>();
+    vars.DualSplits = new Dictionary<string, string[]>();
+    vars.DualSettingsByActor = new Dictionary<string, List<string>>();
+    vars.DualMontageHits = new Dictionary<string, HashSet<string>>();
 
-    vars.GetUnlockedBosses = (Func<byte[], HashSet<int>>) ((data) =>
-    {
-        HashSet<int> result = new HashSet<int>();
-        if (data == null) return result;
-
-        byte[] roleData = ((Func<byte[], int, byte[]>)vars.GetMessageField)(data, 1);
-        if (roleData == null) return result;
-        byte[] roleCs = ((Func<byte[], int, byte[]>)vars.GetMessageField)(roleData, 1);
-        if (roleCs == null) return result;
-        byte[] collection = ((Func<byte[], int, byte[]>)vars.GetMessageField)(roleCs, 8);
-        if (collection == null) return result;
-
-        int[] pos = new int[] { 0 };
-        while (pos[0] < collection.Length)
-        {
-            int key = ((Func<byte[], int[], int>)vars.ReadVarint)(collection, pos);
-            int field = key >> 3;
-            int wire = key & 7;
-            if (wire == 2)
-            {
-                int len = ((Func<byte[], int[], int>)vars.ReadVarint)(collection, pos);
-                if (field == 1)
-                {
-                    byte[] monster = new byte[len];
-                    Array.Copy(collection, pos[0], monster, 0, len);
-                    int monsterId = 0;
-                    bool portraitUnlocked = false;
-                    int[] monsterPos = new int[] { 0 };
-                    while (monsterPos[0] < monster.Length)
-                    {
-                        int monsterKey = ((Func<byte[], int[], int>)vars.ReadVarint)(monster, monsterPos);
-                        int monsterField = monsterKey >> 3;
-                        int monsterWire = monsterKey & 7;
-                        if (monsterWire == 0)
-                        {
-                            int value = ((Func<byte[], int[], int>)vars.ReadVarint)(monster, monsterPos);
-                            if (monsterField == 1) monsterId = value;
-                        }
-                        else if (monsterWire == 2)
-                        {
-                            int valueLen = ((Func<byte[], int[], int>)vars.ReadVarint)(monster, monsterPos);
-                            if (monsterField == 4 && valueLen > 0) portraitUnlocked = true;
-                            monsterPos[0] += valueLen;
-                        }
-                        else if (monsterWire == 1) { monsterPos[0] += 8; }
-                        else if (monsterWire == 5) { monsterPos[0] += 4; }
-                        else { break; }
-                    }
-                    if (monsterId != 0 && portraitUnlocked) result.Add(monsterId);
-                }
-                else
-                {
-                    pos[0] += len;
-                }
-            }
-            else if (wire == 0) { ((Func<byte[], int[], int>)vars.ReadVarint)(collection, pos); }
-            else if (wire == 1) { pos[0] += 8; }
-            else if (wire == 5) { pos[0] += 4; }
-            else { break; }
-        }
-        return result;
-    });
-
-    vars.GetDeadBosses = (Func<byte[], HashSet<string>>) ((data) =>
-    {
-        HashSet<string> result = new HashSet<string>();
-        if (data == null) return result;
-
-        byte[] levelData = ((Func<byte[], int, byte[]>)vars.GetMessageField)(data, 2);
-        if (levelData == null) return result;
-
-        int[] p = new int[] { 0 };
-        while (p[0] < levelData.Length)
-        {
-            int key = ((Func<byte[], int[], int>)vars.ReadVarint)(levelData, p);
-            int field = key >> 3;
-            int wire = key & 7;
-            if (wire == 2)
-            {
-                int len = ((Func<byte[], int[], int>)vars.ReadVarint)(levelData, p);
-                if (field == 1)
-                {
-                    byte[] levelBase = new byte[len];
-                    Array.Copy(levelData, p[0], levelBase, 0, len);
-                    int[] q = new int[] { 0 };
-                    while (q[0] < levelBase.Length)
-                    {
-                        int subKey = ((Func<byte[], int[], int>)vars.ReadVarint)(levelBase, q);
-                        int subField = subKey >> 3;
-                        int subWire = subKey & 7;
-                        if (subWire == 2)
-                        {
-                            int subLen = ((Func<byte[], int[], int>)vars.ReadVarint)(levelBase, q);
-                            if (subField == 3)
-                            {
-                                byte[] deadUnit = new byte[subLen];
-                                Array.Copy(levelBase, q[0], deadUnit, 0, subLen);
-                                string uid = null;
-                                int resetType = 0;
-                                int[] r = new int[] { 0 };
-                                while (r[0] < deadUnit.Length)
-                                {
-                                    int deadKey = ((Func<byte[], int[], int>)vars.ReadVarint)(deadUnit, r);
-                                    int deadField = deadKey >> 3;
-                                    int deadWire = deadKey & 7;
-                                    if (deadWire == 0)
-                                    {
-                                        int deadValue = ((Func<byte[], int[], int>)vars.ReadVarint)(deadUnit, r);
-                                        if (deadField == 2) resetType = deadValue;
-                                    }
-                                    else if (deadWire == 2)
-                                    {
-                                        int deadLen = ((Func<byte[], int[], int>)vars.ReadVarint)(deadUnit, r);
-                                        if (deadField == 1) uid = System.Text.Encoding.UTF8.GetString(deadUnit, r[0], deadLen);
-                                        r[0] += deadLen;
-                                    }
-                                    else if (deadWire == 1) { r[0] += 8; }
-                                    else if (deadWire == 5) { r[0] += 4; }
-                                    else { break; }
-                                }
-                                if (!string.IsNullOrEmpty(uid) && (resetType == 1 || resetType == 2) && uid.StartsWith("UGuid."))
-                                {
-                                    result.Add(uid);
-                                }
-                            }
-                            else
-                            {
-                                q[0] += subLen;
-                            }
-                        }
-                        else if (subWire == 0) { ((Func<byte[], int[], int>)vars.ReadVarint)(levelBase, q); }
-                        else if (subWire == 1) { q[0] += 8; }
-                        else if (subWire == 5) { q[0] += 4; }
-                        else { break; }
-                    }
-                }
-                else
-                {
-                    p[0] += len;
-                }
-            }
-            else if (wire == 0) { ((Func<byte[], int[], int>)vars.ReadVarint)(levelData, p); }
-            else if (wire == 1) { p[0] += 8; }
-            else if (wire == 5) { p[0] += 4; }
-            else { break; }
-        }
-        return result;
-    });
-
-    vars.Log = (Action<string>) ((message) =>
+    vars.IsSettingEnabled = (Func<string, bool, bool>)((id, defaultValue) =>
     {
         try
         {
-            string logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
-            Directory.CreateDirectory(logDirectory);
-            File.AppendAllText(Path.Combine(logDirectory, "BlackMythWukong.log"), DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + " " + message + Environment.NewLine);
+            return settings.ContainsKey(id) ? (bool)settings[id] : defaultValue;
         }
         catch
         {
+            return defaultValue;
         }
     });
-
-    ((Action<string>)vars.Log)("init: BlackMythWukong save splitter loaded");
-
-    if ((bool)vars.SettingsLoaded)
-    {
-        ((Action<string>)vars.Log)("settings loaded: culture=" + vars.SettingsCulture + " file=" + vars.SettingsPath);
-    }
-    else
-    {
-        ((Action<string>)vars.Log)("settings load failed: " + vars.SettingsLoadError);
-    }
 
     vars.IsAutoSplitEnabled = (Func<bool>)(() =>
+        ((Func<string, bool, bool>)vars.IsSettingEnabled)("AutoSplitEnabled", false));
+
+    vars.GetActorSetting = (Func<string, string>)(uid =>
     {
-        try
-        {
-            return settings.ContainsKey("AutoSplitEnabled") && (bool)settings["AutoSplitEnabled"];
-        }
-        catch { return false; }
+        string despawnSetting = "Despawn_" + uid;
+        if (settings.ContainsKey(despawnSetting)) return despawnSetting;
+
+        string montageSetting = "Montage_" + uid;
+        if (settings.ContainsKey(montageSetting)) return montageSetting;
+
+        return "Dead_" + uid;
     });
 
-    vars.FindSavePath = (Func<string, string>) ((gameExePath) =>
+    vars.LoadDualSplits = (Action)(() =>
     {
-        try
+        System.Xml.XmlDocument document = new System.Xml.XmlDocument();
+        document.Load((string)vars.SettingsPath);
+        foreach (System.Xml.XmlNode node in document.SelectNodes(
+            "//Setting[starts-with(@Id, 'Dual_')]"))
         {
-            System.Collections.Generic.List<string> roots = new System.Collections.Generic.List<string>();
-
-            string localRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "b1", "Saved", "SaveGames");
-            if (Directory.Exists(localRoot)) roots.Add(localRoot);
-
-            if (!string.IsNullOrEmpty(gameExePath))
+            string setting = node.Attributes["Id"].Value;
+            string[] uids = setting.Substring("Dual_".Length).Split('+');
+            if (uids.Length != 2)
             {
-                string exeDir = Path.GetDirectoryName(gameExePath);
-                if (!string.IsNullOrEmpty(exeDir))
+                ((Action<string>)vars.Log)(
+                    "[BMW-splitter] invalid dual setting: " + setting);
+                continue;
+            }
+
+            uids[0] = uids[0].Trim();
+            uids[1] = uids[1].Trim();
+            if (uids[0] == uids[1]
+                || !uids[0].StartsWith("UGuid.", StringComparison.Ordinal)
+                || !uids[1].StartsWith("UGuid.", StringComparison.Ordinal))
+            {
+                ((Action<string>)vars.Log)(
+                    "[BMW-splitter] invalid dual setting: " + setting);
+                continue;
+            }
+
+            Dictionary<string, string[]> dualSplits =
+                (Dictionary<string, string[]>)vars.DualSplits;
+            if (dualSplits.ContainsKey(setting)) continue;
+            dualSplits[setting] = uids;
+            ((Dictionary<string, HashSet<string>>)vars.DualMontageHits)[setting] =
+                new HashSet<string>();
+
+            foreach (string uid in uids)
+            {
+                Dictionary<string, List<string>> settingsByActor =
+                    (Dictionary<string, List<string>>)vars.DualSettingsByActor;
+                List<string> settingIds;
+                if (!settingsByActor.TryGetValue(uid, out settingIds))
                 {
-                    string savedDir = Path.GetFullPath(Path.Combine(exeDir, "..", "..", "Saved"));
-                    string gameRoot = Path.Combine(savedDir, "SaveGames");
-                    if (Directory.Exists(gameRoot)) roots.Add(gameRoot);
+                    settingIds = new List<string>();
+                    settingsByActor[uid] = settingIds;
                 }
+                settingIds.Add(setting);
             }
-
-            string[] fallbackRoots = new string[]
-            {
-                @"E:\SteamLibrary\steamapps\common\BlackMythWukong\b1\Saved\SaveGames",
-                @"C:\Program Files (x86)\Steam\steamapps\common\BlackMythWukong\b1\Saved\SaveGames"
-            };
-            foreach (string fallbackRoot in fallbackRoots)
-            {
-                if (Directory.Exists(fallbackRoot)) roots.Add(fallbackRoot);
-            }
-
-            string best = null;
-            DateTime bestTime = DateTime.MinValue;
-            foreach (string root in roots)
-            {
-                string[] files = Directory.GetFiles(root, "ArchiveSaveFile.*.sav", SearchOption.AllDirectories);
-                foreach (string file in files)
-                {
-                    DateTime fileTime = File.GetLastWriteTimeUtc(file);
-                    if (best == null || fileTime > bestTime)
-                    {
-                        best = file;
-                        bestTime = fileTime;
-                    }
-                }
-            }
-            return best;
         }
-        catch (Exception ex)
+    });
+    vars.LoadDualSplits();
+
+    vars.TryQueueSetting = (Func<string, string, bool>)((setting, source) =>
+    {
+        if (!((Func<bool>)vars.IsAutoSplitEnabled)()) return false;
+        if (timer.CurrentPhase != TimerPhase.Running) return false;
+        if (!((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false))
+            return false;
+        if (!((HashSet<string>)vars.CompletedSplits).Add(setting)) return false;
+
+        ((Queue<string>)vars.PendingSplits).Enqueue(setting);
+        ((Action<string>)vars.Log)(
+            "[BMW-splitter] split queued: setting=" + setting + " source=" + source);
+        return true;
+    });
+
+    vars.TryQueueSplit = (Func<string, string, bool>)((uid, source) =>
+    {
+        string setting = ((Func<string, string>)vars.GetActorSetting)(uid);
+        if (!((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false))
+            return false;
+        if (source != "despawn"
+            && setting.StartsWith("Despawn_", StringComparison.Ordinal))
+            return false;
+        if (source != "death-montage"
+            && setting.StartsWith("Montage_", StringComparison.Ordinal))
+            return false;
+
+        return ((Func<string, string, bool>)vars.TryQueueSetting)(setting, source);
+    });
+
+    vars.RegisterDualMontage = (Func<string, bool>)(uid =>
+    {
+        List<string> dualSettings;
+        if (!((Dictionary<string, List<string>>)vars.DualSettingsByActor)
+            .TryGetValue(uid, out dualSettings))
         {
-            ((Action<string>)vars.Log)("FindSavePath error: " + ex.Message);
-            return null;
+            return false;
+        }
+
+        foreach (string setting in dualSettings)
+        {
+            if (((HashSet<string>)vars.CompletedSplits).Contains(setting)) continue;
+
+            string[] pair;
+            if (!((Dictionary<string, string[]>)vars.DualSplits)
+                .TryGetValue(setting, out pair))
+            {
+                continue;
+            }
+
+            Dictionary<string, HashSet<string>> dualHits =
+                (Dictionary<string, HashSet<string>>)vars.DualMontageHits;
+            HashSet<string> hits;
+            if (!dualHits.TryGetValue(setting, out hits))
+            {
+                hits = new HashSet<string>();
+                dualHits[setting] = hits;
+            }
+            hits.Add(uid);
+            if (hits.Contains(pair[0]) && hits.Contains(pair[1]))
+            {
+                ((Func<string, string, bool>)vars.TryQueueSetting)(
+                    setting,
+                    "dual-montage");
+            }
+        }
+        return true;
+    });
+
+    vars.ResetDualActor = (Action<string>)(uid =>
+    {
+        List<string> dualSettings;
+        if (((Dictionary<string, List<string>>)vars.DualSettingsByActor)
+            .TryGetValue(uid, out dualSettings))
+        {
+            foreach (string setting in dualSettings)
+            {
+                HashSet<string> hits;
+                if (((Dictionary<string, HashSet<string>>)vars.DualMontageHits)
+                    .TryGetValue(setting, out hits))
+                {
+                    hits.Remove(uid);
+                }
+            }
+        }
+    });
+
+    vars.ClearActorTracking = (Action)(() =>
+    {
+        vars.ActorSeen = new Dictionary<string, long[]>();
+        vars.ObservedActors = new HashSet<string>();
+        Dictionary<string, HashSet<string>> dualHits =
+            (Dictionary<string, HashSet<string>>)vars.DualMontageHits;
+        foreach (string setting in ((Dictionary<string, string[]>)vars.DualSplits).Keys)
+            dualHits[setting] = new HashSet<string>();
+        vars.LastSlowMotion = false;
+    });
+
+    vars.ResetSession = (Action)(() =>
+    {
+        ((HashSet<string>)vars.CompletedSplits).Clear();
+        ((Action)vars.ClearActorTracking)();
+        vars.PendingSplits = new Queue<string>();
+        vars.NextActorScanTicks = 0L;
+        vars.StartArmed = false;
+    });
+
+    vars.ScanIntervalTicks = TimeSpan.TicksPerMillisecond * 50;
+    vars.MinBossActorSeenTicks = TimeSpan.TicksPerMillisecond * 1500;
+    vars.NextActorScanTicks = 0L;
+    vars.LastUpdateErrorTicks = 0L;
+    vars.LastSlowMotion = false;
+    vars.LastLoading = false;
+    vars.NativeLoadingPending = false;
+    vars.StartArmed = false;
+    vars.LastWorld = "";
+    vars.LastWorldPtr = IntPtr.Zero;
+
+    current.World = "";
+    current.WorldPending = true;
+
+    vars.Events.FunctionFlag("CutsceneNotifyFlag", "*PlayLevelSequence*", null, null);
+    vars.Events.FunctionParentPtr<IntPtr>("CutsceneNotify", "*PlayLevelSequence*", null, null);
+
+    vars.Events.FunctionFlag("SeqPlayerPlayFlag", "*LevelSequencePlayer*", null, "Play");
+    vars.Events.FunctionParentPtr<IntPtr>("SeqPlayerPlayInstance", "*LevelSequencePlayer*", null, "Play");
+    vars.Events.FunctionFlag("SeqPlayerStopFlag", "*LevelSequencePlayer*", null, "Stop");
+    vars.Events.FunctionParentPtr<IntPtr>("SeqPlayerStopInstance", "*LevelSequencePlayer*", null, "Stop");
+
+    vars.Events.FunctionFlag("BinkPlayFlag", "BinkMediaPlayer", null, "Play");
+    vars.Events.FunctionParentPtr<IntPtr>("BinkPlayInstance", "BinkMediaPlayer", null, "Play");
+    vars.Events.FunctionFlag("BinkStopFlag", "BinkMediaPlayer", null, "Stop");
+    vars.Events.FunctionParentPtr<IntPtr>("BinkStopInstance", "BinkMediaPlayer", null, "Stop");
+
+    IntPtr cutsceneActorSlot = vars.Events.InstancePtr("CalliopeLevelSequenceActor", null);
+    if (cutsceneActorSlot != IntPtr.Zero)
+        vars.Resolver.Watch<IntPtr>("CutsceneActor", cutsceneActorSlot);
+
+    IntPtr bguSequenceActorSlot = vars.Events.InstancePtr("BGULevelSequenceActor", null);
+    if (bguSequenceActorSlot != IntPtr.Zero)
+        vars.Resolver.Watch<IntPtr>("BguSequenceActor", bguSequenceActorSlot);
+
+    vars.CutscenePending = false;
+    vars.CutsceneLastSignalTicks = 0L;
+    vars.CutsceneHoldTicks = TimeSpan.TicksPerMillisecond * 500;
+    vars.BinkEarlyStopGuardTicks = TimeSpan.TicksPerMillisecond * 200;
+    vars.BinkPlayTicks = 0L;
+    vars.ActiveSequencePlayer = IntPtr.Zero;
+    vars.ActiveBinkPlayer = IntPtr.Zero;
+
+    current.CutsceneNotify = IntPtr.Zero;
+    current.SeqPlayerPlayInstance = IntPtr.Zero;
+    current.SeqPlayerStopInstance = IntPtr.Zero;
+    current.BinkPlayInstance = IntPtr.Zero;
+    current.BinkStopInstance = IntPtr.Zero;
+    current.CutsceneActor = IntPtr.Zero;
+    current.BguSequenceActor = IntPtr.Zero;
+
+    vars.UpdateCutsceneHooks = (Action)(() =>
+    {
+        long nowTicks = DateTime.UtcNow.Ticks;
+        bool wasPending = (bool)vars.CutscenePending;
+
+        if (vars.Resolver.CheckFlag("CutsceneNotifyFlag"))
+        {
+            IntPtr node = (IntPtr)current.CutsceneNotify;
+            if (node != IntPtr.Zero
+                && !((Func<IntPtr, bool>)vars.ReadCutsceneDisableCameraCuts)(node))
+            {
+                vars.CutscenePending = true;
+                vars.CutsceneLastSignalTicks = nowTicks;
+            }
+        }
+
+        if (vars.Resolver.CheckFlag("SeqPlayerPlayFlag"))
+        {
+            IntPtr player = (IntPtr)current.SeqPlayerPlayInstance;
+            if (player != IntPtr.Zero)
+            {
+                byte status = ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(player);
+                IntPtr sequenceAsset = vars.Resolver.Read<IntPtr>(
+                    (IntPtr)((long)player + 0x290));
+                string sequenceName = sequenceAsset == IntPtr.Zero
+                    ? ""
+                    : vars.Utils.FNameToString(
+                        vars.Resolver.Read<ulong>((IntPtr)((long)sequenceAsset + 0x18)));
+                bool cutsceneSequence = sequenceName.IndexOf(
+                        "LS_", StringComparison.OrdinalIgnoreCase) >= 0
+                    || sequenceName.IndexOf("cpt", StringComparison.OrdinalIgnoreCase) >= 0
+                    || sequenceName.IndexOf("CG", StringComparison.OrdinalIgnoreCase) >= 0
+                    || sequenceName.IndexOf("Seq", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                vars.ActiveSequencePlayer = player;
+                if (status == 1 && cutsceneSequence)
+                {
+                    vars.CutscenePending = true;
+                    vars.CutsceneLastSignalTicks = nowTicks;
+                }
+            }
+        }
+
+        if (vars.Resolver.CheckFlag("SeqPlayerStopFlag"))
+        {
+            IntPtr player = (IntPtr)current.SeqPlayerStopInstance;
+            IntPtr activePlayer = (IntPtr)vars.ActiveSequencePlayer;
+            if (player != IntPtr.Zero && player == activePlayer)
+            {
+                vars.ActiveSequencePlayer = IntPtr.Zero;
+                vars.CutsceneLastSignalTicks = nowTicks;
+            }
+        }
+
+        if (vars.Resolver.CheckFlag("BinkPlayFlag"))
+        {
+            IntPtr bink = (IntPtr)current.BinkPlayInstance;
+            if (bink != IntPtr.Zero)
+            {
+                string binkName = vars.Utils.FNameToString(
+                    vars.Resolver.Read<ulong>((IntPtr)((long)bink + 0x18)));
+                string binkUrl = ((Func<IntPtr, string>)vars.ReadUnrealFString)(
+                    (IntPtr)((long)bink + 0x98));
+                bool sequenceVideo = !string.IsNullOrEmpty(binkUrl)
+                    || binkName.IndexOf("_Seq", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (sequenceVideo)
+                {
+                    vars.CutscenePending = true;
+                    vars.CutsceneLastSignalTicks = nowTicks;
+                    vars.ActiveBinkPlayer = bink;
+                    vars.BinkPlayTicks = nowTicks;
+                }
+            }
+        }
+
+        if (vars.Resolver.CheckFlag("BinkStopFlag"))
+        {
+            IntPtr bink = (IntPtr)current.BinkStopInstance;
+            IntPtr activeBink = (IntPtr)vars.ActiveBinkPlayer;
+            bool matchesActive = bink != IntPtr.Zero && bink == activeBink;
+            long stopElapsed = matchesActive
+                ? nowTicks - (long)vars.BinkPlayTicks
+                : 0L;
+            bool earlyStop = matchesActive
+                && stopElapsed <= (long)vars.BinkEarlyStopGuardTicks;
+
+            if (matchesActive && !earlyStop)
+            {
+                vars.ActiveBinkPlayer = IntPtr.Zero;
+                vars.CutsceneLastSignalTicks = nowTicks;
+            }
+        }
+
+        IntPtr activeSequence = (IntPtr)vars.ActiveSequencePlayer;
+        if (activeSequence != IntPtr.Zero)
+        {
+            byte status = ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(activeSequence);
+            if (status == 1)
+            {
+                vars.CutsceneLastSignalTicks = nowTicks;
+            }
+            else
+            {
+                vars.ActiveSequencePlayer = IntPtr.Zero;
+                vars.CutsceneLastSignalTicks = nowTicks;
+            }
+        }
+
+        IntPtr sequenceActor = (IntPtr)current.CutsceneActor;
+        if (sequenceActor == IntPtr.Zero)
+            sequenceActor = (IntPtr)current.BguSequenceActor;
+        if (sequenceActor != IntPtr.Zero && (bool)vars.CutscenePending)
+        {
+            IntPtr player = vars.Resolver.Read<IntPtr>(
+                (IntPtr)((long)sequenceActor + 0x2B8));
+            if (player != IntPtr.Zero
+                && ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(player) == 1)
+            {
+                vars.ActiveSequencePlayer = player;
+                vars.CutsceneLastSignalTicks = nowTicks;
+            }
+        }
+
+        if ((bool)vars.CutscenePending
+            && (IntPtr)vars.ActiveSequencePlayer == IntPtr.Zero
+            && (IntPtr)vars.ActiveBinkPlayer == IntPtr.Zero
+            && nowTicks - (long)vars.CutsceneLastSignalTicks
+                > (long)vars.CutsceneHoldTicks)
+        {
+            vars.CutscenePending = false;
+        }
+
+        if ((bool)vars.CutscenePending != wasPending)
+        {
+            ((Action<string>)vars.Log)(
+                "[BMW-loading] cutscene loading: " + ((bool)vars.CutscenePending ? "playing" : "ended"));
         }
     });
 }
 
 update
 {
-    vars.Helper.Update();
-    vars.Helper.MapPointers();
-
-    if (!string.IsNullOrEmpty(vars.savePath) && !File.Exists(vars.savePath))
+    try
     {
+        vars.Uhara.Update();
 
-        vars.nextSaveSearch = 0L;
-        vars.lastSaveWrite = 0L;
-        vars.lastSaveLength = -1L;
-    }
+        IntPtr loadingRoot = vars.Resolver.Read<IntPtr>(vars.LoadingStateSlot);
+        byte nativeLoadingState = loadingRoot == IntPtr.Zero
+            ? (byte)0
+            : vars.Resolver.Read<byte>((IntPtr)((long)loadingRoot + 0x240));
+        vars.NativeLoadingPending = nativeLoadingState != 0;
 
-    if (DateTime.UtcNow.Ticks >= ((long)vars.nextSaveSearch))
-    {
-        string gameExePath = "";
-        try
-        {
-            if (game != null) gameExePath = game.MainModule.FileName;
-        }
-        catch
-        {
-        }
-        if (!string.IsNullOrEmpty(gameExePath)) vars.gameExePath = gameExePath;
+        ((Action)vars.UpdateCutsceneHooks)();
 
-        string detectedSavePath = ((Func<string, string>)vars.FindSavePath)(gameExePath);
-        vars.nextSaveSearch = DateTime.UtcNow.AddSeconds(10).Ticks;
-        if (!string.IsNullOrEmpty(detectedSavePath) && detectedSavePath != vars.savePath)
-        {
-            ((Action<string>)vars.Log)("save path: " + detectedSavePath);
-            vars.savePath = detectedSavePath;
-            vars.saveReady = false;
-            vars.lastSaveWrite = 0L;
-            vars.lastSaveLength = -1L;
-            vars.unlockedBosses = new HashSet<int>();
-            vars.deadBosses = new HashSet<string>();
-            ((Queue<string>)vars.pendingBossSplits).Clear();
-        }
-        else if (string.IsNullOrEmpty(detectedSavePath) && DateTime.UtcNow.Ticks >= ((long)vars.nextSaveLog))
-        {
-            ((Action<string>)vars.Log)("save path not found. gameExePath=" + gameExePath);
-            vars.nextSaveLog = DateTime.UtcNow.AddMinutes(1).Ticks;
-        }
-    }
+        long nowTicks = DateTime.UtcNow.Ticks;
+        if (nowTicks < (long)vars.NextActorScanTicks) return;
+        vars.NextActorScanTicks = nowTicks + (long)vars.ScanIntervalTicks;
 
-    if (!string.IsNullOrEmpty(vars.savePath))
-    {
-        try
+        IntPtr worldPtr = vars.Resolver.Read<IntPtr>(vars.Utils.GWorld);
+        if (worldPtr == IntPtr.Zero)
         {
-            long writeTicks = File.GetLastWriteTimeUtc(vars.savePath).Ticks;
-            long fileLength = new FileInfo(vars.savePath).Length;
-            if (writeTicks != ((long)vars.lastSaveWrite) || fileLength != ((long)vars.lastSaveLength))
+            current.World = "";
+            current.WorldPending = true;
+            ((Action)vars.ClearActorTracking)();
+            vars.LastWorld = "";
+            vars.LastWorldPtr = IntPtr.Zero;
+            return;
+        }
+
+        string worldName = vars.Utils.FNameToString(
+            vars.Resolver.Read<ulong>((IntPtr)((long)worldPtr + 0x18)));
+        if (string.IsNullOrEmpty(worldName))
+        {
+            current.World = "";
+            current.WorldPending = true;
+            ((Action)vars.ClearActorTracking)();
+            vars.LastWorld = "";
+            vars.LastWorldPtr = IntPtr.Zero;
+            return;
+        }
+
+        bool worldPending = worldName.StartsWith("Startup", StringComparison.Ordinal)
+            || worldName == "WXLogin_P"
+            || worldName == "SetConfig_P"
+            || worldName == "ServerCheck"
+            || worldName == "None";
+
+        IntPtr previousWorldPtr = (IntPtr)vars.LastWorldPtr;
+        string previousWorld = (string)vars.LastWorld;
+        if (worldName != previousWorld || worldPtr != previousWorldPtr)
+        {
+            if (!string.IsNullOrEmpty(previousWorld))
             {
-                byte[] saveBytes = File.ReadAllBytes(vars.savePath);
-                byte[] payload = ((Func<byte[], byte[]>)vars.ExtractPayload)(saveBytes);
-                HashSet<int> unlocked = ((Func<byte[], HashSet<int>>)vars.GetUnlockedBosses)(payload);
-                HashSet<string> deadBosses = ((Func<byte[], HashSet<string>>)vars.GetDeadBosses)(payload);
-                bool autoSplitEnabled = ((Func<bool>)vars.IsAutoSplitEnabled)();
-                if (unlocked != null && deadBosses != null)
+                ((Action<string>)vars.Log)(
+                    "[BMW-loading] world changed: " + previousWorld + " -> " + worldName);
+            }
+            ((Action)vars.ClearActorTracking)();
+            vars.PendingSplits = new Queue<string>();
+            vars.LastWorld = worldName;
+            vars.LastWorldPtr = worldPtr;
+        }
+
+        current.World = worldName;
+        current.WorldPending = worldPending;
+        if (worldName.StartsWith("Startup", StringComparison.Ordinal))
+            vars.StartArmed = true;
+        if (worldPending) return;
+
+        IntPtr levelPtr = vars.Resolver.Read<IntPtr>((IntPtr)((long)worldPtr + 0x30));
+        if (levelPtr == IntPtr.Zero) return;
+
+        IntPtr actors = vars.Resolver.Read<IntPtr>((IntPtr)((long)levelPtr + 0x98));
+        int actorCount = vars.Resolver.Read<int>((IntPtr)((long)levelPtr + 0xA0));
+        if (actors == IntPtr.Zero || actorCount <= 0 || actorCount > 20000) return;
+
+        Dictionary<string, long[]> nextSeen = new Dictionary<string, long[]>();
+        List<string> deathMontageSplits = new List<string>();
+        List<string> slowMotionCandidates = new List<string>();
+        HashSet<string> previousObservedActors = (HashSet<string>)vars.ObservedActors;
+        HashSet<string> observedActors = new HashSet<string>();
+
+        for (int index = 0; index < actorCount; index++)
+        {
+            IntPtr actor = vars.Resolver.Read<IntPtr>(
+                (IntPtr)((long)actors + index * 8));
+            if (actor == IntPtr.Zero) continue;
+
+            string actorName = vars.Utils.FNameToString(
+                vars.Resolver.Read<ulong>((IntPtr)((long)actor + 0x18)));
+            if (string.IsNullOrEmpty(actorName)) continue;
+            if (!actorName.StartsWith("UGuid___", StringComparison.Ordinal)) continue;
+
+            string uid = actorName.Split('@')[0].Replace("___", ".");
+            observedActors.Add(uid);
+
+            if (!previousObservedActors.Contains(uid))
+            {
+                ((Action<string>)vars.Log)(
+                    "[BMW-splitter] actor appeared: uid=" + uid
+                    + " class=" + ((Func<IntPtr, string>)vars.ReadClassName)(actor)
+                    + " actor=0x" + actor.ToString("X")
+                    + " world=" + worldName);
+            }
+
+            string setting = ((Func<string, string>)vars.GetActorSetting)(uid);
+            bool hasDualSetting = ((Dictionary<string, List<string>>)
+                vars.DualSettingsByActor).ContainsKey(uid);
+            if (!settings.ContainsKey(setting) && !hasDualSetting) continue;
+
+            long[] previous;
+            if (((Dictionary<string, long[]>)vars.ActorSeen).TryGetValue(uid, out previous)
+                && previous[0] == (long)actor)
+            {
+                long previousDeathMontage = previous[2];
+                long seenTicks = nowTicks - previous[1];
+
+                IntPtr anim = ((Func<IntPtr, IntPtr>)vars.FindAnimation)(actor);
+                long deathMontage = previousDeathMontage;
+                if (deathMontage == 0L
+                    && seenTicks >= (long)vars.MinBossActorSeenTicks
+                    && ((Func<IntPtr, bool>)vars.HasDeathMontage)(anim))
                 {
-                    if (!((bool)vars.saveReady))
-                    {
-                        vars.unlockedBosses = unlocked;
-                        vars.deadBosses = deadBosses;
-                        vars.saveReady = true;
-                    }
-                    else
-                    {
-                        HashSet<int> oldUnlocked = (HashSet<int>)vars.unlockedBosses;
-                        foreach (int bossId in unlocked)
-                        {
-                            if (!oldUnlocked.Contains(bossId))
-                            {
-                                string settingId = "Boss_" + bossId;
-                                bool enabled = settings.ContainsKey(settingId) && settings[settingId];
-                                ((Action<string>)vars.Log)("new portrait unlock: " + bossId + " enabled=" + enabled + " autoSplit=" + autoSplitEnabled);
-                                if (enabled && autoSplitEnabled)
-                                {
-                                    ((Queue<string>)vars.pendingBossSplits).Enqueue(settingId);
-                                }
-                            }
-                        }
-
-                        HashSet<string> oldDeadBosses = (HashSet<string>)vars.deadBosses;
-                        foreach (string uid in deadBosses)
-                        {
-                            if (!oldDeadBosses.Contains(uid))
-                            {
-                                string settingId = "Dead_" + uid;
-                                bool enabled = settings.ContainsKey(settingId) && settings[settingId];
-                                ((Action<string>)vars.Log)("new dead-unit: " + uid + " setting=" + settingId + " enabled=" + enabled + " autoSplit=" + autoSplitEnabled);
-                                if (enabled && autoSplitEnabled && vars.completedSplits.Add(settingId))
-                                {
-                                    ((Queue<string>)vars.pendingBossSplits).Enqueue(settingId);
-                                }
-                            }
-                        }
-
-                        vars.unlockedBosses = unlocked;
-                        vars.deadBosses = deadBosses;
-                    }
+                    deathMontage = 1L;
+                    deathMontageSplits.Add(uid);
+                    ((Action<string>)vars.Log)(
+                        "[BMW-splitter] death montage visible: uid=" + uid
+                        + " setting=" + setting
+                        + " enabled=" + ((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false)
+                        + " dual=" + hasDualSetting
+                        + " world=" + worldName);
                 }
 
-                vars.lastSaveWrite = writeTicks;
-                vars.lastSaveLength = fileLength;
+                if (seenTicks >= (long)vars.MinBossActorSeenTicks
+                    && ((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false)
+                    && !hasDualSetting
+                    && !setting.StartsWith("Despawn_", StringComparison.Ordinal)
+                    && !setting.StartsWith("Montage_", StringComparison.Ordinal))
+                {
+                    slowMotionCandidates.Add(uid);
+                }
+
+                nextSeen[uid] = new long[]
+                {
+                    (long)actor,
+                    previous[1],
+                    deathMontage
+                };
+            }
+            else
+            {
+                ((Action<string>)vars.ResetDualActor)(uid);
+                nextSeen[uid] = new long[]
+                {
+                    (long)actor,
+                    nowTicks,
+                    0L
+                };
             }
         }
-        catch (System.IO.FileNotFoundException)
+
+        foreach (string previousUid in previousObservedActors)
         {
+            if (!observedActors.Contains(previousUid))
+            {
+                ((Action<string>)vars.Log)(
+                    "[BMW-splitter] actor despawn observed: uid=" + previousUid
+                    + " world=" + worldName);
+            }
         }
-        catch (System.IO.DirectoryNotFoundException)
+        vars.ObservedActors = observedActors;
+
+        IntPtr worldSettings = vars.Resolver.Read<IntPtr>(
+            (IntPtr)((long)levelPtr + 0x2A0));
+        float timeDilation = worldSettings == IntPtr.Zero
+            ? 1.0f
+            : vars.Resolver.Read<float>((IntPtr)((long)worldSettings + 0x3A8));
+
+        bool slowMotion = timeDilation > 0.001f && timeDilation < 0.16f;
+
+        foreach (string uid in deathMontageSplits)
         {
+            if (!((Dictionary<string, List<string>>)vars.DualSettingsByActor)
+                .ContainsKey(uid))
+            {
+                ((Func<string, string, bool>)vars.TryQueueSplit)(
+                    uid,
+                    "death-montage");
+            }
+            ((Func<string, bool>)vars.RegisterDualMontage)(uid);
         }
-        catch (Exception ex)
+
+        if (slowMotion
+            && !(bool)vars.LastSlowMotion
+            && slowMotionCandidates.Count == 1)
         {
-            ((Action<string>)vars.Log)("update error: " + ex.Message);
+            ((Func<string, string, bool>)vars.TryQueueSplit)(
+                slowMotionCandidates[0],
+                "slow-motion");
         }
+        vars.LastSlowMotion = slowMotion;
+
+        foreach (KeyValuePair<string, long[]> pair
+            in (Dictionary<string, long[]>)vars.ActorSeen)
+        {
+            if (nextSeen.ContainsKey(pair.Key)) continue;
+
+            long seenTicks = nowTicks - pair.Value[1];
+            if (seenTicks < (long)vars.MinBossActorSeenTicks) continue;
+
+            string setting = ((Func<string, string>)vars.GetActorSetting)(pair.Key);
+            if (!setting.StartsWith("Despawn_", StringComparison.Ordinal)) continue;
+            if (!((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false))
+                continue;
+
+            ((Func<string, string, bool>)vars.TryQueueSplit)(pair.Key, "despawn");
+        }
+        vars.ActorSeen = nextSeen;
     }
-}
-
-onStart
-{
-
-    timer.IsGameTimePaused = true;
-    vars.completedSplits.Clear();
-    vars.pendingBossSplits = new Queue<string>();
-    vars.unlockedBosses = new HashSet<int>();
-    vars.deadBosses = new HashSet<string>();
-    vars.saveReady = false;
-
-    if (!string.IsNullOrEmpty(vars.savePath))
+    catch (Exception ex)
     {
-        try
+        long errorTicks = DateTime.UtcNow.Ticks;
+        if (errorTicks - (long)vars.LastUpdateErrorTicks >= TimeSpan.TicksPerSecond)
         {
-            byte[] saveBytes = File.ReadAllBytes(vars.savePath);
-            byte[] payload = ((Func<byte[], byte[]>)vars.ExtractPayload)(saveBytes);
-            HashSet<int> currentUnlocked = ((Func<byte[], HashSet<int>>)vars.GetUnlockedBosses)(payload);
-            HashSet<string> currentDead = ((Func<byte[], HashSet<string>>)vars.GetDeadBosses)(payload);
-            vars.unlockedBosses = currentUnlocked;
-            vars.deadBosses = currentDead;
-            vars.saveReady = true;
-            ((Action<string>)vars.Log)("onStart baseline portraits=" + currentUnlocked.Count + " deadUnits=" + currentDead.Count);
-        }
-        catch (Exception ex)
-        {
-            ((Action<string>)vars.Log)("onStart error: " + ex.Message);
+            vars.LastUpdateErrorTicks = errorTicks;
+            ((Action<string>)vars.Log)("[BMW-splitter] update error: " + ex.ToString());
         }
     }
 }
 
 start
 {
-    return (current.Level == "HFS01/HFS01_PersistentLevel" || current.Level == "MGD/MGD_PersistentLevel") && current.isLoading == 0 && old.isLoading != 0;
+    if (!(bool)vars.StartArmed || current.World != "MGD_PersistentLevel")
+        return false;
+
+    vars.StartArmed = false;
+    ((Action<string>)vars.Log)("[BMW-splitter] auto start: world=" + (string)current.World);
+    return true;
 }
 
 split
 {
-    Queue<string> pending = (Queue<string>)vars.pendingBossSplits;
     if (!((Func<bool>)vars.IsAutoSplitEnabled)())
     {
-        pending.Clear();
+        ((Queue<string>)vars.PendingSplits).Clear();
         return false;
     }
+    if (timer.CurrentPhase != TimerPhase.Running) return false;
+
+    Queue<string> pending = (Queue<string>)vars.PendingSplits;
     while (pending.Count > 0)
     {
-        string bossSetting = pending.Dequeue();
-        if (settings.ContainsKey(bossSetting) && settings[bossSetting])
+        string setting = pending.Dequeue();
+        if (((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false))
         {
-            ((Action<string>)vars.Log)("boss split: " + bossSetting);
+            ((Action<string>)vars.Log)("[BMW-splitter] split: " + setting);
             return true;
         }
     }
-
     return false;
 }
 
 isLoading
 {
-    return current.isLoading != 0 || current.localPlayer == null || current.Level == "Startup/Startup_V2_P";
+    bool worldLoading = (bool)current.WorldPending;
+    bool nativeLoading = (bool)vars.NativeLoadingPending;
+    bool cutsceneLoading =
+        ((Func<string, bool, bool>)vars.IsSettingEnabled)("RemoveCutscenes", true)
+        && (bool)vars.CutscenePending;
+    bool loading = worldLoading || nativeLoading || cutsceneLoading;
+
+    if (loading != (bool)vars.LastLoading)
+    {
+        vars.LastLoading = loading;
+        ((Action<string>)vars.Log)(
+            "[BMW-loading] isLoading=" + loading
+            + " world=" + (string)current.World
+            + " native=" + nativeLoading
+            + " cutscene=" + cutsceneLoading);
+    }
+    return loading;
+}
+
+onStart
+{
+    timer.IsGameTimePaused = true;
+    ((Action)vars.ResetSession)();
+}
+
+onReset
+{
+    ((Action)vars.ResetSession)();
 }
 
 exit
 {
-
     timer.IsGameTimePaused = true;
+    ((Action<string>)vars.Log)("[BMW-splitter] game process exit");
+}
+
+shutdown
+{
+    try { ((Action)vars.ResetSession)(); } catch {}
 }
