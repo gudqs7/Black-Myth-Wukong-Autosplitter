@@ -23,7 +23,7 @@ startup
 
     try
     {
-        Assembly.Load(File.ReadAllBytes(Path.Combine(componentDir, "uhara10-PBZ"))).CreateInstance("Main");
+        Assembly.Load(File.ReadAllBytes(Path.Combine(componentDir, "uhara10-BMW"))).CreateInstance("Main");
     }
     catch (Exception ex)
     {
@@ -552,6 +552,7 @@ update
 {
     try
     {
+
         vars.Uhara.Update();
 
         IntPtr loadingRoot = vars.Resolver.Read<IntPtr>(vars.LoadingStateSlot);
@@ -698,6 +699,7 @@ update
             }
             else
             {
+
                 ((Action<string>)vars.ResetDualActor)(uid);
                 nextSeen[uid] = new long[]
                 {
@@ -764,8 +766,10 @@ update
 
             ((Func<string, string, bool>)vars.TryQueueSplit)(pair.Key, "despawn");
         }
+
         vars.ActorSeen = nextSeen;
     }
+
     catch (Exception ex)
     {
         long errorTicks = DateTime.UtcNow.Ticks;

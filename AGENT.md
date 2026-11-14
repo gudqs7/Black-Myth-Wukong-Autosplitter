@@ -9,7 +9,7 @@ comment-free runtime distribution.
 - Repository `Components`, repository-root ASL/XML mirrors, release
   archives, and the local LiveSplit `Components` directory are generated
   outputs and must contain no comments.
-- `Components/uhara10-PBZ` is the required binary runtime dependency.
+- `Components/uhara10-BMW` is the required binary runtime dependency.
 - `Components/asl-help` is retained as a legacy runtime dependency and is
   still synchronized for compatibility.
 - Do not edit generated runtime ASL or XML under `Components`; regenerate
@@ -49,7 +49,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 The command regenerates comment-free files in `Components` and the repository
 root, then synchronizes
-`BlackMythWukong.asl`, both settings XML files, `uhara10-PBZ`, and legacy
+`BlackMythWukong.asl`, both settings XML files, `uhara10-BMW`, and legacy
 `asl-help` to
 `D:\soft\e-game\LiveSplit_1.8.37\Components`.
 
@@ -69,7 +69,7 @@ The test must report `ASL_PARSE_OK` and `WUKONG_RUNTIME_TEST_OK`.
 ## Behavior notes
 
 - The splitter observes all `UGuid___*` actors for appearance/despawn logs but
-  performs split logic only for configured Boss settings through `uhara10-PBZ`.
+  performs split logic only for configured Boss settings through `uhara10-BMW`.
 - Split signals are death montage and global boss-kill slow motion.
   Boss-kill slow motion requires `0.001 < timeDilation < 0.16`; this excludes
   perfect dodge, See-Through, and Thrust attacks. It is ignored when more than
@@ -180,8 +180,9 @@ Reference implementations:
 
 - `D:\code\b1-mod\mods\TeleportRecall\CutsceneSpeed.cs`
 - `D:\code\b1-mod\mods\TeleportRecall\BinkMediaSpeed.cs`
-- The installed `PhantomBladeZero.asl` uses `uhara10-PBZ`
-  `UnrealEngine/Events`, not `asl-help`.
+- The installed `PhantomBladeZero.asl` uses its own `uhara10-PBZ`
+  `UnrealEngine/Events`, not `asl-help`; BMW uses the separately named
+  `uhara10-BMW` copy.
 
 Runtime hooks:
 

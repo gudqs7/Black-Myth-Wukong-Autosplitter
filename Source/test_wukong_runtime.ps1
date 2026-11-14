@@ -26,7 +26,7 @@ $xmlPaths = @(
     (Join-Path $components "BMWukong.Settings.xml"),
     (Join-Path $components "BMWukong.Settings.en.xml")
 )
-$uharaPath = Join-Path $components "uhara10-PBZ"
+$uharaPath = Join-Path $components "uhara10-BMW"
 $repositoryAslPath = Join-Path $RepositoryRoot "BlackMythWukong.asl"
 $repositoryXmlPaths = @(
     (Join-Path $RepositoryRoot "BMWukong.Settings.xml"),
@@ -56,7 +56,7 @@ foreach ($pair in $mirrorPairs) {
 }
 
 if (-not (Test-Path -LiteralPath $uharaPath -PathType Leaf)) {
-    throw "uhara10-PBZ dependency is missing: $uharaPath"
+    throw "uhara10-BMW dependency is missing: $uharaPath"
 }
 
 $documents = foreach ($xmlPath in $xmlPaths) {
@@ -279,7 +279,7 @@ if ($aslText.Contains('time dilation below 1') -or
 if (-not $aslText.Contains('timeDilation > 0.001f && timeDilation < 0.16f')) {
     throw "Generated ASL does not use the boss-kill-only slow-motion threshold: $aslPath"
 }
-if (-not $aslText.Contains('Assembly.Load(File.ReadAllBytes(Path.Combine(componentDir, "uhara10-PBZ"))).CreateInstance("Main");')) {
+if (-not $aslText.Contains('Assembly.Load(File.ReadAllBytes(Path.Combine(componentDir, "uhara10-BMW"))).CreateInstance("Main");')) {
     throw "Generated ASL does not load uHara: $aslPath"
 }
 if (-not $aslText.Contains('System.Globalization.CultureInfo.CurrentCulture.Name')) {
