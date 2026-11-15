@@ -2,8 +2,8 @@
  * Black Myth: Wukong LiveSplit 自动打点脚本（可编辑源码）。
  *
  * 源码规则:
- * - 本文件是唯一保留注释的位置；Components、仓库根目录、发布包和本地
- *   LiveSplit Components 均由 build_wukong_runtime.ps1 去除注释后生成。
+ * - 本文件是唯一保留注释的位置；Components、发布包和本地 LiveSplit
+ *   Components 均由 build_wukong_runtime.ps1 去除注释后生成。
  * - 生命周期钩子和每个委托都要说明作用、入参、返回值和大致原理；
  *   较长的状态处理段要说明数据来源、判定顺序和失败时的行为。
  * - 注释必须描述当前实现，不能把计划、猜测或已经删除的旧方案写成事实。

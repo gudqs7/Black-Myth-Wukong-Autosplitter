@@ -6,13 +6,13 @@
 BMW_AutoSplitter 仓库根目录，默认是本脚本目录的上级目录。
 
 .PARAMETER OutputDirectory
-目标 Components 目录，默认是仓库中的 Components 目录。生成结果同时镜像到仓库根目录。
+目标 Components 目录，默认是仓库中的 Components 目录。只生成 Components 发布文件，不写入仓库根目录。
 
 .PARAMETER LiveSplitComponentsPath
 指定 -SyncLiveSplit 时使用的本机 LiveSplit Components 目录。
 
 .PARAMETER SyncLiveSplit
-生成完成后复制 ASL/XML 和必需二进制依赖到本机 LiveSplit 目录。
+生成完成后复制 ASL/XML 和 uhara10-BMW 到本机 LiveSplit 目录。
 
 .OUTPUTS
 输出已生成和已同步文件的路径。
@@ -50,14 +50,19 @@ $runtimeAssets = @(
     }
 )
 
-$outputDirectories = @($OutputDirectory)
-$normalizedOutput = [IO.Path]::GetFullPath($OutputDirectory)
-$normalizedRepositoryRoot = [IO.Path]::GetFullPath($RepositoryRoot)
-if ($normalizedOutput -ne $normalizedRepositoryRoot) {
-    $outputDirectories += $RepositoryRoot
-}
-foreach ($directory in $outputDirectories) {
-    New-Item -ItemType Directory -Force -Path $directory | Out-Null
+New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
+
+$obsoleteOutputs = @(
+    (Join-Path $RepositoryRoot "BlackMythWukong.asl"),
+    (Join-Path $RepositoryRoot "BMWukong.Settings.xml"),
+    (Join-Path $RepositoryRoot "BMWukong.Settings.en.xml"),
+    (Join-Path $OutputDirectory "asl-help")
+)
+foreach ($path in $obsoleteOutputs) {
+    if (Test-Path -LiteralPath $path -PathType Leaf) {
+        Remove-Item -LiteralPath $path -Force
+        Write-Output "obsolete runtime removed: $path"
+    }
 }
 
 foreach ($asset in $runtimeAssets) {
@@ -75,19 +80,17 @@ foreach ($asset in $runtimeAssets) {
     }
     $runtimeText = Normalize-CommentStrippedText -Text $runtimeText
 
-    foreach ($directory in $outputDirectories) {
-        $targetPath = Join-Path $directory $asset.TargetName
-        Write-Utf8NoBom -Path $targetPath -Text $runtimeText
+    $targetPath = Join-Path $OutputDirectory $asset.TargetName
+    Write-Utf8NoBom -Path $targetPath -Text $runtimeText
 
-        if ($asset.CommentType -eq "CSharp") {
-            Assert-CSharpCommentsRemoved -Path $targetPath
-        }
-        else {
-            Assert-XmlCommentsRemoved -Path $targetPath
-        }
-
-        Write-Output "runtime generated: $targetPath"
+    if ($asset.CommentType -eq "CSharp") {
+        Assert-CSharpCommentsRemoved -Path $targetPath
     }
+    else {
+        Assert-XmlCommentsRemoved -Path $targetPath
+    }
+
+    Write-Output "runtime generated: $targetPath"
 }
 
 if (-not $SyncLiveSplit) {
@@ -102,7 +105,6 @@ $syncNames = @(
     "BlackMythWukong.asl",
     "BMWukong.Settings.xml",
     "BMWukong.Settings.en.xml",
-    "asl-help",
     "uhara10-BMW"
 )
 

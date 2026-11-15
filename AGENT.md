@@ -6,12 +6,13 @@ comment-free runtime distribution.
 ## Runtime contract
 
 - Editable ASL and settings XML live under `Source/Runtime`.
-- Repository `Components`, repository-root ASL/XML mirrors, release
-  archives, and the local LiveSplit `Components` directory are generated
-  outputs and must contain no comments.
+- Repository `Components`, release archives, and the local LiveSplit
+  `Components` directory are generated or synchronized outputs and must
+  contain no comments.
 - `Components/uhara10-BMW` is the required binary runtime dependency.
-- `Components/asl-help` is retained as a legacy runtime dependency and is
-  still synchronized for compatibility.
+- The repository root must not contain ASL/XML mirrors. Release output must
+  not include legacy `asl-help`; the BMW runtime depends only on
+  `uhara10-BMW`.
 - Do not edit generated runtime ASL or XML under `Components`; regenerate
   them from `Source/Runtime`.
 - Preserve user-selected `State="true"` / `State="false"` values in
@@ -32,9 +33,11 @@ comment-free runtime distribution.
 - `Source/comment_tools.ps1`: shared comment removal and verification helpers.
 - `Source/AslParseProbe.cs`: loads LiveSplit's ASL parser for tests.
 - `Components/*.asl` and `Components/*.xml`: generated runtime files. Do not
-  edit them directly. `Components/asl-help` is the fixed binary dependency.
-- Root `BlackMythWukong.asl`, `BMWukong.Settings.xml`, and
-  `BMWukong.Settings.en.xml`: generated mirrors that must match `Components`.
+  edit them directly.
+- `Components/uhara10-BMW`: required binary runtime dependency. Do not ship
+  `asl-help` with this splitter.
+- Repository root: must not contain `BlackMythWukong.asl`,
+  `BMWukong.Settings.xml`, or `BMWukong.Settings.en.xml` mirrors.
 - `TECHNICAL_NOTES.md`: maintenance notes for the UGuid, montage, slow-motion,
   Despawn, and Dual signal model.
 
@@ -47,10 +50,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File .\Source\build_wukong_runtime.ps1 -SyncLiveSplit
 ```
 
-The command regenerates comment-free files in `Components` and the repository
-root, then synchronizes
-`BlackMythWukong.asl`, both settings XML files, `uhara10-BMW`, and legacy
-`asl-help` to
+The command regenerates comment-free files in `Components`, removes the
+obsolete root ASL/XML mirrors and `Components/asl-help`, then synchronizes
+`BlackMythWukong.asl`, both settings XML files, and `uhara10-BMW` to
 `D:\soft\e-game\LiveSplit_1.8.37\Components`.
 
 Before overwriting a local runtime file, the script compares SHA-256 and
@@ -181,8 +183,7 @@ Reference implementations:
 - `D:\code\b1-mod\mods\TeleportRecall\CutsceneSpeed.cs`
 - `D:\code\b1-mod\mods\TeleportRecall\BinkMediaSpeed.cs`
 - The installed `PhantomBladeZero.asl` uses its own `uhara10-PBZ`
-  `UnrealEngine/Events`, not `asl-help`; BMW uses the separately named
-  `uhara10-BMW` copy.
+  `UnrealEngine/Events`; BMW uses the separately named `uhara10-BMW` copy.
 
 Runtime hooks:
 
