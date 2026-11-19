@@ -79,7 +79,7 @@ Dual_UGuid.A+UGuid.B
 - 日志只记录 Actor 出现/消失、死亡 Montage、入队、实际打点和异常。
 - `split` 每轮最多消费一个待定设置，避免同一帧连打多个点。
 - 运行时文件必须由 `Source/build_wukong_runtime.ps1` 去注释生成，并通过 `Source/test_wukong_runtime.ps1` 的 ASL 解析和 XML 一致性检查。
-- 发布目录以 `Components` 为准，只包含 ASL、两份设置 XML 和 `uhara10-BMW`。仓库根目录不得保留 ASL/XML 镜像，`Components` 和发布包不得包含旧版 `asl-help`。
+- 发布目录包含 `Components` 中的 ASL、两份设置 XML、`uhara10-BMW`，以及 `lss` 中的中英文两份主线分段文件。仓库根目录不得保留 ASL/XML 镜像，`Components` 和发布包不得包含旧版 `asl-help`。
 
 ## 验证清单
 

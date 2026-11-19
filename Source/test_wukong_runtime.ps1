@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 验证生成的黑神话：悟空运行时文件没有注释，并编译解析 ASL。
 
@@ -27,6 +27,45 @@ $xmlPaths = @(
     (Join-Path $components "BMWukong.Settings.en.xml")
 )
 $uharaPath = Join-Path $components "uhara10-BMW"
+$lssDirectory = Join-Path $RepositoryRoot "lss"
+$chineseLssPath = Join-Path $lssDirectory "黑猴-主线-分章节.lss"
+$englishLssPath = Join-Path $lssDirectory "Black Myth Wukong - Main Bosses - By Chapter.lss"
+foreach ($lssPath in @($chineseLssPath, $englishLssPath)) {
+    if (-not (Test-Path -LiteralPath $lssPath -PathType Leaf)) {
+        throw "LSS split file is missing: $lssPath"
+    }
+}
+
+$chineseLss = New-Object System.Xml.XmlDocument
+$englishLss = New-Object System.Xml.XmlDocument
+$chineseLss.Load($chineseLssPath)
+$englishLss.Load($englishLssPath)
+if ($chineseLss.DocumentElement.Name -ne "Run" -or $englishLss.DocumentElement.Name -ne "Run") {
+    throw "Unexpected LSS root element."
+}
+if ($chineseLss.Run.CategoryName -ne "主线 Boss - 分章节") {
+    throw "Unexpected Chinese LSS category: $($chineseLss.Run.CategoryName)"
+}
+if ($englishLss.Run.CategoryName -ne "Main Bosses - By Chapter") {
+    throw "Unexpected English LSS category: $($englishLss.Run.CategoryName)"
+}
+$chineseSegments = @($chineseLss.Run.Segments.Segment)
+$englishSegments = @($englishLss.Run.Segments.Segment)
+if ($chineseSegments.Count -ne 42 -or $englishSegments.Count -ne 42) {
+    throw "Unexpected LSS segment count: CN=$($chineseSegments.Count), EN=$($englishSegments.Count)"
+}
+for ($i = 0; $i -lt $chineseSegments.Count; $i++) {
+    $chineseData = @($chineseSegments[$i].ChildNodes | Where-Object { $_.NodeType -eq 'Element' -and $_.Name -ne 'Name' } | ForEach-Object { $_.OuterXml }) -join "`n"
+    $englishData = @($englishSegments[$i].ChildNodes | Where-Object { $_.NodeType -eq 'Element' -and $_.Name -ne 'Name' } | ForEach-Object { $_.OuterXml }) -join "`n"
+    if ($chineseData -ne $englishData) {
+        throw "Chinese and English LSS segment data differ at index $($i + 1)."
+    }
+}
+$englishLssText = [System.IO.File]::ReadAllText($englishLssPath)
+if ($englishLssText -match '[\u4e00-\u9fff]') {
+    throw "English LSS still contains Chinese text: $englishLssPath"
+}
+Write-Output "WUKONG_LSS_TEST_OK"
 
 Assert-CSharpCommentsRemoved -Path $aslPath
 foreach ($xmlPath in $xmlPaths) {

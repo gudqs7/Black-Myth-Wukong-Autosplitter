@@ -28,8 +28,11 @@ comment-free runtime distribution.
   settings.
 - `Source/build_wukong_runtime.ps1`: comment stripping, generation, and
   LiveSplit synchronization.
-- `Source/test_wukong_runtime.ps1`: comment/XML checks and LiveSplit ASL parse
-  verification.
+- `Source/test_wukong_runtime.ps1`: comment/XML checks, bilingual LSS
+  consistency checks, and LiveSplit ASL parse verification.
+- `lss/黑猴-主线-分章节.lss`: Chinese 42-segment main-Boss chapter split file.
+- `lss/Black Myth Wukong - Main Bosses - By Chapter.lss`: English counterpart;
+  only the category and segment labels may differ from the Chinese file.
 - `Source/comment_tools.ps1`: shared comment removal and verification helpers.
 - `Source/AslParseProbe.cs`: loads LiveSplit's ASL parser for tests.
 - `Components/*.asl` and `Components/*.xml`: generated runtime files. Do not
@@ -66,7 +69,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File .\Source\test_wukong_runtime.ps1
 ```
 
-The test must report `ASL_PARSE_OK` and `WUKONG_RUNTIME_TEST_OK`.
+The test must report `WUKONG_LSS_TEST_OK`, `ASL_PARSE_OK`, and `WUKONG_RUNTIME_TEST_OK`. Release archives include both `Components` and the two `lss` split files.
 
 ## Behavior notes
 

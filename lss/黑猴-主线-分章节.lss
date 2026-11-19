@@ -1,0 +1,535 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Run version="1.7.0">
+  <GameIcon />
+  <GameName>Black Myth: Wukong</GameName>
+  <CategoryName>主线 Boss - 分章节</CategoryName>
+  <LayoutPath>
+  </LayoutPath>
+  <Metadata>
+    <Run id="" />
+    <Platform usesEmulator="False">
+    </Platform>
+    <Region>
+    </Region>
+    <Variables />
+    <CustomVariables />
+  </Metadata>
+  <Offset>00:00:00</Offset>
+  <AttemptCount>0</AttemptCount>
+  <AttemptHistory />
+  <Segments>
+    <Segment>
+      <Name>-二郎神</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-轱护院</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-广智</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-幽魂</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-灵虚子</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-广谋</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-白衣秀士一</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-白衣秀士二</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-黑风大王</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>{1.黑风山} 黑熊精</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-沙二郎</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-石先锋</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-虎先锋</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>{2.黄风岭} 黄风大圣</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-马猴一阶段</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-亢金龙</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-魔将·妙音</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-马猴二阶段</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-亢金星君</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-不白一阶段</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-不白二阶段</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-魔将·劫波</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-黄眉一</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-马猴三阶段</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>{3.小西天} 黄眉二</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-二姐</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-右手虫</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-毒蛙</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-八戒一阶段</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-八戒二阶段</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-紫蛛儿</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>{4.盘丝岭} 百眼魔君</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-急如火·快如风</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-云里雾·雾里云</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-红孩儿</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>{5.火焰山} 夜叉王</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-王灵官</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-金甲犀</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-步云鹿</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-碧臂螂</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>-石猿</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+    <Segment>
+      <Name>{6.花果山} 大圣残躯</Name>
+      <Icon />
+      <SplitTimes>
+        <SplitTime name="Personal Best" />
+      </SplitTimes>
+      <BestSegmentTime />
+      <SegmentHistory />
+    </Segment>
+  </Segments>
+  <AutoSplitterSettings>
+    <Version>1.5</Version>
+    <ScriptPath>D:\soft\e-game\LiveSplit_1.8.37\Components\BlackMythWukong.asl</ScriptPath>
+    <Start>True</Start>
+    <Split>True</Split>
+    <CustomSettings>
+      <Setting id="AutoSplitEnabled" type="bool">True</Setting>
+      <Setting id="RemoveCutscenes" type="bool">True</Setting>
+      <Setting id="Prologue" type="bool">True</Setting>
+      <Setting id="Despawn_UGuid.MGD.yangjian.start" type="bool">True</Setting>
+      <Setting id="Chapter1Bosses" type="bool">True</Setting>
+      <Setting id="Chapter1MainBosses" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFS.Niu.Teacher" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFS.GuangZhi" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFS.TongChi01" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFS.DBL0" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFS.GuangM0" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFS.Baiyi0" type="bool">True</Setting>
+      <Setting id="Montage_UGuid.HFS.BaiyiT2" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFS.XiongR0" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFS.XiongX0" type="bool">True</Setting>
+      <Setting id="Chapter1YaoguaiKingBosses" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFS.JCZL" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFS.WoodDragon" type="bool">True</Setting>
+      <Setting id="Chapter1ChiefBosses" type="bool">True</Setting>
+      <Setting id="Boss_202001" type="bool">True</Setting>
+      <Setting id="Chapter2Bosses" type="bool">True</Setting>
+      <Setting id="Chapter2MainBosses" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.FuZiShu.ZS0" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.ShiXianFeng" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.HuXianFeng.Hu0" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.HFDS.H0" type="bool">True</Setting>
+      <Setting id="Chapter2YaoguaiKingBosses" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.ShuWang_01a.SW0" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.ShiGanDang.1" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.HuangPaoZhu.Battle" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.Hu.01" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LSH.DuJiaoXian" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.LiLong" type="bool">True</Setting>
+      <Setting id="Chapter2ChiefBosses" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.Shawuliang" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.BaShanHu" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.StoneMan.Fight" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.Wa.01" type="bool">True</Setting>
+      <Setting id="Boss_202028" type="bool">True</Setting>
+      <Setting id="Boss_202007" type="bool">True</Setting>
+      <Setting id="Boss_202004" type="bool">True</Setting>
+      <Setting id="Chapter3Bosses" type="bool">True</Setting>
+      <Setting id="Chapter3MainBosses" type="bool">True</Setting>
+      <Setting id="Despawn_UGuid.LYS.XueHou.NM" type="bool">True</Setting>
+      <Setting id="Montage_UGuid.LYS.KJL.Long" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.Mo_01" type="bool">True</Setting>
+      <Setting id="Montage_UGuid.LYS.XueHou.AnShen" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.KJL.Women" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.SengMian" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.SengMian02" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.Mo2" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.HuangMei.Big" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.RBM" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.HuangMei.Small" type="bool">True</Setting>
+      <Setting id="Chapter3YaoguaiKingBosses" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.JianLong.Fight" type="bool">True</Setting>
+      <Setting id="Chapter3ChiefBosses" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.Mo4" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.Mo3.Fly" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.XueWa" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.bujing" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.LaoSeng" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.HuanWuZhe" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.Hu_Wind_Battle.HZSJ" type="bool">True</Setting>
+      <Setting id="Boss_302014" type="bool">True</Setting>
+      <Setting id="Boss_302016" type="bool">True</Setting>
+      <Setting id="Boss_302007" type="bool">True</Setting>
+      <Setting id="Boss_301002" type="bool">True</Setting>
+      <Setting id="Chapter4Bosses" type="bool">True</Setting>
+      <Setting id="Chapter4MainBosses" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.PSD.Erjie.Village" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.PSD.FSC01.foshouchong" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.PSD.Wa.01" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.PSD.BaJie.Mo" type="bool">True</Setting>
+      <Setting id="Montage_UGuid.PSD.BaJie.Ye" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.PSD.LaoZhiZhu" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.PSD.BaiYanMoJun" type="bool">True</Setting>
+      <Setting id="Chapter4YaoguaiKingBosses" type="bool">True</Setting>
+      <Setting id="Boss_402011" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.PSD.WuLong.4H" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.ZYS.MRXG" type="bool">True</Setting>
+      <Setting id="Chapter4ChiefBosses" type="bool">True</Setting>
+      <Setting id="Boss_402001" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.ZYS.XieZi.MRXG" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.PSD.qinlang" type="bool">True</Setting>
+      <Setting id="Boss_402009" type="bool">True</Setting>
+      <Setting id="Boss_402007" type="bool">True</Setting>
+      <Setting id="Chapter5Bosses" type="bool">True</Setting>
+      <Setting id="Chapter5MainBosses" type="bool">True</Setting>
+      <Setting id="Dual_UGuid.HYS.JiRuHuo01+UGuid.HYS.KuaiRuFeng01" type="bool">True</Setting>
+      <Setting id="Dual_UGuid.HYS.WuLiYun+UGuid.HYS.YunLiWu" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HYS.HongHaiEr" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HYS.YeChaWang" type="bool">True</Setting>
+      <Setting id="Chapter5YaoguaiKingBosses" type="bool">True</Setting>
+      <Setting id="Boss_502013" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HYS.ZhanChe.01a" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HYS.ZhanChe.01b" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HYS.ZhanChe.01c" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HYS.ZhanChe.01d" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HYS.JDS.05" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HYS.TuDi.YS" type="bool">True</Setting>
+      <Setting id="Dual_UGuid.HYS.XingGongXian+UGuid.HYS.XianGongXing" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.BSD.JJS" type="bool">True</Setting>
+      <Setting id="Chapter5ChiefBosses" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HYS.HMS.Outside" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HYS.Wa.01" type="bool">True</Setting>
+      <Setting id="Boss_501017" type="bool">True</Setting>
+      <Setting id="Boss_502009" type="bool">True</Setting>
+      <Setting id="Boss_502008" type="bool">True</Setting>
+      <Setting id="Boss_502014" type="bool">True</Setting>
+      <Setting id="Chapter6Bosses" type="bool">True</Setting>
+      <Setting id="Chapter6MainBosses" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.BYS.WLG.01" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.BYS.Xiniu" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.BYS.Xuelu" type="bool">True</Setting>
+      <Setting id="Montage_UGuid.BYS.TangLang" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.MGD.Yuan" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.MGD.JSDS.P2" type="bool">True</Setting>
+      <Setting id="Chapter6YaoguaiKingBosses" type="bool">True</Setting>
+      <Setting id="Boss_603001" type="bool">True</Setting>
+      <Setting id="Chapter6ChiefBosses" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.SZLC.Wa.01" type="bool">True</Setting>
+      <Setting id="Boss_602005" type="bool">True</Setting>
+      <Setting id="Boss_602007" type="bool">True</Setting>
+      <Setting id="Boss_602006" type="bool">True</Setting>
+      <Setting id="Boss_602009" type="bool">True</Setting>
+      <Setting id="Boss_103003" type="bool">True</Setting>
+    </CustomSettings>
+  </AutoSplitterSettings>
+</Run>

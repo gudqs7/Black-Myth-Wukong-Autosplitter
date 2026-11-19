@@ -12,6 +12,14 @@
 - `uhara10-BMW`
 
 在 LiveSplit 中添加 `Scriptable Auto Splitter`，选择 `BlackMythWukong.asl`，然后确认设置面板中的 `AutoSplitEnabled` 和需要的 Boss 项已开启。
+## 分段文件
+
+`lss` 目录提供两份内容等价的 42 段主线计时文件：
+
+- 中文：`黑猴-主线-分章节.lss`
+- 英文：`Black Myth Wukong - Main Bosses - By Chapter.lss`
+
+在 LiveSplit 中通过“打开分段”选择对应语言的文件。两份文件的章节、顺序、图标、时间和自动打点设置相同，只翻译分类名和分段名。
 
 ## 运行时文件
 
@@ -38,6 +46,8 @@ ASL 和 XML 由 `Source/Runtime` 生成，不直接编辑；`uhara10-BMW` 是黑
 - `uhara10-BMW`
 
 仓库根目录不得保留 ASL/XML 镜像，`Components` 和发布包不得包含旧版 `asl-help`。黑猴脚本只依赖 `uhara10-BMW`；修改脚本或设置时编辑 `Source/Runtime`，再重新生成。
+
+`lss` 目录只保留中英文两份主线分段文件。发布包需要同时包含 `Components` 和这两份 `.lss`，并在 Release 中提供两份 `.lss` 的独立下载。
 
 ## 开发
 
