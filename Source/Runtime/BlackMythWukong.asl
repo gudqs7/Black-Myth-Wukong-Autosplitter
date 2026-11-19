@@ -557,14 +557,10 @@ init
         vars.Resolver.Watch<IntPtr>("BguSequenceActor", bguSequenceActorSlot);
 
     // CutscenePending：过场/视频正在播放，供 isLoading 暂停 Game Time。
-    // CutsceneLastSignalTicks：最后一个有效的播放或结束信号时间。
-    // CutsceneHoldTicks：所有播放器都结束后仍保持过场状态的 500ms 容错窗。
     // BinkEarlyStopGuardTicks：忽略 Bink Play 后 200ms 内的提前 Stop。
     // BinkPlayTicks：当前 Bink 的 Play 时间，用于识别章末提前 Stop。
     // ActiveSequencePlayer / ActiveBinkPlayer：当前正在跟踪的播放器指针。
     vars.CutscenePending = false;
-    vars.CutsceneLastSignalTicks = 0L;
-    vars.CutsceneHoldTicks = TimeSpan.TicksPerMillisecond * 500;
     vars.BinkEarlyStopGuardTicks = TimeSpan.TicksPerMillisecond * 200;
     vars.BinkPlayTicks = 0L;
     vars.ActiveSequencePlayer = IntPtr.Zero;
@@ -584,7 +580,7 @@ init
     // 入参：无，读取 vars.Events 的 Hook 标志和 current 中的对象快照。
     // 返回：void。
     // 原理：只处理真正的 Play/Stop/状态变化；Sequence 状态和 Actor 备用路径
-    // 持续续期当前信号，所有播放器结束后再由 CutsceneHoldTicks 延迟清除。
+    // 所有播放器结束后立即清除 CutscenePending。
     vars.UpdateCutsceneHooks = (Action)(() =>
     {
         long nowTicks = DateTime.UtcNow.Ticks;
@@ -599,7 +595,6 @@ init
                 && !((Func<IntPtr, bool>)vars.ReadCutsceneDisableCameraCuts)(node))
             {
                 vars.CutscenePending = true;
-                vars.CutsceneLastSignalTicks = nowTicks;
             }
         }
 
@@ -627,13 +622,12 @@ init
                 if (status == 1 && cutsceneSequence)
                 {
                     vars.CutscenePending = true;
-                    vars.CutsceneLastSignalTicks = nowTicks;
                 }
             }
         }
 
         // SequencePlayer.Stop 只能结束同一个活动播放器，防止旧播放器的延迟 Stop
-        // 清掉新一轮过场；结束时间用于启动 500ms 容错窗。
+        // 清掉新一轮过场。
         if (vars.Resolver.CheckFlag("SeqPlayerStopFlag"))
         {
             IntPtr player = (IntPtr)current.SeqPlayerStopInstance;
@@ -641,7 +635,6 @@ init
             if (player != IntPtr.Zero && player == activePlayer)
             {
                 vars.ActiveSequencePlayer = IntPtr.Zero;
-                vars.CutsceneLastSignalTicks = nowTicks;
             }
         }
 
@@ -661,7 +654,6 @@ init
                 if (sequenceVideo)
                 {
                     vars.CutscenePending = true;
-                    vars.CutsceneLastSignalTicks = nowTicks;
                     vars.ActiveBinkPlayer = bink;
                     vars.BinkPlayTicks = nowTicks;
                 }
@@ -685,29 +677,23 @@ init
             if (matchesActive && !earlyStop)
             {
                 vars.ActiveBinkPlayer = IntPtr.Zero;
-                vars.CutsceneLastSignalTicks = nowTicks;
             }
         }
 
-        // Hook 边沿之间仍轮询活动 SequencePlayer 的状态：1 表示继续播放并续期，
+        // Hook 边沿之间仍轮询活动 SequencePlayer 的状态：1 表示继续播放，
         // 其他值立即结束活动播放器。这样可以覆盖没有可靠 Stop 回调的序列。
         IntPtr activeSequence = (IntPtr)vars.ActiveSequencePlayer;
         if (activeSequence != IntPtr.Zero)
         {
             byte status = ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(activeSequence);
-            if (status == 1)
-            {
-                vars.CutsceneLastSignalTicks = nowTicks;
-            }
-            else
+            if (status != 1)
             {
                 vars.ActiveSequencePlayer = IntPtr.Zero;
-                vars.CutsceneLastSignalTicks = nowTicks;
             }
         }
 
         // 部分任务过场只暴露 SequenceActor，没有可靠的 Play/Stop 事件。
-        // 此时从 Actor+0x2B8 取其 SequencePlayer，状态为 1 时持续续期。
+        // 此时从 Actor+0x2B8 取其 SequencePlayer，状态为 1 时标记为活动播放器。
         IntPtr sequenceActor = (IntPtr)current.CutsceneActor;
         if (sequenceActor == IntPtr.Zero)
             sequenceActor = (IntPtr)current.BguSequenceActor;
@@ -719,17 +705,14 @@ init
                 && ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(player) == 1)
             {
                 vars.ActiveSequencePlayer = player;
-                vars.CutsceneLastSignalTicks = nowTicks;
             }
         }
 
-        // 只有 SequencePlayer 和 BinkPlayer 都为空，且超过最后一个结束信号
-        // 的容错窗时才清除 CutscenePending；这避免片段切换时短暂闪烁。
+        // SequencePlayer 和 BinkPlayer 都结束后立即清除 CutscenePending，
+        // 不再保留额外容错窗，避免额外延长 Game Time 暂停。
         if ((bool)vars.CutscenePending
             && (IntPtr)vars.ActiveSequencePlayer == IntPtr.Zero
-            && (IntPtr)vars.ActiveBinkPlayer == IntPtr.Zero
-            && nowTicks - (long)vars.CutsceneLastSignalTicks
-                > (long)vars.CutsceneHoldTicks)
+            && (IntPtr)vars.ActiveBinkPlayer == IntPtr.Zero)
         {
             vars.CutscenePending = false;
         }

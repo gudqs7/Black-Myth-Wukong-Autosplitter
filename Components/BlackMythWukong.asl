@@ -393,8 +393,6 @@ init
         vars.Resolver.Watch<IntPtr>("BguSequenceActor", bguSequenceActorSlot);
 
     vars.CutscenePending = false;
-    vars.CutsceneLastSignalTicks = 0L;
-    vars.CutsceneHoldTicks = TimeSpan.TicksPerMillisecond * 500;
     vars.BinkEarlyStopGuardTicks = TimeSpan.TicksPerMillisecond * 200;
     vars.BinkPlayTicks = 0L;
     vars.ActiveSequencePlayer = IntPtr.Zero;
@@ -420,7 +418,6 @@ init
                 && !((Func<IntPtr, bool>)vars.ReadCutsceneDisableCameraCuts)(node))
             {
                 vars.CutscenePending = true;
-                vars.CutsceneLastSignalTicks = nowTicks;
             }
         }
 
@@ -446,7 +443,6 @@ init
                 if (status == 1 && cutsceneSequence)
                 {
                     vars.CutscenePending = true;
-                    vars.CutsceneLastSignalTicks = nowTicks;
                 }
             }
         }
@@ -458,7 +454,6 @@ init
             if (player != IntPtr.Zero && player == activePlayer)
             {
                 vars.ActiveSequencePlayer = IntPtr.Zero;
-                vars.CutsceneLastSignalTicks = nowTicks;
             }
         }
 
@@ -476,7 +471,6 @@ init
                 if (sequenceVideo)
                 {
                     vars.CutscenePending = true;
-                    vars.CutsceneLastSignalTicks = nowTicks;
                     vars.ActiveBinkPlayer = bink;
                     vars.BinkPlayTicks = nowTicks;
                 }
@@ -497,7 +491,6 @@ init
             if (matchesActive && !earlyStop)
             {
                 vars.ActiveBinkPlayer = IntPtr.Zero;
-                vars.CutsceneLastSignalTicks = nowTicks;
             }
         }
 
@@ -505,14 +498,9 @@ init
         if (activeSequence != IntPtr.Zero)
         {
             byte status = ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(activeSequence);
-            if (status == 1)
-            {
-                vars.CutsceneLastSignalTicks = nowTicks;
-            }
-            else
+            if (status != 1)
             {
                 vars.ActiveSequencePlayer = IntPtr.Zero;
-                vars.CutsceneLastSignalTicks = nowTicks;
             }
         }
 
@@ -527,15 +515,12 @@ init
                 && ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(player) == 1)
             {
                 vars.ActiveSequencePlayer = player;
-                vars.CutsceneLastSignalTicks = nowTicks;
             }
         }
 
         if ((bool)vars.CutscenePending
             && (IntPtr)vars.ActiveSequencePlayer == IntPtr.Zero
-            && (IntPtr)vars.ActiveBinkPlayer == IntPtr.Zero
-            && nowTicks - (long)vars.CutsceneLastSignalTicks
-                > (long)vars.CutsceneHoldTicks)
+            && (IntPtr)vars.ActiveBinkPlayer == IntPtr.Zero)
         {
             vars.CutscenePending = false;
         }
