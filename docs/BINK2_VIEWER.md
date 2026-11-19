@@ -77,8 +77,9 @@ D:\soft\e-game\LiveSplit_AutoSplitter\_analysis\Cue4List\exports_movie\b1\Conten
   `EDMovieIgnore -> EDMovieStop -> BinkMediaPlayer.Stop -> EDMovieDoEnd`；
 - 因此跳过会额外产生一个真实 Stop，不能只靠固定时长判断结束。
 
-当前 ASL 只对 URL 或对象名包含 `chapter` 的章末 Bink 应用 `earlyStop`
-保护。
+当前 ASL 只用对象名 `BinkMoviePlayer_Chapter` 识别章节末尾视频，不读取
+Bink URL。章节末尾 Bink 参与 `CutscenePending` / `isLoading`，并保留
+200ms 的提前 Stop 保护；其他 Bink 的 `Play` / `Stop` 只打印详细诊断日志。
 
 ### 已排除的 Hook
 

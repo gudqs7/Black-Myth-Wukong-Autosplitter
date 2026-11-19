@@ -63,34 +63,20 @@ init
             vars.Resolver.Read<ulong>((IntPtr)((long)classPtr + 0x18)));
     });
 
-    vars.ReadUnrealFString = (Func<IntPtr, string>)(address =>
-    {
-        if (address == IntPtr.Zero) return "";
-        IntPtr data = vars.Resolver.Read<IntPtr>(address);
-        int length = vars.Resolver.Read<int>((IntPtr)((long)address + 8));
-        if (data == IntPtr.Zero || length <= 0 || length > 512) return "";
-        byte[] raw = (byte[])vars.Resolver.ReadBytes(data, length * 2);
-        if (raw == null || raw.Length == 0) return "";
-        return System.Text.Encoding.Unicode.GetString(raw).TrimEnd('\0');
-    });
-
     vars.ReadSequenceStatus = (Func<IntPtr, byte>)(player =>
     {
         if (player == IntPtr.Zero) return 0;
         return vars.Resolver.Read<byte>((IntPtr)((long)player + 0x288));
     });
 
-    vars.ReadCutsceneDisableCameraCuts = (Func<IntPtr, bool>)(node =>
+    vars.ReadSequenceName = (Func<IntPtr, string>)(player =>
     {
-        string nodeClass = ((Func<IntPtr, string>)vars.ReadClassName)(node);
-        if (nodeClass == "BAN_GSPlayLevelSequence")
-            return (vars.Resolver.Read<byte>((IntPtr)((long)node + 0x62)) & 1) != 0;
-        if (nodeClass == "BED_ProcessStateNode_PlayLevelSequence")
-            return (vars.Resolver.Read<byte>((IntPtr)((long)node + 0x2B4)) & 1) != 0;
-        if (nodeClass == "BED_QuestNode_PlayLevelSequence")
-            return (vars.Resolver.Read<byte>((IntPtr)((long)node + 0x2C0)) & 1) != 0;
-
-        return true;
+        if (player == IntPtr.Zero) return "";
+        IntPtr sequenceAsset = vars.Resolver.Read<IntPtr>(
+            (IntPtr)((long)player + 0x290));
+        if (sequenceAsset == IntPtr.Zero) return "";
+        return vars.Utils.FNameToString(
+            vars.Resolver.Read<ulong>((IntPtr)((long)sequenceAsset + 0x18)));
     });
 
     vars.FindAnimation = (Func<IntPtr, IntPtr>)(actor =>
@@ -502,54 +488,35 @@ init
     current.World = "";
     current.WorldPending = true;
 
-    vars.Events.FunctionFlag("CutsceneNotifyFlag", "*PlayLevelSequence*", null, null);
-    vars.Events.FunctionParentPtr<IntPtr>("CutsceneNotify", "*PlayLevelSequence*", null, null);
-
     vars.Events.FunctionFlag("SeqPlayerPlayFlag", "*LevelSequencePlayer*", null, "Play");
     vars.Events.FunctionParentPtr<IntPtr>("SeqPlayerPlayInstance", "*LevelSequencePlayer*", null, "Play");
     vars.Events.FunctionFlag("SeqPlayerStopFlag", "*LevelSequencePlayer*", null, "Stop");
     vars.Events.FunctionParentPtr<IntPtr>("SeqPlayerStopInstance", "*LevelSequencePlayer*", null, "Stop");
+    vars.Events.FunctionFlag("SeqCameraCutsFlag", "*LevelSequencePlayer*", null, "SetDisableCameraCuts");
+    vars.Events.FunctionParentPtr<IntPtr>("SeqCameraCutsInstance", "*LevelSequencePlayer*", null, "SetDisableCameraCuts");
 
     vars.Events.FunctionFlag("BinkPlayFlag", "BinkMediaPlayer", null, "Play");
     vars.Events.FunctionParentPtr<IntPtr>("BinkPlayInstance", "BinkMediaPlayer", null, "Play");
     vars.Events.FunctionFlag("BinkStopFlag", "BinkMediaPlayer", null, "Stop");
     vars.Events.FunctionParentPtr<IntPtr>("BinkStopInstance", "BinkMediaPlayer", null, "Stop");
 
-    IntPtr cutsceneActorSlot = vars.Events.InstancePtr("CalliopeLevelSequenceActor", null);
-    if (cutsceneActorSlot != IntPtr.Zero)
-        vars.Resolver.Watch<IntPtr>("CutsceneActor", cutsceneActorSlot);
-
-    IntPtr bguSequenceActorSlot = vars.Events.InstancePtr("BGULevelSequenceActor", null);
-    if (bguSequenceActorSlot != IntPtr.Zero)
-        vars.Resolver.Watch<IntPtr>("BguSequenceActor", bguSequenceActorSlot);
-
     vars.CutscenePending = false;
     vars.BinkEarlyStopGuardTicks = TimeSpan.TicksPerMillisecond * 200;
     vars.BinkPlayTicks = 0L;
+    vars.SeqCameraCutsGuardTicks = TimeSpan.TicksPerMillisecond * 200;
+    vars.ActiveSequencePlayTicks = 0L;
     vars.ActiveSequencePlayer = IntPtr.Zero;
     vars.ActiveBinkPlayer = IntPtr.Zero;
 
-    current.CutsceneNotify = IntPtr.Zero;
     current.SeqPlayerPlayInstance = IntPtr.Zero;
     current.SeqPlayerStopInstance = IntPtr.Zero;
+    current.SeqCameraCutsInstance = IntPtr.Zero;
     current.BinkPlayInstance = IntPtr.Zero;
     current.BinkStopInstance = IntPtr.Zero;
-    current.CutsceneActor = IntPtr.Zero;
-    current.BguSequenceActor = IntPtr.Zero;
 
     vars.UpdateCutsceneHooks = (Action)(() =>
     {
         long nowTicks = DateTime.UtcNow.Ticks;
-
-        if (vars.Resolver.CheckFlag("CutsceneNotifyFlag"))
-        {
-            IntPtr node = (IntPtr)current.CutsceneNotify;
-            if (node != IntPtr.Zero
-                && !((Func<IntPtr, bool>)vars.ReadCutsceneDisableCameraCuts)(node))
-            {
-                vars.CutscenePending = true;
-            }
-        }
 
         if (vars.Resolver.CheckFlag("SeqPlayerPlayFlag"))
         {
@@ -557,24 +524,26 @@ init
             if (player != IntPtr.Zero)
             {
                 byte status = ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(player);
-                IntPtr sequenceAsset = vars.Resolver.Read<IntPtr>(
-                    (IntPtr)((long)player + 0x290));
-                string sequenceName = sequenceAsset == IntPtr.Zero
-                    ? ""
-                    : vars.Utils.FNameToString(
-                        vars.Resolver.Read<ulong>((IntPtr)((long)sequenceAsset + 0x18)));
+                string sequenceName = ((Func<IntPtr, string>)vars.ReadSequenceName)(player);
                 bool cutsceneSequence = sequenceName.IndexOf(
                         "LS_", StringComparison.OrdinalIgnoreCase) >= 0
                     || sequenceName.IndexOf("cpt", StringComparison.OrdinalIgnoreCase) >= 0
                     || sequenceName.IndexOf("CG", StringComparison.OrdinalIgnoreCase) >= 0
                     || sequenceName.IndexOf("Seq", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool participates = status == 1 && cutsceneSequence;
 
                 vars.ActiveSequencePlayer = player;
-                if (status == 1 && cutsceneSequence)
+                if (participates)
                 {
+                    vars.ActiveSequencePlayTicks = nowTicks;
                     vars.CutscenePending = true;
-                    ((Action<string>)vars.Log)("[BMW-seq] play");
                 }
+                ((Action<string>)vars.Log)(
+                    "[BMW-seq] play player=0x" + player.ToInt64().ToString("X")
+                    + " status=" + status
+                    + " cutscene=" + cutsceneSequence
+                    + " participates=" + participates
+                    + " name=" + sequenceName);
             }
         }
 
@@ -582,31 +551,80 @@ init
         {
             IntPtr player = (IntPtr)current.SeqPlayerStopInstance;
             IntPtr activePlayer = (IntPtr)vars.ActiveSequencePlayer;
-            if (player != IntPtr.Zero && player == activePlayer)
+            bool matchesActive = player != IntPtr.Zero && player == activePlayer;
+            byte status = player == IntPtr.Zero
+                ? (byte)0
+                : ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(player);
+            string sequenceName = player == IntPtr.Zero
+                ? ""
+                : ((Func<IntPtr, string>)vars.ReadSequenceName)(player);
+            ((Action<string>)vars.Log)(
+                "[BMW-seq] stop player=0x" + player.ToInt64().ToString("X")
+                + " active=0x" + activePlayer.ToInt64().ToString("X")
+                + " match=" + matchesActive
+                + " status=" + status
+                + " name=" + sequenceName);
+            if (matchesActive)
             {
                 vars.ActiveSequencePlayer = IntPtr.Zero;
-                ((Action<string>)vars.Log)("[BMW-seq] end");
+                ((Action<string>)vars.Log)(
+                    "[BMW-seq] end reason=stop player=0x"
+                    + player.ToInt64().ToString("X")
+                    + " name=" + sequenceName);
+            }
+        }
+
+        if (vars.Resolver.CheckFlag("SeqCameraCutsFlag"))
+        {
+            IntPtr player = (IntPtr)current.SeqCameraCutsInstance;
+            IntPtr activePlayer = (IntPtr)vars.ActiveSequencePlayer;
+            bool matchesActive = player != IntPtr.Zero && player == activePlayer;
+            long cameraCutsElapsed = matchesActive
+                ? nowTicks - (long)vars.ActiveSequencePlayTicks
+                : -1L;
+            bool controlReturned = matchesActive
+                && cameraCutsElapsed > (long)vars.SeqCameraCutsGuardTicks;
+            string sequenceName = player == IntPtr.Zero
+                ? ""
+                : ((Func<IntPtr, string>)vars.ReadSequenceName)(player);
+            ((Action<string>)vars.Log)(
+                "[BMW-seq] camera-cuts player=0x" + player.ToInt64().ToString("X")
+                + " active=0x" + activePlayer.ToInt64().ToString("X")
+                + " match=" + matchesActive
+                + " elapsedMs=" + cameraCutsElapsed
+                + " controlReturned=" + controlReturned
+                + " name=" + sequenceName);
+            if (controlReturned)
+            {
+                vars.ActiveSequencePlayer = IntPtr.Zero;
+                ((Action<string>)vars.Log)(
+                    "[BMW-seq] end reason=camera-cuts player=0x"
+                    + player.ToInt64().ToString("X")
+                    + " elapsedMs=" + cameraCutsElapsed
+                    + " name=" + sequenceName);
             }
         }
 
         if (vars.Resolver.CheckFlag("BinkPlayFlag"))
         {
             IntPtr bink = (IntPtr)current.BinkPlayInstance;
+            string binkName = "";
             if (bink != IntPtr.Zero)
             {
-                string binkName = vars.Utils.FNameToString(
+                binkName = vars.Utils.FNameToString(
                     vars.Resolver.Read<ulong>((IntPtr)((long)bink + 0x18)));
-                string binkUrl = ((Func<IntPtr, string>)vars.ReadUnrealFString)(
-                    (IntPtr)((long)bink + 0x98));
-                bool sequenceVideo = !string.IsNullOrEmpty(binkUrl)
-                    || binkName.IndexOf("_Seq", StringComparison.OrdinalIgnoreCase) >= 0;
-                if (sequenceVideo)
-                {
-                    vars.CutscenePending = true;
-                    vars.ActiveBinkPlayer = bink;
-                    vars.BinkPlayTicks = nowTicks;
-                    ((Action<string>)vars.Log)("[BMW-bink] play");
-                }
+            }
+            bool chapterEndBink = binkName == "BinkMoviePlayer_Chapter";
+            ((Action<string>)vars.Log)(
+                "[BMW-bink] play player=0x" + bink.ToInt64().ToString("X")
+                + " chapter=" + chapterEndBink
+                + " participates=" + chapterEndBink
+                + " name=" + binkName);
+            if (chapterEndBink)
+            {
+                vars.CutscenePending = true;
+                vars.ActiveBinkPlayer = bink;
+                vars.BinkPlayTicks = nowTicks;
             }
         }
 
@@ -614,30 +632,37 @@ init
         {
             IntPtr bink = (IntPtr)current.BinkStopInstance;
             IntPtr activeBink = (IntPtr)vars.ActiveBinkPlayer;
-            bool matchesActive = bink != IntPtr.Zero && bink == activeBink;
-            long stopElapsed = matchesActive
-                ? nowTicks - (long)vars.BinkPlayTicks
-                : 0L;
             string binkName = "";
-            string binkUrl = "";
             if (bink != IntPtr.Zero)
             {
                 binkName = vars.Utils.FNameToString(
                     vars.Resolver.Read<ulong>((IntPtr)((long)bink + 0x18)));
-                binkUrl = ((Func<IntPtr, string>)vars.ReadUnrealFString)(
-                    (IntPtr)((long)bink + 0x98));
             }
-            bool chapterEndBink = binkName.IndexOf(
-                    "chapter", StringComparison.OrdinalIgnoreCase) >= 0
-                || binkUrl.IndexOf("chapter", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool chapterEndBink = binkName == "BinkMoviePlayer_Chapter";
+            bool matchesActive = bink != IntPtr.Zero && bink == activeBink;
+            long stopElapsed = matchesActive
+                ? nowTicks - (long)vars.BinkPlayTicks
+                : -1L;
             bool earlyStop = matchesActive
                 && chapterEndBink
+                && stopElapsed >= 0
                 && stopElapsed <= (long)vars.BinkEarlyStopGuardTicks;
-
+            ((Action<string>)vars.Log)(
+                "[BMW-bink] stop player=0x" + bink.ToInt64().ToString("X")
+                + " active=0x" + activeBink.ToInt64().ToString("X")
+                + " chapter=" + chapterEndBink
+                + " match=" + matchesActive
+                + " elapsedMs=" + stopElapsed
+                + " earlyStop=" + earlyStop
+                + " name=" + binkName);
             if (matchesActive && !earlyStop)
             {
                 vars.ActiveBinkPlayer = IntPtr.Zero;
-                ((Action<string>)vars.Log)("[BMW-bink] end");
+                ((Action<string>)vars.Log)(
+                    "[BMW-bink] end reason=stop player=0x"
+                    + bink.ToInt64().ToString("X")
+                    + " elapsedMs=" + stopElapsed
+                    + " name=" + binkName);
             }
         }
 
@@ -647,22 +672,14 @@ init
             byte status = ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(activeSequence);
             if (status != 1)
             {
+                string sequenceName = ((Func<IntPtr, string>)vars.ReadSequenceName)(
+                    activeSequence);
                 vars.ActiveSequencePlayer = IntPtr.Zero;
-                ((Action<string>)vars.Log)("[BMW-seq] end");
-            }
-        }
-
-        IntPtr sequenceActor = (IntPtr)current.CutsceneActor;
-        if (sequenceActor == IntPtr.Zero)
-            sequenceActor = (IntPtr)current.BguSequenceActor;
-        if (sequenceActor != IntPtr.Zero && (bool)vars.CutscenePending)
-        {
-            IntPtr player = vars.Resolver.Read<IntPtr>(
-                (IntPtr)((long)sequenceActor + 0x2B8));
-            if (player != IntPtr.Zero
-                && ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(player) == 1)
-            {
-                vars.ActiveSequencePlayer = player;
+                ((Action<string>)vars.Log)(
+                    "[BMW-seq] end reason=status player=0x"
+                    + activeSequence.ToInt64().ToString("X")
+                    + " status=" + status
+                    + " name=" + sequenceName);
             }
         }
 

@@ -272,14 +272,32 @@ if (-not $aslText.Contains('bool nativeLoading = (bool)vars.NativeLoadingPending
 if (-not $aslText.Contains('vars.Events = vars.Uhara.CreateTool("UnrealEngine", "Events");')) {
     throw "Generated ASL does not create the uHara Events tool."
 }
-if (-not $aslText.Contains('FunctionFlag("CutsceneNotifyFlag", "*PlayLevelSequence*", null, null);')) {
-    throw "Generated ASL does not hook PlayLevelSequence notifications."
+if ($aslText.Contains('CutsceneNotifyFlag') -or
+    $aslText.Contains('ReadCutsceneDisableCameraCuts') -or
+    $aslText.Contains('ReadUnrealFString')) {
+    throw "Generated ASL still contains the redundant PlayLevelSequence notification path or unused FString reader."
 }
 if (-not $aslText.Contains('FunctionParentPtr<IntPtr>("SeqPlayerPlayInstance", "*LevelSequencePlayer*", null, "Play");')) {
     throw "Generated ASL does not capture the sequence player Play event."
 }
+if (-not $aslText.Contains('FunctionFlag("SeqCameraCutsFlag", "*LevelSequencePlayer*", null, "SetDisableCameraCuts");')) {
+    throw "Generated ASL does not hook LevelSequencePlayer.SetDisableCameraCuts."
+}
+if (-not $aslText.Contains('SeqCameraCutsGuardTicks') -or
+    -not $aslText.Contains('bool controlReturned = matchesActive') -or
+    -not $aslText.Contains('cameraCutsElapsed > (long)vars.SeqCameraCutsGuardTicks;')) {
+    throw "Generated ASL does not use the camera-cuts control-return guard."
+}
+if ($aslText.Contains('CalliopeLevelSequenceActor') -or
+    $aslText.Contains('BGULevelSequenceActor') -or
+    $aslText.Contains('actor-fallback')) {
+    throw "Generated ASL still contains the removed SequenceActor fallback path."
+}
 if (-not $aslText.Contains('FunctionFlag("BinkPlayFlag", "BinkMediaPlayer", null, "Play");')) {
     throw "Generated ASL does not hook BinkMediaPlayer Play."
+}
+if (-not $aslText.Contains('FunctionFlag("BinkStopFlag", "BinkMediaPlayer", null, "Stop");')) {
+    throw "Generated ASL does not hook BinkMediaPlayer Stop."
 }
 if (-not $aslText.Contains('"[BMW-loading] isLoading=" + loading')) {
     throw "Generated ASL does not expose the overall loading signal."
@@ -291,19 +309,50 @@ if (-not $aslText.Contains('cutsceneSequence')) {
     throw "Generated ASL does not classify LevelSequencePlayer playback by sequence name."
 }
 
-if (-not $aslText.Contains('BinkEarlyStopGuardTicks') -or
-    -not $aslText.Contains('bool chapterEndBink = binkName.IndexOf(') -or
-    -not $aslText.Contains('&& chapterEndBink')) {
-    throw "Generated ASL must apply the early Stop guard only to chapter-end Bink videos."
+$binkPlayMatch = [regex]::Match(
+    $aslText,
+    'if \(vars\.Resolver\.CheckFlag\("BinkPlayFlag"\)\)(?<block>.*?)if \(vars\.Resolver\.CheckFlag\("BinkStopFlag"\)\)',
+    [Text.RegularExpressions.RegexOptions]::Singleline)
+$binkStopMatch = [regex]::Match(
+    $aslText,
+    'if \(vars\.Resolver\.CheckFlag\("BinkStopFlag"\)\)(?<block>.*?)IntPtr activeSequence',
+    [Text.RegularExpressions.RegexOptions]::Singleline)
+if (-not $binkPlayMatch.Success -or -not $binkStopMatch.Success) {
+    throw "Generated ASL does not isolate the Bink Play/Stop blocks."
 }
-foreach ($simpleBinkLog in @(
-    '"[BMW-bink] play"',
-    '"[BMW-bink] end"',
-    '"[BMW-seq] play"',
-    '"[BMW-seq] end"'
+$binkPlayBlock = $binkPlayMatch.Groups['block'].Value
+$binkStopBlock = $binkStopMatch.Groups['block'].Value
+if (-not $binkPlayBlock.Contains('bool chapterEndBink = binkName == "BinkMoviePlayer_Chapter";') -or
+    -not $binkPlayBlock.Contains('if (chapterEndBink)') -or
+    -not $binkPlayBlock.Contains('vars.CutscenePending = true;') -or
+    -not $binkPlayBlock.Contains('vars.ActiveBinkPlayer = bink;')) {
+    throw "Generated ASL must enable loading only for BinkMoviePlayer_Chapter on Play."
+}
+if (-not $binkStopBlock.Contains('bool chapterEndBink = binkName == "BinkMoviePlayer_Chapter";') -or
+    -not $binkStopBlock.Contains('bool earlyStop = matchesActive') -or
+    -not $binkStopBlock.Contains('&& stopElapsed <= (long)vars.BinkEarlyStopGuardTicks;') -or
+    -not $binkStopBlock.Contains('if (matchesActive && !earlyStop)')) {
+    throw "Generated ASL must keep the chapter-end Bink early Stop guard."
+}
+if ($binkPlayBlock.Contains('binkUrl') -or
+    $binkStopBlock.Contains('binkUrl') -or
+    $binkPlayBlock.Contains('0x98') -or
+    $binkStopBlock.Contains('0x98')) {
+    throw "Bink chapter-end detection must use only BinkMoviePlayer_Chapter and must not read the URL."
+}
+foreach ($eventLog in @(
+    '"[BMW-bink] play player=0x"',
+    '"[BMW-bink] stop player=0x"',
+    '"[BMW-bink] end reason=stop player=0x"',
+    '"[BMW-seq] play player=0x"',
+    '"[BMW-seq] stop player=0x"',
+    '"[BMW-seq] camera-cuts player=0x"',
+    '"[BMW-seq] end reason=stop player=0x"',
+    '"[BMW-seq] end reason=camera-cuts player=0x"',
+    '"[BMW-seq] end reason=status player=0x"'
 )) {
-    if (-not $aslText.Contains($simpleBinkLog)) {
-        throw "Generated ASL is missing simple Bink/Sequence event log ${simpleBinkLog}."
+    if (-not $aslText.Contains($eventLog)) {
+        throw "Generated ASL is missing detailed Bink/Sequence event log $($eventLog)."
     }
 }
 if (-not $aslText.Contains('vars.CutscenePending')) {

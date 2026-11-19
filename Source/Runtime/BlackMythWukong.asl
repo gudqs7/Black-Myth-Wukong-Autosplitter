@@ -122,22 +122,6 @@ init
             vars.Resolver.Read<ulong>((IntPtr)((long)classPtr + 0x18)));
     });
 
-    // ReadUnrealFString 委托。
-    // 入参：address，UE FString 结构地址。
-    // 返回：UTF-16 字符串；指针、长度或数据无效时返回空字符串。
-    // 原理：FString 在 +0x00 保存字符数据指针，在 +0x08 保存字符数量；
-    // 这里把长度限制为 512，按 UTF-16 一次读取后去掉尾部 NUL。
-    vars.ReadUnrealFString = (Func<IntPtr, string>)(address =>
-    {
-        if (address == IntPtr.Zero) return "";
-        IntPtr data = vars.Resolver.Read<IntPtr>(address);
-        int length = vars.Resolver.Read<int>((IntPtr)((long)address + 8));
-        if (data == IntPtr.Zero || length <= 0 || length > 512) return "";
-        byte[] raw = (byte[])vars.Resolver.ReadBytes(data, length * 2);
-        if (raw == null || raw.Length == 0) return "";
-        return System.Text.Encoding.Unicode.GetString(raw).TrimEnd('\0');
-    });
-
     // ReadSequenceStatus 委托。
     // 入参：player，LevelSequencePlayer 地址。
     // 返回：player+0x288 的状态字节；指针为空时返回 0。
@@ -148,23 +132,17 @@ init
         return vars.Resolver.Read<byte>((IntPtr)((long)player + 0x288));
     });
 
-    // ReadCutsceneDisableCameraCuts 委托。
-    // 入参：node，PlayLevelSequence 任务节点地址。
-    // 返回：已知节点对应标志位的布尔值；未知类返回 true。
-    // 原理：只有三个已经验证过的节点类可以安全换算标志位；未知节点返回 true，
-    // 让上层忽略它，避免普通交互节点被误认为过场。
-    vars.ReadCutsceneDisableCameraCuts = (Func<IntPtr, bool>)(node =>
+    // ReadSequenceName 委托。
+    // 入参：player，LevelSequencePlayer 地址。
+    // 返回：player+0x290 指向的 Sequence 资产名称；失败时返回空字符串。
+    vars.ReadSequenceName = (Func<IntPtr, string>)(player =>
     {
-        string nodeClass = ((Func<IntPtr, string>)vars.ReadClassName)(node);
-        if (nodeClass == "BAN_GSPlayLevelSequence")
-            return (vars.Resolver.Read<byte>((IntPtr)((long)node + 0x62)) & 1) != 0;
-        if (nodeClass == "BED_ProcessStateNode_PlayLevelSequence")
-            return (vars.Resolver.Read<byte>((IntPtr)((long)node + 0x2B4)) & 1) != 0;
-        if (nodeClass == "BED_QuestNode_PlayLevelSequence")
-            return (vars.Resolver.Read<byte>((IntPtr)((long)node + 0x2C0)) & 1) != 0;
-
-        // 未知类不主动暂停，避免普通交互节点造成误判。
-        return true;
+        if (player == IntPtr.Zero) return "";
+        IntPtr sequenceAsset = vars.Resolver.Read<IntPtr>(
+            (IntPtr)((long)player + 0x290));
+        if (sequenceAsset == IntPtr.Zero) return "";
+        return vars.Utils.FNameToString(
+            vars.Resolver.Read<ulong>((IntPtr)((long)sequenceAsset + 0x18)));
     });
 
     // 3. Boss Actor 动作读取委托。
@@ -689,71 +667,51 @@ init
     current.World = "";
     current.WorldPending = true;
 
-    // 6. 过场和 Bink 状态。
-    // FunctionFlag 记录事件边沿，FunctionParentPtr 暴露触发函数所属对象；
-    // InstancePtr 捕获没有稳定 Play/Stop 边沿时仍可轮询的 Sequence Actor。
-    vars.Events.FunctionFlag("CutsceneNotifyFlag", "*PlayLevelSequence*", null, null);
-    vars.Events.FunctionParentPtr<IntPtr>("CutsceneNotify", "*PlayLevelSequence*", null, null);
-
+    // 6. 过场状态与 Bink 诊断日志。
+    // FunctionFlag 记录事件边沿，FunctionParentPtr 暴露触发函数所属对象。
+    // 只有 name=BinkMoviePlayer_Chapter 的章节末尾 Bink 参与 isLoading。
     vars.Events.FunctionFlag("SeqPlayerPlayFlag", "*LevelSequencePlayer*", null, "Play");
     vars.Events.FunctionParentPtr<IntPtr>("SeqPlayerPlayInstance", "*LevelSequencePlayer*", null, "Play");
     vars.Events.FunctionFlag("SeqPlayerStopFlag", "*LevelSequencePlayer*", null, "Stop");
     vars.Events.FunctionParentPtr<IntPtr>("SeqPlayerStopInstance", "*LevelSequencePlayer*", null, "Stop");
+    vars.Events.FunctionFlag("SeqCameraCutsFlag", "*LevelSequencePlayer*", null, "SetDisableCameraCuts");
+    vars.Events.FunctionParentPtr<IntPtr>("SeqCameraCutsInstance", "*LevelSequencePlayer*", null, "SetDisableCameraCuts");
 
     vars.Events.FunctionFlag("BinkPlayFlag", "BinkMediaPlayer", null, "Play");
     vars.Events.FunctionParentPtr<IntPtr>("BinkPlayInstance", "BinkMediaPlayer", null, "Play");
     vars.Events.FunctionFlag("BinkStopFlag", "BinkMediaPlayer", null, "Stop");
     vars.Events.FunctionParentPtr<IntPtr>("BinkStopInstance", "BinkMediaPlayer", null, "Stop");
 
-    IntPtr cutsceneActorSlot = vars.Events.InstancePtr("CalliopeLevelSequenceActor", null);
-    if (cutsceneActorSlot != IntPtr.Zero)
-        vars.Resolver.Watch<IntPtr>("CutsceneActor", cutsceneActorSlot);
-
-    IntPtr bguSequenceActorSlot = vars.Events.InstancePtr("BGULevelSequenceActor", null);
-    if (bguSequenceActorSlot != IntPtr.Zero)
-        vars.Resolver.Watch<IntPtr>("BguSequenceActor", bguSequenceActorSlot);
-
-    // CutscenePending：过场/视频正在播放，供 isLoading 暂停 Game Time。
-    // BinkEarlyStopGuardTicks：只忽略章末 Bink 在 Play 后 200ms 内的提前 Stop。
-    // BinkPlayTicks：当前 Bink 的 Play 时间，用于识别章末提前 Stop。
+    // CutscenePending：Sequence 或章节末尾 Bink 正在播放，供 isLoading 暂停
+    // Game Time。章节末尾只按 name=BinkMoviePlayer_Chapter 判断。
+    // BinkEarlyStopGuardTicks / BinkPlayTicks：识别章节末尾 Bink 的提前 Stop。
+    // SeqCameraCutsGuardTicks：避免 Play 前同一帧的 SetDisableCameraCuts 立即结束。
+    // ActiveSequencePlayTicks：当前 Sequence 的 Play 时间，用于 camera-cuts 去抖。
     // ActiveSequencePlayer / ActiveBinkPlayer：当前正在跟踪的播放器指针。
     vars.CutscenePending = false;
     vars.BinkEarlyStopGuardTicks = TimeSpan.TicksPerMillisecond * 200;
     vars.BinkPlayTicks = 0L;
+    vars.SeqCameraCutsGuardTicks = TimeSpan.TicksPerMillisecond * 200;
+    vars.ActiveSequencePlayTicks = 0L;
     vars.ActiveSequencePlayer = IntPtr.Zero;
     vars.ActiveBinkPlayer = IntPtr.Zero;
 
     // current 中的 Hook 结果是 uHara 每轮写入的边沿/对象快照；每轮读取前先给出
     // 明确的空值，避免 ASL 动态对象在首次调用时缺少字段。
-    current.CutsceneNotify = IntPtr.Zero;
     current.SeqPlayerPlayInstance = IntPtr.Zero;
     current.SeqPlayerStopInstance = IntPtr.Zero;
+    current.SeqCameraCutsInstance = IntPtr.Zero;
     current.BinkPlayInstance = IntPtr.Zero;
     current.BinkStopInstance = IntPtr.Zero;
-    current.CutsceneActor = IntPtr.Zero;
-    current.BguSequenceActor = IntPtr.Zero;
 
     // UpdateCutsceneHooks 委托。
     // 入参：无，读取 vars.Events 的 Hook 标志和 current 中的对象快照。
     // 返回：void。
-    // 原理：只处理真正的 Play/Stop/状态变化；Sequence 状态和 Actor 备用路径
-    // 所有播放器结束后立即清除 CutscenePending。
+    // 原理：Sequence 状态和 Actor 备用路径参与 CutscenePending；只有
+    // BinkMoviePlayer_Chapter 会额外参与加载判断，其他 Bink 仅记录日志。
     vars.UpdateCutsceneHooks = (Action)(() =>
     {
         long nowTicks = DateTime.UtcNow.Ticks;
-
-        // PlayLevelSequence 通知只作为粗信号；已知节点还要通过类相关标志位过滤，
-        // 未知节点会在 ReadCutsceneDisableCameraCuts 中返回 true 并被忽略。
-        if (vars.Resolver.CheckFlag("CutsceneNotifyFlag"))
-        {
-            IntPtr node = (IntPtr)current.CutsceneNotify;
-            if (node != IntPtr.Zero
-                && !((Func<IntPtr, bool>)vars.ReadCutsceneDisableCameraCuts)(node))
-            {
-                vars.CutscenePending = true;
-            }
-        }
-
         // SequencePlayer.Play 是主过场信号：状态字节为 1，且名称包含 LS_/cpt/CG/Seq
         // 时才锁存。名称过滤避免暂停页或普通动画序列被误当成剧情过场。
         if (vars.Resolver.CheckFlag("SeqPlayerPlayFlag"))
@@ -762,93 +720,151 @@ init
             if (player != IntPtr.Zero)
             {
                 byte status = ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(player);
-                IntPtr sequenceAsset = vars.Resolver.Read<IntPtr>(
-                    (IntPtr)((long)player + 0x290));
-                string sequenceName = sequenceAsset == IntPtr.Zero
-                    ? ""
-                    : vars.Utils.FNameToString(
-                        vars.Resolver.Read<ulong>((IntPtr)((long)sequenceAsset + 0x18)));
+                string sequenceName = ((Func<IntPtr, string>)vars.ReadSequenceName)(player);
                 bool cutsceneSequence = sequenceName.IndexOf(
                         "LS_", StringComparison.OrdinalIgnoreCase) >= 0
                     || sequenceName.IndexOf("cpt", StringComparison.OrdinalIgnoreCase) >= 0
                     || sequenceName.IndexOf("CG", StringComparison.OrdinalIgnoreCase) >= 0
                     || sequenceName.IndexOf("Seq", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool participates = status == 1 && cutsceneSequence;
 
                 vars.ActiveSequencePlayer = player;
-                if (status == 1 && cutsceneSequence)
+                if (participates)
                 {
+                    vars.ActiveSequencePlayTicks = nowTicks;
                     vars.CutscenePending = true;
-                    ((Action<string>)vars.Log)("[BMW-seq] play");
                 }
+                ((Action<string>)vars.Log)(
+                    "[BMW-seq] play player=0x" + player.ToInt64().ToString("X")
+                    + " status=" + status
+                    + " cutscene=" + cutsceneSequence
+                    + " participates=" + participates
+                    + " name=" + sequenceName);
             }
         }
 
         // SequencePlayer.Stop 只能结束同一个活动播放器，防止旧播放器的延迟 Stop
-        // 清掉新一轮过场。
+        // 清掉新一轮过场；日志保留 player/active/match/status/name 便于排查。
         if (vars.Resolver.CheckFlag("SeqPlayerStopFlag"))
         {
             IntPtr player = (IntPtr)current.SeqPlayerStopInstance;
             IntPtr activePlayer = (IntPtr)vars.ActiveSequencePlayer;
-            if (player != IntPtr.Zero && player == activePlayer)
+            bool matchesActive = player != IntPtr.Zero && player == activePlayer;
+            byte status = player == IntPtr.Zero
+                ? (byte)0
+                : ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(player);
+            string sequenceName = player == IntPtr.Zero
+                ? ""
+                : ((Func<IntPtr, string>)vars.ReadSequenceName)(player);
+            ((Action<string>)vars.Log)(
+                "[BMW-seq] stop player=0x" + player.ToInt64().ToString("X")
+                + " active=0x" + activePlayer.ToInt64().ToString("X")
+                + " match=" + matchesActive
+                + " status=" + status
+                + " name=" + sequenceName);
+            if (matchesActive)
             {
                 vars.ActiveSequencePlayer = IntPtr.Zero;
-                ((Action<string>)vars.Log)("[BMW-seq] end");
+                ((Action<string>)vars.Log)(
+                    "[BMW-seq] end reason=stop player=0x"
+                    + player.ToInt64().ToString("X")
+                    + " name=" + sequenceName);
             }
         }
 
-        // Bink Play 同时读取 URL 和对象名。只要 URL 非空或名称包含 _Seq，就按
-        // 过场视频处理；记录播放器指针和 Play 时间供 Stop 去重与提前 Stop 判断。
+        // DisableCameraCutsWithBlendOut 会在播放器真正 Stop 前把摄像机控制权交还玩家。
+        // 同一活动中收到 SetDisableCameraCuts，并超过 Play 后的 200ms 去抖窗，即结束加载状态。
+        if (vars.Resolver.CheckFlag("SeqCameraCutsFlag"))
+        {
+            IntPtr player = (IntPtr)current.SeqCameraCutsInstance;
+            IntPtr activePlayer = (IntPtr)vars.ActiveSequencePlayer;
+            bool matchesActive = player != IntPtr.Zero && player == activePlayer;
+            long cameraCutsElapsed = matchesActive
+                ? nowTicks - (long)vars.ActiveSequencePlayTicks
+                : -1L;
+            bool controlReturned = matchesActive
+                && cameraCutsElapsed > (long)vars.SeqCameraCutsGuardTicks;
+            string sequenceName = player == IntPtr.Zero
+                ? ""
+                : ((Func<IntPtr, string>)vars.ReadSequenceName)(player);
+            ((Action<string>)vars.Log)(
+                "[BMW-seq] camera-cuts player=0x" + player.ToInt64().ToString("X")
+                + " active=0x" + activePlayer.ToInt64().ToString("X")
+                + " match=" + matchesActive
+                + " elapsedMs=" + cameraCutsElapsed
+                + " controlReturned=" + controlReturned
+                + " name=" + sequenceName);
+            if (controlReturned)
+            {
+                vars.ActiveSequencePlayer = IntPtr.Zero;
+                ((Action<string>)vars.Log)(
+                    "[BMW-seq] end reason=camera-cuts player=0x"
+                    + player.ToInt64().ToString("X")
+                    + " elapsedMs=" + cameraCutsElapsed
+                    + " name=" + sequenceName);
+            }
+        }
+
+        // Bink 只有 name=BinkMoviePlayer_Chapter 的章节末尾才参与加载判断。
+        // 普通 Bink 仍记录详细日志，但不修改 CutscenePending 或活动播放器。
         if (vars.Resolver.CheckFlag("BinkPlayFlag"))
         {
             IntPtr bink = (IntPtr)current.BinkPlayInstance;
-            if (bink != IntPtr.Zero)
-            {
-                string binkName = vars.Utils.FNameToString(
-                    vars.Resolver.Read<ulong>((IntPtr)((long)bink + 0x18)));
-                string binkUrl = ((Func<IntPtr, string>)vars.ReadUnrealFString)(
-                    (IntPtr)((long)bink + 0x98));
-                bool sequenceVideo = !string.IsNullOrEmpty(binkUrl)
-                    || binkName.IndexOf("_Seq", StringComparison.OrdinalIgnoreCase) >= 0;
-                if (sequenceVideo)
-                {
-                    vars.CutscenePending = true;
-                    vars.ActiveBinkPlayer = bink;
-                    vars.BinkPlayTicks = nowTicks;
-                    ((Action<string>)vars.Log)("[BMW-bink] play");
-                }
-            }
-        }
-
-        // 只有章末 Bink 会先发一个固定/提前 Stop，视频真正结束后再发第二次 Stop。
-        // 因此 earlyStop 只对 URL 或对象名包含 chapter 的 Bink 生效。
-        if (vars.Resolver.CheckFlag("BinkStopFlag"))
-        {
-            IntPtr bink = (IntPtr)current.BinkStopInstance;
-            IntPtr activeBink = (IntPtr)vars.ActiveBinkPlayer;
-            bool matchesActive = bink != IntPtr.Zero && bink == activeBink;
-            long stopElapsed = matchesActive
-                ? nowTicks - (long)vars.BinkPlayTicks
-                : 0L;
             string binkName = "";
-            string binkUrl = "";
             if (bink != IntPtr.Zero)
             {
                 binkName = vars.Utils.FNameToString(
                     vars.Resolver.Read<ulong>((IntPtr)((long)bink + 0x18)));
-                binkUrl = ((Func<IntPtr, string>)vars.ReadUnrealFString)(
-                    (IntPtr)((long)bink + 0x98));
             }
-            bool chapterEndBink = binkName.IndexOf(
-                    "chapter", StringComparison.OrdinalIgnoreCase) >= 0
-                || binkUrl.IndexOf("chapter", StringComparison.OrdinalIgnoreCase) >= 0;
+            bool chapterEndBink = binkName == "BinkMoviePlayer_Chapter";
+            ((Action<string>)vars.Log)(
+                "[BMW-bink] play player=0x" + bink.ToInt64().ToString("X")
+                + " chapter=" + chapterEndBink
+                + " participates=" + chapterEndBink
+                + " name=" + binkName);
+            if (chapterEndBink)
+            {
+                vars.CutscenePending = true;
+                vars.ActiveBinkPlayer = bink;
+                vars.BinkPlayTicks = nowTicks;
+            }
+        }
+
+        if (vars.Resolver.CheckFlag("BinkStopFlag"))
+        {
+            IntPtr bink = (IntPtr)current.BinkStopInstance;
+            IntPtr activeBink = (IntPtr)vars.ActiveBinkPlayer;
+            string binkName = "";
+            if (bink != IntPtr.Zero)
+            {
+                binkName = vars.Utils.FNameToString(
+                    vars.Resolver.Read<ulong>((IntPtr)((long)bink + 0x18)));
+            }
+            bool chapterEndBink = binkName == "BinkMoviePlayer_Chapter";
+            bool matchesActive = bink != IntPtr.Zero && bink == activeBink;
+            long stopElapsed = matchesActive
+                ? nowTicks - (long)vars.BinkPlayTicks
+                : -1L;
             bool earlyStop = matchesActive
                 && chapterEndBink
+                && stopElapsed >= 0
                 && stopElapsed <= (long)vars.BinkEarlyStopGuardTicks;
-
+            ((Action<string>)vars.Log)(
+                "[BMW-bink] stop player=0x" + bink.ToInt64().ToString("X")
+                + " active=0x" + activeBink.ToInt64().ToString("X")
+                + " chapter=" + chapterEndBink
+                + " match=" + matchesActive
+                + " elapsedMs=" + stopElapsed
+                + " earlyStop=" + earlyStop
+                + " name=" + binkName);
             if (matchesActive && !earlyStop)
             {
                 vars.ActiveBinkPlayer = IntPtr.Zero;
-                ((Action<string>)vars.Log)("[BMW-bink] end");
+                ((Action<string>)vars.Log)(
+                    "[BMW-bink] end reason=stop player=0x"
+                    + bink.ToInt64().ToString("X")
+                    + " elapsedMs=" + stopElapsed
+                    + " name=" + binkName);
             }
         }
 
@@ -860,29 +876,19 @@ init
             byte status = ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(activeSequence);
             if (status != 1)
             {
+                string sequenceName = ((Func<IntPtr, string>)vars.ReadSequenceName)(
+                    activeSequence);
                 vars.ActiveSequencePlayer = IntPtr.Zero;
-                ((Action<string>)vars.Log)("[BMW-seq] end");
+                ((Action<string>)vars.Log)(
+                    "[BMW-seq] end reason=status player=0x"
+                    + activeSequence.ToInt64().ToString("X")
+                    + " status=" + status
+                    + " name=" + sequenceName);
             }
         }
 
-        // 部分任务过场只暴露 SequenceActor，没有可靠的 Play/Stop 事件。
-        // 此时从 Actor+0x2B8 取其 SequencePlayer，状态为 1 时标记为活动播放器。
-        IntPtr sequenceActor = (IntPtr)current.CutsceneActor;
-        if (sequenceActor == IntPtr.Zero)
-            sequenceActor = (IntPtr)current.BguSequenceActor;
-        if (sequenceActor != IntPtr.Zero && (bool)vars.CutscenePending)
-        {
-            IntPtr player = vars.Resolver.Read<IntPtr>(
-                (IntPtr)((long)sequenceActor + 0x2B8));
-            if (player != IntPtr.Zero
-                && ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(player) == 1)
-            {
-                vars.ActiveSequencePlayer = player;
-            }
-        }
-
-        // SequencePlayer 和 BinkPlayer 都结束后立即清除 CutscenePending，
-        // 不再保留额外容错窗，避免额外延长 Game Time 暂停。
+        // SequencePlayer 和章节末尾 BinkPlayer 都结束后立即清除 CutscenePending。
+        // 普通 Bink 从未进入 ActiveBinkPlayer，因此不会影响此判定。
         if ((bool)vars.CutscenePending
             && (IntPtr)vars.ActiveSequencePlayer == IntPtr.Zero
             && (IntPtr)vars.ActiveBinkPlayer == IntPtr.Zero)

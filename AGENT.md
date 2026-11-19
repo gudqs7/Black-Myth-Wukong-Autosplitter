@@ -95,10 +95,12 @@ The test must report `WUKONG_LSS_TEST_OK`, `ASL_PARSE_OK`, and `WUKONG_RUNTIME_T
   actual splits, and exceptions.
 - `AutoSplitEnabled` is the master automatic-split switch and defaults to false.
 - `RemoveCutscenes` defaults to true. Cutscene state is captured through uHara
-  `UnrealEngine/Events` hooks on `PlayLevelSequence`, `LevelSequencePlayer`,
-  and `BinkMediaPlayer`; `isLoading` reads only the cached hook state. Do not use
-  CameraManager view-target classes or periodic GUObjectArray scans as the
-  loading decision.
+  `UnrealEngine/Events` hooks on `LevelSequencePlayer`. Bink participates in
+  `isLoading` only when its object name is exactly `BinkMoviePlayer_Chapter`; all
+  other Bink events are diagnostic logs only. The coarse `PlayLevelSequence`
+  notification is intentionally absent because it cannot reliably drive the end
+  of loading state. Do not use CameraManager view-target classes or periodic
+  GUObjectArray scans as the loading decision.
 - Settings resolve by full culture, then base language, then the Simplified
   Chinese default.
 - Keep logs under the local LiveSplit `Logs` directory out of this repository.
@@ -191,20 +193,29 @@ Reference implementations:
 Runtime hooks:
 
 - Create `vars.Events = vars.Uhara.CreateTool("UnrealEngine", "Events")`.
-- Register `PlayLevelSequence*` notification hooks as an optional coarse signal.
-- Register `*LevelSequencePlayer*` `Play` and `Stop` hooks; this is the working
-  primary signal for BMW camera/story sequences.
-- Register `BinkMediaPlayer` `Play` and `Stop` hooks for pre-rendered video.
-- Capture `CalliopeLevelSequenceActor` and `BGULevelSequenceActor` instances as
-  a fallback source for the active SequencePlayer.
+- Register `*LevelSequencePlayer*` `Play`, `Stop`, and `SetDisableCameraCuts`
+  hooks. `SetDisableCameraCuts` indicates camera/control handoff and can end a
+  cutscene earlier than the eventual `Stop` call.
+- Do not register the coarse `PlayLevelSequence*` notification hook. It can set
+  state without a reliable matching terminal signal.
+- Register `BinkMediaPlayer` `Play` and `Stop` hooks. Only
+  `BinkMoviePlayer_Chapter` sets `ActiveBinkPlayer` and participates in
+  `CutscenePending`; all other Bink events remain diagnostic-only.
+- Do not use `CalliopeLevelSequenceActor` or `BGULevelSequenceActor` instance
+  fallbacks. They depend on initialization-time discovery and a fixed `+0x2B8`
+  player offset; the Play/Stop/status and camera-cuts hooks are the supported
+  source of truth.
 - Read the sequence name from:
   `LevelSequencePlayer + 0x290 -> LevelSequence`, then `LevelSequence + 0x18`.
 - Read playback state from `LevelSequencePlayer + 0x288`.
-- Read the Bink URL from `BinkMediaPlayer + 0x98`.
-- `CutscenePending` is latched and cleared 500 ms after the matching Stop/status
-  transition. Do not measure the hold from Play.
-- A matching Bink Stop within 200 ms of Play is ignored. Chapter-end Bink has an
-  early/fixed Stop followed later by the real Stop.
+- Identify chapter-end Bink by the exact object name `BinkMoviePlayer_Chapter`;
+  do not read the Bink URL.
+- `CutscenePending` is cleared when both the active SequencePlayer and the
+  chapter-end BinkPlayer are inactive.
+- Ignore a matching `SetDisableCameraCuts` within 200 ms of Sequence Play to avoid
+  the setup call. Later matching camera-cuts events are treated as control return.
+- Ignore a chapter-end Bink Stop within 200 ms of Play; the final Stop ends the
+  Bink state.
 - Do not use generic `CineCameraActor`, CameraManager targets,
   `BGUChapterCameraActor`, periodic `GUObjectArray` scans, or fixed 5-second
   holds as loading signals.
@@ -217,7 +228,8 @@ bink stop: player=0x... match=True elapsedMs=1 earlyStop=True
 bink stop: player=0x... match=True elapsedMs=18799 earlyStop=False
 ```
 
-The first Stop is ignored; the second Stop ends the Bink state.
+The first Stop is ignored; the second Stop ends the chapter-end Bink state.
+Non-chapter Bink events do not change `CutscenePending` or `isLoading`.
 
 ### Validation matrix
 
