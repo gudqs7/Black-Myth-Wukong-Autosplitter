@@ -55,7 +55,8 @@
 
     <Setting Id="Chapter3Bosses" Label="第三章 - 小西天" State="true">
         <Setting Id="Chapter3MainBosses" Label="主线 Boss" State="true">
-            <Setting Id="Despawn_UGuid.LYS.XueHou.NM" Label="马猴一阶段" State="true"/>
+            <Setting Id="Action_UGuid.LYS.XueHou.NM@AM_lys_xuehou_leave_01" Label="马猴一阶段(逃跑)" State="true"/>
+            <Setting Id="Montage_UGuid.LYS.XueHou.NM" Label="马猴一阶段(死亡)" State="true"/>
             <Setting Id="Montage_UGuid.LYS.KJL.Long" Label="亢金龙" State="true"/>
             <Setting Id="Dead_UGuid.LYS.Mo_01" Label="魔将·妙音" State="true"/>
             <Setting Id="Montage_UGuid.LYS.XueHou.AnShen" Label="马猴二阶段" State="true"/>
@@ -63,7 +64,7 @@
             <Setting Id="Dead_UGuid.LYS.SengMian" Label="不白一阶段" State="true"/>
             <Setting Id="Dead_UGuid.LYS.SengMian02" Label="不白二阶段" State="true"/>
             <Setting Id="Dead_UGuid.LYS.Mo2" Label="魔将·劫波" State="true"/>
-            <Setting Id="Dead_UGuid.LYS.HuangMei.Big" Label="黄眉一" State="true"/>
+            <Setting Id="Action_UGuid.LYS.HuangMei.Big@AM_LYS_HuangMei_02_FinalTWZ" Label="黄眉一" State="true"/>
             <Setting Id="Dead_UGuid.LYS.RBM" Label="马猴三阶段" State="true"/>
             <Setting Id="Dead_UGuid.LYS.HuangMei.Small" Label="黄眉二" State="true"/>
         </Setting>

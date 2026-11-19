@@ -12,13 +12,14 @@
  * - UGuid 是唯一可靠的 Boss 观察键；Boss_* 只保留给尚未完成 UGuid 映射的项。
  * - Dual_UGuid.A+UGuid.B 只在两个 Boss 都出现死亡 Montage 后打点。
  * - Montage_* 只接受死亡 Montage，Despawn_* 只接受 Actor 消失。
+ * - Action_<UGuid>@<动作名> 只接受匹配的动作 Montage；动作名和可复制配置键来自 [BMW-action] 日志。
  * - isLoading 只暂停 Game Time，Real Time 始终由 LiveSplit 正常推进。
  */
 state("b1-Win64-Shipping") {}
 state("b1-WinGDK-Shipping") {}
 
 // LiveSplit 生命周期钩子：startup
-// 作用：初始化文件日志、加载 uHara 运行时，并读取当前语言的 Boss 设置 XML。
+// 作用：加载 uHara 运行时、建立统一日志委托，并读取当前语言的 Boss 设置 XML。
 // 入参：没有显式参数；LiveSplit 通过 ASL 注入设置构建器和 vars 容器。
 // 返回：null。
 // 原理：startup 在游戏进程出现前即可运行，因此设置必须在这里读取，才能让
@@ -27,37 +28,24 @@ startup
 {
     string componentDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Components");
 
+    // 从组件目录加载独立的 uHara 副本。必须在创建 Log 委托前完成，因为所有
+    // 黑猴日志统一交给 vars.Uhara.Log，避免再维护第二套文件日志路径。
+    Assembly.Load(File.ReadAllBytes(Path.Combine(componentDir, "uhara10-BMW"))).CreateInstance("Main");
+
     // Log 委托。
     // 入参：message，已经格式化好的一行日志。
-    // 返回：void；所有目录和文件异常都在内部吞掉。
-    // 原理：日志追加到 LiveSplit\Logs，带本地时间戳；写日志失败不能中断计时。
-    vars.LogPath = Path.Combine(
-        AppDomain.CurrentDomain.BaseDirectory,
-        "Logs",
-        "BMW-Hook-AutoSplitter.log");
+    // 返回：void；uHara 日志异常在内部吞掉。
+    // 原理：日志统一写入 uHara 的日志目标；写日志失败不能中断计时。
     vars.Log = (Action<string>)(message =>
     {
         try
         {
-            Directory.CreateDirectory(Path.GetDirectoryName((string)vars.LogPath));
-            File.AppendAllText(
-                (string)vars.LogPath,
-                DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + " " + message + Environment.NewLine);
+            vars.Uhara.Log(
+                DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")
+                + " " + message);
         }
         catch {}
     });
-
-    // 从组件目录加载独立的 uHara 副本。使用绝对组件路径，避免依赖当前工作目录；
-    // 抛出的异常会先写入本脚本日志，再继续向上传播以阻止半初始化状态。
-    try
-    {
-        Assembly.Load(File.ReadAllBytes(Path.Combine(componentDir, "uhara10-BMW"))).CreateInstance("Main");
-    }
-    catch (Exception ex)
-    {
-        ((Action<string>)vars.Log)("[BMW-loading] uhara load failed: " + ex.ToString());
-        throw;
-    }
 
     // 设置解析顺序：
     // 1. 完整区域名，例如 BMWukong.Settings.zh-CN.xml。
@@ -79,7 +67,6 @@ startup
     vars.Uhara.Settings.CreateFromXml(settingsPath);
     ((Action<string>)vars.Log)("[BMW-loading] settings loaded: " + settingsPath);
 }
-
 // LiveSplit 生命周期钩子：init
 // 作用：解析 UE 基础对象、创建内存读取和打点委托、注册过场 Hook，并初始化
 // 所有跨 update 的缓存与队列。
@@ -180,7 +167,7 @@ init
         return true;
     });
 
-    // 3. Boss Actor 读取委托。
+    // 3. Boss Actor 动作读取委托。
     // ActorSeen 的 long[] 值布局：
     // [0] Actor 指针，[1] 首次观察时间，[2] 死亡 Montage 是否已触发。
     // FindAnimation 委托。
@@ -221,20 +208,21 @@ init
         return IntPtr.Zero;
     });
 
-    // HasDeathMontage 委托。
+    // ReadActionNames 委托。
     // 入参：anim，AnimInstance 地址。
-    // 返回：当前 Montage 数组中是否存在死亡类 Montage。
+    // 返回：当前 Montage 数组中的动作名，按名称排序后用 | 连接；没有动作时为空串。
     // 原理：AnimInstance+0x88 是 Montage 指针数组，+0x90 是数量；每个元素
-    // 按 0x1C8 步长读取，再从 Montage+0x18 解出 FName。名称包含 _die、
-    // _dead、death 或 suicide 时视为死亡 Montage。
-    vars.HasDeathMontage = (Func<IntPtr, bool>)(anim =>
+    // 按 0x1C8 步长读取，再从 Montage+0x18 解出 FName。去重和排序保证同一组
+    // 动作在连续扫描中生成稳定的比较键，避免数组顺序波动造成假变化日志。
+    vars.ReadActionNames = (Func<IntPtr, string>)(anim =>
     {
-        if (anim == IntPtr.Zero) return false;
+        if (anim == IntPtr.Zero) return "";
         IntPtr montages = vars.Resolver.Read<IntPtr>((IntPtr)((long)anim + 0x88));
         int montageCount = vars.Resolver.Read<int>((IntPtr)((long)anim + 0x90));
         if (montages == IntPtr.Zero || montageCount <= 0 || montageCount > 16)
-            return false;
+            return "";
 
+        List<string> names = new List<string>();
         for (int index = 0; index < montageCount; index++)
         {
             IntPtr montage = vars.Resolver.Read<IntPtr>(
@@ -243,17 +231,90 @@ init
             string montageName = vars.Utils.FNameToString(
                 vars.Resolver.Read<ulong>((IntPtr)((long)montage + 0x18)));
             if (string.IsNullOrEmpty(montageName)) continue;
+            if (montageName.Equals("None", StringComparison.OrdinalIgnoreCase)) continue;
 
-            string lowerName = montageName.ToLowerInvariant();
-            if (lowerName.Contains("_die")
-                || lowerName.Contains("_dead")
-                || lowerName.Contains("death")
-                || lowerName.Contains("suicide"))
+            bool duplicate = false;
+            for (int nameIndex = 0; nameIndex < names.Count; nameIndex++)
+            {
+                if (names[nameIndex].Equals(montageName, StringComparison.OrdinalIgnoreCase))
+                {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (!duplicate) names.Add(montageName);
+        }
+
+        names.Sort(StringComparer.OrdinalIgnoreCase);
+        string result = "";
+        for (int nameIndex = 0; nameIndex < names.Count; nameIndex++)
+        {
+            if (result.Length > 0) result += "|";
+            result += names[nameIndex];
+        }
+        return result;
+    });
+
+    // IsDeathAction 委托。
+    // 入参：actionNames，ReadActionNames 返回的当前动作集合。
+    // 返回：动作集合中是否包含死亡类名称。
+    // 原理：名称包含 _die、_dead、death 或 suicide 时视为死亡动作。
+    vars.IsDeathAction = (Func<string, bool>)(actionNames =>
+    {
+        if (string.IsNullOrEmpty(actionNames)) return false;
+        string lowerName = actionNames.ToLowerInvariant();
+        return lowerName.Contains("_die")
+            || lowerName.Contains("_dead")
+            || lowerName.Contains("death")
+            || lowerName.Contains("suicide");
+    });
+
+    // MatchAction 委托。
+    // 入参：actionNames 是当前动作集合，pattern 是 Action_ 设置 @ 后面的动作名。
+    // 返回：任一动作精确匹配（不区分大小写）时为 true；pattern 末尾 * 时按前缀匹配。
+    // 原理：当前动作可能同时包含多个 Montage，因此逐个拆分比较；单独的 * 匹配
+    // 任意非空动作，便于只观察某个 Actor 的第一个动作。
+    vars.MatchAction = (Func<string, string, bool>)((actionNames, pattern) =>
+    {
+        if (string.IsNullOrEmpty(actionNames) || string.IsNullOrEmpty(pattern))
+            return false;
+
+        string[] actions = actionNames.Split('|');
+        bool prefixMatch = pattern.EndsWith("*", StringComparison.Ordinal);
+        string prefix = prefixMatch ? pattern.Substring(0, pattern.Length - 1) : pattern;
+        for (int index = 0; index < actions.Length; index++)
+        {
+            if (pattern == "*") return true;
+            if (prefixMatch
+                && actions[index].StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            if (!prefixMatch
+                && actions[index].Equals(pattern, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
         }
         return false;
+    });
+
+    // BuildActionSettingList 委托。
+    // 入参：uid 是 Actor 唯一键，actionNames 是当前动作集合。
+    // 返回：可直接粘贴到 XML 的 Action_ 配置键，多个动作以逗号分隔。
+    // 原理：Actor 消失日志和死亡 Montage 日志输出该字符串，用户无需手工拼接 UID 和动作名。
+    vars.BuildActionSettingList = (Func<string, string, string>)((uid, actionNames) =>
+    {
+        if (string.IsNullOrEmpty(actionNames)) return "";
+        string[] actions = actionNames.Split('|');
+        string result = "";
+        for (int index = 0; index < actions.Length; index++)
+        {
+            if (string.IsNullOrEmpty(actions[index])) continue;
+            if (result.Length > 0) result += ",";
+            result += "Action_" + uid + "@" + actions[index];
+        }
+        return result;
     });
 
     // 4. 设置读取、双 Boss 配置和打点队列。
@@ -265,6 +326,9 @@ init
     // DualSplits：Dual_ 设置 id -> 两个 UGuid。
     // DualSettingsByActor：UGuid -> 包含该 Actor 的 Dual_ 设置列表。
     // DualMontageHits：Dual_ 设置 id -> 已出现死亡 Montage 的 UGuid 集合。
+    // ActionSplitsByActor：UGuid -> 该 Actor 的 Action_ 设置 id 列表。
+    // ActionSplitPatterns：Action_ 设置 id -> @ 后面的动作匹配模式。
+    // ActorActionState：所有已见 UGuid -> [Actor 指针, 当前动作, 最后非空动作, 类名, 死亡动作已见]。
     vars.CompletedSplits = new HashSet<string>();
     vars.ActorSeen = new Dictionary<string, long[]>();
     vars.PendingSplits = new Queue<string>();
@@ -272,6 +336,9 @@ init
     vars.DualSplits = new Dictionary<string, string[]>();
     vars.DualSettingsByActor = new Dictionary<string, List<string>>();
     vars.DualMontageHits = new Dictionary<string, HashSet<string>>();
+    vars.ActionSplitsByActor = new Dictionary<string, List<string>>();
+    vars.ActionSplitPatterns = new Dictionary<string, string>();
+    vars.ActorActionState = new Dictionary<string, string[]>();
 
     // IsSettingEnabled 委托。
     // 入参：id 是设置键，defaultValue 是键缺失或读取异常时的回退值。
@@ -369,6 +436,57 @@ init
     });
     vars.LoadDualSplits();
 
+    // LoadActionSplits 委托。
+    // 入参：无，使用 startup 保存的 vars.SettingsPath。
+    // 返回：void；非法 Action_ 项只记录日志并跳过，不中断其余配置。
+    // 原理：配置格式固定为 Action_UGuid.<Boss>@<动作名>；@ 后面也可使用末尾 *
+    // 做前缀匹配，单独的 * 表示该 Actor 的任意非空动作。这里只解析一次 XML，
+    // 同时建立 Actor -> 设置列表和设置 -> 动作模式两个索引供 update 使用。
+    vars.LoadActionSplits = (Action)(() =>
+    {
+        System.Xml.XmlDocument document = new System.Xml.XmlDocument();
+        document.Load((string)vars.SettingsPath);
+        foreach (System.Xml.XmlNode node in document.SelectNodes(
+            "//Setting[starts-with(@Id, 'Action_')]"))
+        {
+            string setting = node.Attributes["Id"].Value;
+            int separator = setting.IndexOf('@', "Action_".Length);
+            if (separator <= "Action_".Length
+                || separator >= setting.Length - 1
+                || setting.IndexOf('@', separator + 1) >= 0)
+            {
+                ((Action<string>)vars.Log)(
+                    "[BMW-action] invalid action setting: " + setting);
+                continue;
+            }
+
+            string uid = setting.Substring("Action_".Length, separator - "Action_".Length);
+            string pattern = setting.Substring(separator + 1);
+            if (!uid.StartsWith("UGuid.", StringComparison.Ordinal)
+                || string.IsNullOrEmpty(pattern))
+            {
+                ((Action<string>)vars.Log)(
+                    "[BMW-action] invalid action setting: " + setting);
+                continue;
+            }
+
+            Dictionary<string, string> patterns =
+                (Dictionary<string, string>)vars.ActionSplitPatterns;
+            if (patterns.ContainsKey(setting)) continue;
+            patterns[setting] = pattern;
+
+            Dictionary<string, List<string>> settingsByActor =
+                (Dictionary<string, List<string>>)vars.ActionSplitsByActor;
+            List<string> settingIds;
+            if (!settingsByActor.TryGetValue(uid, out settingIds))
+            {
+                settingIds = new List<string>();
+                settingsByActor[uid] = settingIds;
+            }
+            settingIds.Add(setting);
+        }
+    });
+    vars.LoadActionSplits();
     // TryQueueSetting 委托。
     // 入参：setting 是最终设置 id，source 是 death-montage/slow-motion/despawn/
     // dual-montage 等打点来源文本。
@@ -387,6 +505,44 @@ init
         ((Action<string>)vars.Log)(
             "[BMW-splitter] split queued: setting=" + setting + " source=" + source);
         return true;
+    });
+
+    // TryQueueActionSplits 委托。
+    // 入参：uid 是 Actor 唯一键，actionNames 是当前动作集合。
+    // 返回：至少一个 Action_ 设置成功入队时为 true。
+    // 原理：每个配置只匹配自己的动作模式；CompletedSplits 去重后同一个自定义
+    // 动作打点在单次计时尝试中最多触发一次。
+    vars.TryQueueActionSplits = (Func<string, string, bool>)((uid, actionNames) =>
+    {
+        List<string> settingIds;
+        if (!((Dictionary<string, List<string>>)vars.ActionSplitsByActor)
+            .TryGetValue(uid, out settingIds))
+        {
+            return false;
+        }
+
+        bool queued = false;
+        foreach (string setting in settingIds)
+        {
+            if (((HashSet<string>)vars.CompletedSplits).Contains(setting)) continue;
+
+            string pattern;
+            if (!((Dictionary<string, string>)vars.ActionSplitPatterns)
+                .TryGetValue(setting, out pattern))
+            {
+                continue;
+            }
+            if (!((Func<string, string, bool>)vars.MatchAction)(actionNames, pattern))
+                continue;
+
+            if (((Func<string, string, bool>)vars.TryQueueSetting)(
+                setting,
+                "action:" + pattern))
+            {
+                queued = true;
+            }
+        }
+        return queued;
     });
 
     // TryQueueSplit 委托。
@@ -486,6 +642,7 @@ init
     {
         vars.ActorSeen = new Dictionary<string, long[]>();
         vars.ObservedActors = new HashSet<string>();
+        vars.ActorActionState = new Dictionary<string, string[]>();
         Dictionary<string, HashSet<string>> dualHits =
             (Dictionary<string, HashSet<string>>)vars.DualMontageHits;
         foreach (string setting in ((Dictionary<string, string[]>)vars.DualSplits).Keys)
@@ -557,7 +714,7 @@ init
         vars.Resolver.Watch<IntPtr>("BguSequenceActor", bguSequenceActorSlot);
 
     // CutscenePending：过场/视频正在播放，供 isLoading 暂停 Game Time。
-    // BinkEarlyStopGuardTicks：忽略 Bink Play 后 200ms 内的提前 Stop。
+    // BinkEarlyStopGuardTicks：只忽略章末 Bink 在 Play 后 200ms 内的提前 Stop。
     // BinkPlayTicks：当前 Bink 的 Play 时间，用于识别章末提前 Stop。
     // ActiveSequencePlayer / ActiveBinkPlayer：当前正在跟踪的播放器指针。
     vars.CutscenePending = false;
@@ -584,7 +741,6 @@ init
     vars.UpdateCutsceneHooks = (Action)(() =>
     {
         long nowTicks = DateTime.UtcNow.Ticks;
-        bool wasPending = (bool)vars.CutscenePending;
 
         // PlayLevelSequence 通知只作为粗信号；已知节点还要通过类相关标志位过滤，
         // 未知节点会在 ReadCutsceneDisableCameraCuts 中返回 true 并被忽略。
@@ -622,6 +778,7 @@ init
                 if (status == 1 && cutsceneSequence)
                 {
                     vars.CutscenePending = true;
+                    ((Action<string>)vars.Log)("[BMW-seq] play");
                 }
             }
         }
@@ -635,6 +792,7 @@ init
             if (player != IntPtr.Zero && player == activePlayer)
             {
                 vars.ActiveSequencePlayer = IntPtr.Zero;
+                ((Action<string>)vars.Log)("[BMW-seq] end");
             }
         }
 
@@ -656,12 +814,13 @@ init
                     vars.CutscenePending = true;
                     vars.ActiveBinkPlayer = bink;
                     vars.BinkPlayTicks = nowTicks;
+                    ((Action<string>)vars.Log)("[BMW-bink] play");
                 }
             }
         }
 
-        // 章末 Bink 会先发一个固定/提前 Stop，视频真正结束后再发第二次 Stop。
-        // 只接受匹配当前活动 Bink 且超过 BinkEarlyStopGuardTicks 的 Stop。
+        // 只有章末 Bink 会先发一个固定/提前 Stop，视频真正结束后再发第二次 Stop。
+        // 因此 earlyStop 只对 URL 或对象名包含 chapter 的 Bink 生效。
         if (vars.Resolver.CheckFlag("BinkStopFlag"))
         {
             IntPtr bink = (IntPtr)current.BinkStopInstance;
@@ -670,13 +829,26 @@ init
             long stopElapsed = matchesActive
                 ? nowTicks - (long)vars.BinkPlayTicks
                 : 0L;
+            string binkName = "";
+            string binkUrl = "";
+            if (bink != IntPtr.Zero)
+            {
+                binkName = vars.Utils.FNameToString(
+                    vars.Resolver.Read<ulong>((IntPtr)((long)bink + 0x18)));
+                binkUrl = ((Func<IntPtr, string>)vars.ReadUnrealFString)(
+                    (IntPtr)((long)bink + 0x98));
+            }
+            bool chapterEndBink = binkName.IndexOf(
+                    "chapter", StringComparison.OrdinalIgnoreCase) >= 0
+                || binkUrl.IndexOf("chapter", StringComparison.OrdinalIgnoreCase) >= 0;
             bool earlyStop = matchesActive
+                && chapterEndBink
                 && stopElapsed <= (long)vars.BinkEarlyStopGuardTicks;
 
-            // 章末 Bink 会先发一个固定 Stop，真正的 Stop 在视频结束后。
             if (matchesActive && !earlyStop)
             {
                 vars.ActiveBinkPlayer = IntPtr.Zero;
+                ((Action<string>)vars.Log)("[BMW-bink] end");
             }
         }
 
@@ -689,6 +861,7 @@ init
             if (status != 1)
             {
                 vars.ActiveSequencePlayer = IntPtr.Zero;
+                ((Action<string>)vars.Log)("[BMW-seq] end");
             }
         }
 
@@ -715,12 +888,6 @@ init
             && (IntPtr)vars.ActiveBinkPlayer == IntPtr.Zero)
         {
             vars.CutscenePending = false;
-        }
-
-        if ((bool)vars.CutscenePending != wasPending)
-        {
-            ((Action<string>)vars.Log)(
-                "[BMW-loading] cutscene loading: " + ((bool)vars.CutscenePending ? "playing" : "ended"));
         }
     });
 }
@@ -845,15 +1012,86 @@ update
             string uid = actorName.Split('@')[0].Replace("___", ".");
             observedActors.Add(uid);
 
-            if (!previousObservedActors.Contains(uid))
+            bool firstObserved = !previousObservedActors.Contains(uid);
+            string actorClass = "";
+            if (firstObserved)
             {
+                actorClass = ((Func<IntPtr, string>)vars.ReadClassName)(actor);
                 ((Action<string>)vars.Log)(
                     "[BMW-splitter] actor appeared: uid=" + uid
-                    + " class=" + ((Func<IntPtr, string>)vars.ReadClassName)(actor)
+                    + " class=" + actorClass
                     + " actor=0x" + actor.ToString("X")
                     + " world=" + worldName);
             }
 
+            // 动作观测覆盖所有 UGuid，不受 Dead_/Montage_/Despawn_ 配置限制。
+            // ActorActionState 用 Actor 指针区分同 UID 的新实例；动作集合只在发生
+            // 变化时写日志，但每个扫描周期仍用当前动作检查 Action_ 自定义打点。
+            IntPtr anim = ((Func<IntPtr, IntPtr>)vars.FindAnimation)(actor);
+            string actionNames = ((Func<IntPtr, string>)vars.ReadActionNames)(anim);
+            bool deathAction = ((Func<string, bool>)vars.IsDeathAction)(actionNames);
+            string actorKey = actor.ToString("X");
+            Dictionary<string, string[]> actionStates =
+                (Dictionary<string, string[]>)vars.ActorActionState;
+            string[] actionState;
+            bool sameActor = actionStates.TryGetValue(uid, out actionState)
+                && actionState[0] == actorKey;
+            string previousAction = sameActor ? actionState[1] : "";
+            string lastNonEmptyAction = sameActor ? actionState[2] : "";
+            bool deathActionSeen = sameActor && actionState[4] == "1";
+            if (sameActor && string.IsNullOrEmpty(actorClass) && actionState.Length > 3)
+                actorClass = actionState[3];
+
+            if (!string.IsNullOrEmpty(actionNames))
+                lastNonEmptyAction = actionNames;
+            if (deathAction)
+                deathActionSeen = true;
+
+            // 动作变化日志默认关闭，避免高频 Montage 切换刷日志；排查时移除块注释即可。
+            /*
+            bool actionChanged = sameActor
+                ? actionNames != previousAction
+                : !string.IsNullOrEmpty(actionNames);
+            if (actionChanged)
+            {
+                if (string.IsNullOrEmpty(actorClass))
+                    actorClass = ((Func<IntPtr, string>)vars.ReadClassName)(actor);
+
+                string currentAction = string.IsNullOrEmpty(actionNames)
+                    ? "<none>" : actionNames;
+                string previousActionText = string.IsNullOrEmpty(previousAction)
+                    ? "<none>" : previousAction;
+                string lastActionText = string.IsNullOrEmpty(lastNonEmptyAction)
+                    ? "<none>" : lastNonEmptyAction;
+                string settingActionNames = string.IsNullOrEmpty(actionNames)
+                    ? lastNonEmptyAction : actionNames;
+                string customSettings = ((Func<string, string, string>)
+                    vars.BuildActionSettingList)(uid, settingActionNames);
+                if (string.IsNullOrEmpty(customSettings)) customSettings = "<none>";
+
+                ((Action<string>)vars.Log)(
+                    "[BMW-action] actor action changed: uid=" + uid
+                    + " class=" + actorClass
+                    + " actor=0x" + actorKey
+                    + " action=" + currentAction
+                    + " previous=" + previousActionText
+                    + " lastAction=" + lastActionText
+                    + " deathAction=" + deathAction
+                    + " custom=" + customSettings
+                    + " world=" + worldName);
+            }
+            */
+
+            actionStates[uid] = new string[]
+            {
+                actorKey,
+                actionNames,
+                lastNonEmptyAction,
+                actorClass,
+                deathActionSeen ? "1" : "0"
+            };
+
+            ((Func<string, string, bool>)vars.TryQueueActionSplits)(uid, actionNames);
             // 出现/消失日志覆盖所有 UGuid；后续分割状态只跟踪已配置 Actor。
             // GetActorSetting 返回的是语义优先级，最终仍要检查 settings 中是否真实存在；
             // Dual_ 只通过 DualSettingsByActor 判断，不需要单 Actor 的 Dead_ 设置。
@@ -872,11 +1110,10 @@ update
                 // 同一 Actor 指针才复用上一轮缓存。死亡 Montage 一旦观测到就锁存，
                 // 且只有持续存在超过 MinBossActorSeenTicks 后才允许检测，
                 // 避免 Actor 刚生成时动画状态未就绪造成误判。
-                IntPtr anim = ((Func<IntPtr, IntPtr>)vars.FindAnimation)(actor);
                 long deathMontage = previousDeathMontage;
                 if (deathMontage == 0L
                     && seenTicks >= (long)vars.MinBossActorSeenTicks
-                    && ((Func<IntPtr, bool>)vars.HasDeathMontage)(anim))
+                    && deathAction)
                 {
                     deathMontage = 1L;
                     deathMontageSplits.Add(uid);
@@ -885,6 +1122,9 @@ update
                         + " setting=" + setting
                         + " enabled=" + ((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false)
                         + " dual=" + hasDualSetting
+                        + " action=" + actionNames
+                        + " custom=" + ((Func<string, string, string>)
+                            vars.BuildActionSettingList)(uid, actionNames)
                         + " world=" + worldName);
                 }
 
@@ -924,9 +1164,40 @@ update
         {
             if (!observedActors.Contains(previousUid))
             {
+                string lastName = "<unknown>";
+                string lastCurrent = "<unknown>";
+                string lastClass = "<unknown>";
+                string lastDeathAction = "unknown";
+                string[] previousActionState;
+                if (((Dictionary<string, string[]>)vars.ActorActionState)
+                    .TryGetValue(previousUid, out previousActionState))
+                {
+                    lastCurrent = string.IsNullOrEmpty(previousActionState[1])
+                        ? "<none>" : previousActionState[1];
+                    lastName = string.IsNullOrEmpty(previousActionState[2])
+                        ? "<none>" : previousActionState[2];
+                    lastClass = string.IsNullOrEmpty(previousActionState[3])
+                        ? "<none>" : previousActionState[3];
+                    lastDeathAction = previousActionState[4] == "1" ? "true" : "false";
+                }
+
+                string lastActionNames = lastName == "<none>" ? "" : lastName;
+                string lastCustomSettings = ((Func<string, string, string>)
+                    vars.BuildActionSettingList)(previousUid, lastActionNames);
+                if (string.IsNullOrEmpty(lastCustomSettings))
+                    lastCustomSettings = "<none>";
+                ((Action<string>)vars.Log)(
+                    "[BMW-action] actor despawn: uid=" + previousUid
+                    + " class=" + lastClass
+                    + " current=" + lastCurrent
+                    + " lastAction=" + lastName
+                    + " deathActionSeen=" + lastDeathAction
+                    + " custom=" + lastCustomSettings
+                    + " world=" + worldName);
                 ((Action<string>)vars.Log)(
                     "[BMW-splitter] actor despawn observed: uid=" + previousUid
                     + " world=" + worldName);
+                ((Dictionary<string, string[]>)vars.ActorActionState).Remove(previousUid);
             }
         }
         vars.ObservedActors = observedActors;

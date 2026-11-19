@@ -90,3 +90,8 @@ Dual_UGuid.A+UGuid.B
 - `Despawn_UGuid.*` 不被 Montage 或慢动作触发。
 - 双 Boss 只击杀一个时不打点，两个都出现 Montage 后只打一次。
 - 世界切换、计时器重置和 Actor 重建后不保留旧双 Boss 进度。
+
+## Bink2 视频检查
+
+本机保留了 RAD Video Tools，用于直接播放 `.bk2` 或转成 MP4；提取、查看命令和
+`BinkMediaPlayer.Stop` 的已知行为记录在 [docs/BINK2_VIEWER.md](docs/BINK2_VIEWER.md)。

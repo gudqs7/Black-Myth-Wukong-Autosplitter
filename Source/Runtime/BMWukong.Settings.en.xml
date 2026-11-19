@@ -51,7 +51,8 @@
     </Setting>
     <Setting Id="Chapter3Bosses" Label="Chapter 3 - The New West" State="true">
         <Setting Id="Chapter3MainBosses" Label="Main Bosses" State="true">
-            <Setting Id="Despawn_UGuid.LYS.XueHou.NM" Label="Macaque Chief (Phase 1)" State="true"/>
+            <Setting Id="Action_UGuid.LYS.XueHou.NM@AM_lys_xuehou_leave_01" Label="Macaque Chief (Phase 1 - Escape)" State="true"/>
+            <Setting Id="Montage_UGuid.LYS.XueHou.NM" Label="Macaque Chief (Phase 1 - Death)" State="true"/>
             <Setting Id="Montage_UGuid.LYS.KJL.Long" Label="Kang-Jin Loong" State="true"/>
             <Setting Id="Dead_UGuid.LYS.Mo_01" Label="Captain Wise-Voice" State="true"/>
             <Setting Id="Montage_UGuid.LYS.XueHou.AnShen" Label="Macaque Chief (Phase 2)" State="true"/>
@@ -59,7 +60,7 @@
             <Setting Id="Dead_UGuid.LYS.SengMian" Label="Non-White (Phase 1)" State="true"/>
             <Setting Id="Dead_UGuid.LYS.SengMian02" Label="Non-White (Phase 2)" State="true"/>
             <Setting Id="Dead_UGuid.LYS.Mo2" Label="Captain Kalpa-Wave" State="true"/>
-            <Setting Id="Dead_UGuid.LYS.HuangMei.Big" Label="Yellowbrow (Phase 1)" State="true"/>
+            <Setting Id="Action_UGuid.LYS.HuangMei.Big@AM_LYS_HuangMei_02_FinalTWZ" Label="Yellowbrow (Phase 1)" State="true"/>
             <Setting Id="Dead_UGuid.LYS.RBM" Label="Macaque Chief (Phase 3)" State="true"/>
             <Setting Id="Dead_UGuid.LYS.HuangMei.Small" Label="Yellowbrow (Phase 2)" State="true"/>
         </Setting>

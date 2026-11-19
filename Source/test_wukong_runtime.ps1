@@ -117,7 +117,7 @@ if ($defaultSettings.Count -ne $englishSettings.Count) {
 $expectedMain = @{
     1 = @('Dead_UGuid.HFS.Niu.Teacher','Dead_UGuid.HFS.GuangZhi','Dead_UGuid.HFS.TongChi01','Dead_UGuid.HFS.DBL0','Dead_UGuid.HFS.GuangM0','Dead_UGuid.HFS.Baiyi0','Montage_UGuid.HFS.BaiyiT2','Dead_UGuid.HFS.XiongR0','Dead_UGuid.HFS.XiongX0')
     2 = @('Dead_UGuid.HFM.FuZiShu.ZS0','Dead_UGuid.HFM.ShiXianFeng','Dead_UGuid.HFM.HuXianFeng.Hu0','Dead_UGuid.HFM.HFDS.H0')
-    3 = @('Dead_UGuid.LYS.XueHou.NM','Montage_UGuid.LYS.KJL.Long','Dead_UGuid.LYS.Mo_01','Montage_UGuid.LYS.XueHou.AnShen','Dead_UGuid.LYS.KJL.Women','Dead_UGuid.LYS.SengMian','Dead_UGuid.LYS.SengMian02','Dead_UGuid.LYS.Mo2','Dead_UGuid.LYS.HuangMei.Big','Dead_UGuid.LYS.RBM','Dead_UGuid.LYS.HuangMei.Small')
+    3 = @('Action_UGuid.LYS.XueHou.NM@AM_lys_xuehou_leave_01','Montage_UGuid.LYS.XueHou.NM','Montage_UGuid.LYS.KJL.Long','Dead_UGuid.LYS.Mo_01','Montage_UGuid.LYS.XueHou.AnShen','Dead_UGuid.LYS.KJL.Women','Dead_UGuid.LYS.SengMian','Dead_UGuid.LYS.SengMian02','Dead_UGuid.LYS.Mo2','Action_UGuid.LYS.HuangMei.Big@AM_LYS_HuangMei_02_FinalTWZ','Dead_UGuid.LYS.RBM','Dead_UGuid.LYS.HuangMei.Small')
     4 = @('Dead_UGuid.PSD.Erjie.Village','Dead_UGuid.PSD.FSC01.foshouchong','Dead_UGuid.PSD.Wa.01','Dead_UGuid.PSD.BaJie.Mo','Montage_UGuid.PSD.BaJie.Ye','Dead_UGuid.PSD.LaoZhiZhu','Dead_UGuid.PSD.BaiYanMoJun')
     5 = @('Dual_UGuid.HYS.JiRuHuo01+UGuid.HYS.KuaiRuFeng01','Dual_UGuid.HYS.WuLiYun+UGuid.HYS.YunLiWu','Dead_UGuid.HYS.HongHaiEr','Dead_UGuid.HYS.YeChaWang')
     6 = @('Dead_UGuid.BYS.WLG.01','Dead_UGuid.BYS.Xiniu','Dead_UGuid.BYS.Xuelu','Montage_UGuid.BYS.TangLang','Dead_UGuid.MGD.Yuan','Dead_UGuid.MGD.JSDS.P2')
@@ -138,8 +138,8 @@ foreach ($chapter in 1..6) {
             throw "Chapter boss category is empty: $groupId"
         }
     }
-    $actualMain = @($chapterNode.SelectSingleNode("./Setting[@Id='Chapter${chapter}MainBosses']").SelectNodes('./Setting') | ForEach-Object { $_.Id -replace '^(Dead_|Montage_|Despawn_|Dual_)', '' })
-    $expectedMainIds = @($expectedMain[$chapter] | ForEach-Object { $_ -replace '^(Dead_|Montage_|Despawn_|Dual_)', '' })
+    $actualMain = @($chapterNode.SelectSingleNode("./Setting[@Id='Chapter${chapter}MainBosses']").SelectNodes('./Setting') | ForEach-Object { ($_.Id -replace '^Action_(UGuid\.[^@]+)@.*$', '$1') -replace '^(Dead_|Montage_|Despawn_|Dual_)', '' })
+    $expectedMainIds = @($expectedMain[$chapter] | ForEach-Object { ($_ -replace '^Action_(UGuid\.[^@]+)@.*$', '$1') -replace '^(Dead_|Montage_|Despawn_|Dual_)', '' })
     if (($actualMain -join '|') -ne ($expectedMainIds -join '|')) {
         throw "Main Boss classification changed unexpectedly for chapter $chapter"
     }
@@ -282,14 +282,29 @@ if (-not $aslText.Contains('FunctionFlag("BinkPlayFlag", "BinkMediaPlayer", null
     throw "Generated ASL does not hook BinkMediaPlayer Play."
 }
 if (-not $aslText.Contains('"[BMW-loading] isLoading=" + loading')) {
-    throw "Generated ASL does not expose the cutscene loading signal."
+    throw "Generated ASL does not expose the overall loading signal."
+}
+if ($aslText.Contains('"[BMW-loading] cutscene loading:')) {
+    throw "Generated ASL still contains the redundant cutscene loading transition log."
 }
 if (-not $aslText.Contains('cutsceneSequence')) {
     throw "Generated ASL does not classify LevelSequencePlayer playback by sequence name."
 }
 
-if (-not $aslText.Contains('BinkEarlyStopGuardTicks')) {
-    throw "Generated ASL does not ignore the early Bink stop edge."
+if (-not $aslText.Contains('BinkEarlyStopGuardTicks') -or
+    -not $aslText.Contains('bool chapterEndBink = binkName.IndexOf(') -or
+    -not $aslText.Contains('&& chapterEndBink')) {
+    throw "Generated ASL must apply the early Stop guard only to chapter-end Bink videos."
+}
+foreach ($simpleBinkLog in @(
+    '"[BMW-bink] play"',
+    '"[BMW-bink] end"',
+    '"[BMW-seq] play"',
+    '"[BMW-seq] end"'
+)) {
+    if (-not $aslText.Contains($simpleBinkLog)) {
+        throw "Generated ASL is missing simple Bink/Sequence event log ${simpleBinkLog}."
+    }
 }
 if (-not $aslText.Contains('vars.CutscenePending')) {
     throw "Generated ASL does not track cutscene state."
@@ -331,6 +346,28 @@ if (-not $aslText.Contains('"AutoSplitEnabled", false')) {
 }
 if (-not $aslText.Contains('vars.TryQueueSplit = (Func<string, string, bool>)')) {
     throw "Generated ASL does not centralize split queueing: $aslPath"
+}
+if (-not $aslText.Contains('vars.Uhara.Log(')) {
+    throw "Generated ASL must route logs through uHara: $aslPath"
+}
+if (-not $aslText.Contains('DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")')) {
+    throw "Generated ASL must prefix uHara log messages with a millisecond timestamp: $aslPath"
+}
+if ($aslText.Contains('BMW-Hook-AutoSplitter.log') -or $aslText.Contains('vars.LogPath')) {
+    throw "Generated ASL must not keep the legacy private log file: $aslPath"
+}
+if ($aslText.Contains('"[BMW-action] actor action changed: uid="')) {
+    throw "Generated ASL still contains the action-change log: $aslPath"
+}
+if (-not $aslText.Contains('"[BMW-action] actor despawn: uid="') -or
+    -not $aslText.Contains('vars.ReadActionNames = (Func<IntPtr, string>)')) {
+    throw "Generated ASL does not log final Actor actions: $aslPath"
+}
+if (-not $aslText.Contains('vars.LoadActionSplits = (Action)') -or
+    -not $aslText.Contains('//Setting[starts-with(@Id, ''Action_'')]') -or
+    -not $aslText.Contains('vars.TryQueueActionSplits = (Func<string, string, bool>)') -or
+    -not $aslText.Contains('"action:" + pattern')) {
+    throw "Generated ASL does not parse and queue Action_UGuid@action settings: $aslPath"
 }
 if (-not $aslText.Contains('vars.TryQueueSetting = (Func<string, string, bool>)')) {
     throw "Generated ASL does not centralize setting queueing for dual Bosses: $aslPath"
@@ -413,10 +450,6 @@ $removedVerboseLogs = @(
     'tracked UGuid actors',
     'removal candidate',
     'removal canceled',
-    'sequence player play: player=',
-    'sequence player stop: player=',
-    'bink play: player=',
-    'bink stop: player=',
     'boss hidden edge: uid=',
     'boss kill slow motion: uid='
 )
