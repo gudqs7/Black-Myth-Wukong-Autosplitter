@@ -10,7 +10,7 @@
    - `BMWukong.Settings.xml`
    - `BMWukong.Settings.en.xml`
    - `uhara10-BMW`
-3. 启动 LiveSplit，编辑布局(edit layout)并添加 `脚本自动打点器(Scriptable Auto Splitter)`，然后选择刚才复制过去的 `Components\BlackMythWukong.asl` 即可。 
+3. 启动 LiveSplit，编辑布局(edit layout)并添加 `脚本自动打点器(Scriptable Auto Splitter)`，然后选择刚才复制过去的 `Components\BlackMythWukong.asl` 即可。
 
 ## 注意事项
 
