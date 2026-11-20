@@ -4,20 +4,20 @@
 
 ## 安装
 
-将 `Components` 目录中的以下文件复制到 LiveSplit 安装目录的 `Components`：
+1. 关闭 LiveSplit。
+2. 将压缩包内 `Components` 文件夹中的以下文件复制到 LiveSplit 安装目录的 `Components` 文件夹；遇到同名文件选择覆盖：
+   - `BlackMythWukong.asl`
+   - `BMWukong.Settings.xml`
+   - `BMWukong.Settings.en.xml`
+   - `uhara10-BMW`
+3. 启动 LiveSplit，编辑布局(edit layout)并添加 `脚本自动打点器(Scriptable Auto Splitter)`，然后选择刚才复制过去的 `Components\BlackMythWukong.asl` 即可。 
 
-- `BlackMythWukong.asl`
-- `BMWukong.Settings.xml`
-- `BMWukong.Settings.en.xml`
-- `uhara10-BMW`
-
-在 LiveSplit 中添加 `脚本自动打点器`，选择 `BlackMythWukong.asl`，然后确认设置面板中的“自动打点总开关”和需要的首领项已开启。
-### 注意事项
+## 注意事项
 
 若自动打点生效但去动画不生效，请检查：
 
 1. 是否安装了 Mod。有些 Mod 也会 Hook，和去动画原理冲突；移除 Mod 即可。
-2. 检查编辑节点（Edit splits）里的去加载是否处于激活状态（能点 Setting 就是激活了）。若是，则取消激活，然后保存节点（Save splits），再重启计时器软件。
+2. 检查编辑节点（Edit splits）里的去加载是否处于激活状态（能点 Setting 按钮就是激活了）。若是，则取消激活，然后保存节点（Save splits），再重启计时器软件。
 
 ## 分段文件
 
