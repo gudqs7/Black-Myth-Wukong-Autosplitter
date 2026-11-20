@@ -11,7 +11,8 @@
 - `BMWukong.Settings.en.xml`
 - `uhara10-BMW`
 
-在 LiveSplit 中添加 `Scriptable Auto Splitter`，选择 `BlackMythWukong.asl`，然后确认设置面板中的 `AutoSplitEnabled` 和需要的 Boss 项已开启。
+在 LiveSplit 中添加 `脚本自动打点器`，选择 `BlackMythWukong.asl`，然后确认设置面板中的“自动打点总开关”和需要的首领项已开启。
+
 ## 分段文件
 
 `lss` 目录提供两份内容等价的 42 段主线计时文件：
@@ -34,7 +35,7 @@ ASL 和 XML 由 `Source/Runtime` 生成，不直接编辑；`uhara10-BMW` 是黑
 
 当前打点由配置中的 `UGuid___*` Boss Actor 驱动，支持死亡 montage 和全局击杀慢放；击杀慢放仅使用 `0.001 < timeDilation < 0.16`，避免完美闪避、识破和退寸误触发。普通配置使用 `Dead_UGuid.*`；只希望死亡 Montage 触发时使用 `Montage_UGuid.*`，它会跳过慢放；如果 Boss 中途会消失，可用 `Despawn_UGuid.*`，该前缀会跳过 Montage 和慢放，只在 Actor 消失时打点。需要按指定动作 Montage 触发时使用 `Action_UGuid.*@动作名`，同一 UGuid 可同时配置多个不同动作或与其他触发类型并存。双 Boss 使用 `Dual_UGuid.A+UGuid.B`，两个 Actor 都出现死亡 Montage 后才打点，且不会使用慢放信号；配置在 `init` 中解析一次，逐帧只做字典查询。每章设置先包一层章节分类，再分为“主线 Boss”“全妖王 Boss”和“头目 Boss”；主线按用户维护的列表保留，非主线按影神图的妖王/头目类型归类，所有 Boss 默认开启。尚未找到可靠 UGuid 映射的 `Boss_*` 项会原样保留。脚本会为所有 UGuid Actor 记录出现和消失日志，并为已配置 Boss 记录死亡 Montage 检测日志；只有实际入队时才进行自动打点判定。
 
-`RemoveCutscenes` 默认开启，通过 `uhara10-BMW` 的 `UnrealEngine/Events` 注册 `LevelSequencePlayer` 和 `BinkMediaPlayer` 事件。Sequence 的 `SetDisableCameraCuts` 控制权交还会提前结束加载判断，避免人物已恢复操作后仍等待 Sequence `Stop`；Bink 只有对象名为 `BinkMoviePlayer_Chapter` 的章节末尾视频参与加载，并保留 200ms 提前 Stop 保护；其他 Bink 只打印诊断日志。不再使用 `PlayLevelSequence` 粗通知、CameraManager、GUObjectArray 扫描或相机类名做判据。该逻辑只影响 Game Time，布局必须使用 Game Time 才能观察去加载效果。
+“CG 动画去加载”默认开启，通过 `uhara10-BMW` 的 `UnrealEngine/Events` 注册 `LevelSequencePlayer` 和 `BinkMediaPlayer` 事件。Sequence 的 `SetDisableCameraCuts` 控制权交还会提前结束加载判断，避免人物已恢复操作后仍等待 Sequence `Stop`；Bink 只有对象名为 `BinkMoviePlayer_Chapter` 的章节末尾视频参与加载，并保留 200ms 提前 Stop 保护；其他 Bink 只打印诊断日志。不再使用 `PlayLevelSequence` 粗通知、CameraManager、GUObjectArray 扫描或相机类名做判据。该逻辑只影响游戏时间，布局必须使用“游戏时间”才能观察去加载效果。
 
 ## 发布规则
 
@@ -78,6 +79,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
   -File .\Source\test_wukong_runtime.ps1
 ```
 
-`AutoSplitEnabled` 是自动打点总开关，默认关闭。同步前脚本会比较 `LastWriteTime` 和 SHA-256。若本机 LiveSplit 中的文件更新且内容不同，会停止并提示先合并回 `Source/Runtime`，避免覆盖手动修改。
+“自动打点总开关”默认开启。同步前脚本会比较 `LastWriteTime` 和 SHA-256。若本机 LiveSplit 中的文件更新且内容不同，会停止并提示先合并回 `Source/Runtime`，避免覆盖手动修改。
 
 维护和调试经验见 [TECHNICAL_NOTES.md](TECHNICAL_NOTES.md)。

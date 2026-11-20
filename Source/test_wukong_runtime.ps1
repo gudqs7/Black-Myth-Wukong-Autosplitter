@@ -114,6 +114,13 @@ if ($defaultSettings.Count -ne $englishSettings.Count) {
     throw "Chinese and English settings have different item counts."
 }
 
+$lssSettingIds = @($chineseLss.SelectNodes('//AutoSplitterSettings/CustomSettings/Setting') | ForEach-Object { $_.id })
+$xmlSettingIds = @($defaultSettings | ForEach-Object { $_.Id })
+$settingIdDiff = @(Compare-Object $xmlSettingIds $lssSettingIds)
+if ($settingIdDiff.Count -ne 0) {
+    throw "LSS custom settings do not match settings XML: $($settingIdDiff | Out-String)"
+}
+
 $expectedMain = @{
     1 = @('Dead_UGuid.HFS.Niu.Teacher','Dead_UGuid.HFS.GuangZhi','Dead_UGuid.HFS.TongChi01','Dead_UGuid.HFS.DBL0','Dead_UGuid.HFS.GuangM0','Dead_UGuid.HFS.Baiyi0','Montage_UGuid.HFS.BaiyiT2','Dead_UGuid.HFS.XiongR0','Dead_UGuid.HFS.XiongX0')
     2 = @('Dead_UGuid.HFM.FuZiShu.ZS0','Dead_UGuid.HFM.ShiXianFeng','Dead_UGuid.HFM.HuXianFeng.Hu0','Dead_UGuid.HFM.HFDS.H0')
@@ -155,10 +162,23 @@ $expectedParents = @{
     'Dead_UGuid.HFS.TongChi01' = 'Chapter1MainBosses'
     'Montage_UGuid.HFS.BaiyiT2' = 'Chapter1MainBosses'
     'Dead_UGuid.HFS.JCZL' = 'Chapter1YaoguaiKingBosses'
-    'Boss_202001' = 'Chapter1ChiefBosses'
+    'Dead_UGuid.HFS.WaBig' = 'Chapter1ChiefBosses'
+    'Dead_UGuid.HFM.Suoyang' = 'Chapter2ChiefBosses'
+    'Dead_UGuid.HFM.LaPapesse' = 'Chapter2ChiefBosses'
     'Dead_UGuid.LYS.Mo4' = 'Chapter3ChiefBosses'
-    'Boss_302014' = 'Chapter3ChiefBosses'
-    'Boss_603001' = 'Chapter6YaoguaiKingBosses'
+    'Dead_UGuid.LYS.Mo3.OutsideTemple' = 'Chapter3ChiefBosses'
+    'Dead_UGuid.LYS.fsys' = 'Chapter3ChiefBosses'
+    'Dead_UGuid.PSD.YouYan' = 'Chapter4ChiefBosses'
+    'Dead_UGuid.PSD.JCZB' = 'Chapter4ChiefBosses'
+    'Dead_UGuid.ZYS.DaoShi.Fight' = 'Chapter4ChiefBosses'
+    'Dead_UGuid.ZYS.Daoshi.P2' = 'Chapter4ChiefBosses'
+    'Dead_UGuid.HYS.YSCheng' = 'Chapter5ChiefBosses'
+    'Dead_UGuid.HYS.JDS.01' = 'Chapter5YaoguaiKingBosses'
+    'Dead_UGuid.BYS.HMS.02' = 'Chapter6ChiefBosses'
+    'Dead_UGuid.BYS.Shitongling.03' = 'Chapter6ChiefBosses'
+    'Dead_UGuid.BYS.hema.king' = 'Chapter6ChiefBosses'
+    'Dead_UGuid.BYS.Baishe' = 'Chapter6ChiefBosses'
+    'Dead_UGuid.SL.sgd' = 'Chapter6YaoguaiKingBosses'
 }
 foreach ($expected in $expectedParents.GetEnumerator()) {
     $node = $defaultDocument.SelectSingleNode("//Setting[@Id='$($expected.Key)']")
@@ -179,6 +199,21 @@ $expectedMappings = @{
     'Boss_703001' = 'Dead_UGuid.BSD.JJS'
     'Boss_803001' = 'Dead_UGuid.ZYS.XieZi.MRXG'
     'Boss_803002' = 'Dead_UGuid.ZYS.MRXG'
+    'Boss_202001' = 'Dead_UGuid.HFS.WaBig'
+    'Boss_202028' = 'Dead_UGuid.HFM.Suoyang'
+    'Boss_202007' = 'Dead_UGuid.HFM.LaPapesse'
+    'Boss_302014' = 'Dead_UGuid.LYS.Mo3.OutsideTemple'
+    'Boss_301002' = 'Dead_UGuid.LYS.fsys'
+    'Boss_402001' = 'Dead_UGuid.PSD.YouYan'
+    'Boss_402009' = 'Dead_UGuid.PSD.JCZB'
+    'Boss_402007' = 'Dead_UGuid.ZYS.DaoShi.Fight'
+    'Boss_501017' = 'Dead_UGuid.HYS.YSCheng'
+    'Boss_502013' = 'Dead_UGuid.HYS.JDS.01'
+    'Boss_602007' = 'Dead_UGuid.BYS.HMS.02'
+    'Boss_602006' = 'Dead_UGuid.BYS.Shitongling.03'
+    'Boss_602009' = 'Dead_UGuid.BYS.hema.king'
+    'Boss_103003' = 'Dead_UGuid.BYS.Baishe'
+    'Boss_603001' = 'Dead_UGuid.SL.sgd'
 }
 foreach ($mapping in $expectedMappings.GetEnumerator()) {
     if ($null -ne $defaultDocument.SelectSingleNode("//Setting[@Id='$($mapping.Key)']")) {
@@ -208,6 +243,15 @@ foreach ($setting in $dualSettings) {
 $optionalBossSettings = @($defaultDocument.SelectNodes('//Setting[starts-with(@Id,"Boss_")]'))
 if ($optionalBossSettings.Count -eq 0) {
     throw "Unmapped optional Boss_* settings must be retained for manual maintenance."
+}
+$expectedUnmappedBossIds = @(
+    'Boss_202004', 'Boss_302016', 'Boss_302007', 'Boss_402011',
+    'Boss_502009', 'Boss_502008', 'Boss_502014'
+)
+foreach ($id in $expectedUnmappedBossIds) {
+    if ($null -eq $defaultDocument.SelectSingleNode("//Setting[@Id='$id']")) {
+        throw "Unmapped Boss_* setting was removed without a verified replacement: $id"
+    }
 }
 
 $englishById = @{}

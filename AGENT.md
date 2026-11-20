@@ -93,7 +93,7 @@ The test must report `WUKONG_LSS_TEST_OK`, `ASL_PARSE_OK`, and `WUKONG_RUNTIME_T
 - All Boss settings default to `State="true"`. Production logging includes all
   UGuid appearance/despawn edges plus loading/cutscene transitions, queued and
   actual splits, and exceptions.
-- `AutoSplitEnabled` is the master automatic-split switch and defaults to false.
+- `AutoSplitEnabled` is the master automatic-split switch and defaults to true.
 - `RemoveCutscenes` defaults to true. Cutscene state is captured through uHara
   `UnrealEngine/Events` hooks on `LevelSequencePlayer`. Bink participates in
   `isLoading` only when its object name is exactly `BinkMoviePlayer_Chapter`; all
