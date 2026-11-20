@@ -101,6 +101,23 @@ Dual_UGuid.A+UGuid.B
 - 双 Boss 只击杀一个时不打点，两个都出现 Montage 后只打一次。
 - 世界切换、计时器重置和 Actor 重建后不保留旧双 Boss 进度。
 
+## 维护与发布经验
+
+- 新增 ASL `vars` 字段或委托后，必须完全退出并重启 LiveSplit 再验证；LiveSplit
+  热重载可能留下空字段并产生 `NullReferenceException`。
+- Montage 数组 `count > 0` 不代表一定读到了动作：需检查 item 内候选指针并校验
+  对象类名包含 `AnimMontage`。当前已验证兼容 `item+0` 与 `item+0x18`。
+- 动作诊断只用于定位阶段。生产日志保留 `uid`、`action`、`deathAction` 即可；
+  不要恢复周期 Montage-state、AnimInstance、数组头或 item 指针输出。
+- 修改中英文设置或 LSS 时，四处必须同步：中英文 XML、两份 LSS、生成目录和
+  本机 LiveSplit 目录；发布前必须跑完整三组测试。
+- 更新 Release 时替换现有资源并同步更新 release notes、`SHA256SUMS.txt` 和
+  `dist`。`dist` 只保留当前版本，避免旧包混入。
+- GitHub Release asset 文件名会把中文字符净化成连字符（例如 `-.-.lss`）。
+  中文展示名应使用 asset `label`，文件名使用稳定 ASCII，并在发布说明和校验
+  文件中写明实际下载文件名。
+- 用户遇到“自动打点生效但去动画不生效”时，优先排查 Mod Hook 冲突和
+  Edit splits 中仍激活的去加载设置；按安装说明取消后保存并重启。
 ## Bink2 视频检查
 
 本机保留了 RAD Video Tools，用于直接播放 `.bk2` 或转成 MP4；提取、查看命令和

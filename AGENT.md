@@ -62,6 +62,13 @@ Before overwriting a local runtime file, the script compares SHA-256 and
 `LastWriteTime`. A newer differing local file must be inspected and merged back
 into `Source/Runtime` first. After copying, SHA-256 equality is verified.
 
+- Adding or removing ASL `vars` fields/delegates changes the initialization
+  shape. Fully exit and restart LiveSplit before validation; hot reload can
+  leave new fields null and cause `NullReferenceException`.
+- Keep validated action diagnostics out of production. The action-change log
+  should stay minimal (`uid`, `action`, `deathAction`); do not restore periodic
+  Montage-state, AnimInstance, array-header, or item-pointer logging.
+
 ## Verification
 
 ```powershell
@@ -71,10 +78,24 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 The test must report `WUKONG_LSS_TEST_OK`, `ASL_PARSE_OK`, and `WUKONG_RUNTIME_TEST_OK`. Release archives include both `Components` and the two `lss` split files.
 
+## Release guidance
+
+- Keep `dist` limited to the current release staging directory, archive,
+  standalone split files, current release notes, and `SHA256SUMS.txt`.
+- GitHub sanitizes CJK Release asset filenames (for example to `-.-.lss`).
+  Use a stable ASCII asset `name` plus a Chinese `label`, and document the
+  actual download filename in release notes and checksums.
+- Before publishing, synchronize both settings XML files and both LSS files,
+  regenerate runtime components, run all three runtime tests, verify package
+  hashes, and replace the existing release assets when updating a release.
+
 ## Behavior notes
 
 - The splitter observes all `UGuid___*` actors for appearance/despawn logs but
   performs split logic only for configured Boss settings through `uhara10-BMW`.
+- Action Montage detection reads `AnimInstance+0x88`, `+0x128`, and `+0x138`,
+  tries both `item+0` and `item+0x18` pointer layouts, and accepts only objects
+  whose class name contains `AnimMontage`.
 - Split signals are death montage and global boss-kill slow motion.
   Boss-kill slow motion requires `0.001 < timeDilation < 0.16`; this excludes
   perfect dodge, See-Through, and Thrust attacks. It is ignored when more than
