@@ -449,12 +449,29 @@ if (-not $aslText.Contains('DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")')) 
 if ($aslText.Contains('BMW-Hook-AutoSplitter.log') -or $aslText.Contains('vars.LogPath')) {
     throw "Generated ASL must not keep the legacy private log file: $aslPath"
 }
-if ($aslText.Contains('"[BMW-action] actor action changed: uid="')) {
-    throw "Generated ASL still contains the action-change log: $aslPath"
+if (-not $aslText.Contains('"[BMW-action] actor action changed: uid="')) {
+    throw "Generated ASL action-change log is missing: $aslPath"
 }
-if (-not $aslText.Contains('"[BMW-action] actor despawn: uid="') -or
-    -not $aslText.Contains('vars.ReadActionNames = (Func<IntPtr, string>)')) {
-    throw "Generated ASL does not log final Actor actions: $aslPath"
+if ($aslText.Contains('"ActionDebugLog", false')) {
+    throw "Generated ASL action-change log must not depend on ActionDebugLog: $aslPath"
+}
+if (-not $aslText.Contains('+ " action=" + currentAction') -or
+    -not $aslText.Contains('+ " deathAction=" + deathAction')) {
+    throw "Generated ASL action-change log is missing action/death fields: $aslPath"
+}
+if ($aslText.Contains('vars.ReadActionDetails') -or
+    $aslText.Contains('vars.ReadMontageArrays') -or
+    $aslText.Contains('"[BMW-action] actor montage state: uid="') -or
+    $aslText.Contains('MontageSampleIntervalTicks') -or
+    $aslText.Contains('" details="') -or
+    $aslText.Contains('" arrays="') -or
+    $aslText.Contains('"itemOffset=0x"') -or
+    $aslText.Contains('"[18]=0x"')) {
+    throw "Generated ASL still contains verbose Montage diagnostics: $aslPath"
+}
+if (-not $aslText.Contains('new int[] { 0x88, 0x128, 0x138 }') -or
+    -not $aslText.Contains('int[] montagePointerOffsets = new int[] { 0x0, 0x18 }')) {
+    throw "Generated ASL does not retain the full Montage reader: $aslPath"
 }
 if (-not $aslText.Contains('vars.LoadActionSplits = (Action)') -or
     -not $aslText.Contains('//Setting[starts-with(@Id, ''Action_'')]') -or

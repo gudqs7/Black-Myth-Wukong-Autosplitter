@@ -188,39 +188,76 @@ init
 
     // ReadActionNames 委托。
     // 入参：anim，AnimInstance 地址。
-    // 返回：当前 Montage 数组中的动作名，按名称排序后用 | 连接；没有动作时为空串。
-    // 原理：AnimInstance+0x88 是 Montage 指针数组，+0x90 是数量；每个元素
-    // 按 0x1C8 步长读取，再从 Montage+0x18 解出 FName。去重和排序保证同一组
-    // 动作在连续扫描中生成稳定的比较键，避免数组顺序波动造成假变化日志。
+    // 返回：当前全部 Montage 数组中的动作名，按名称排序后用 | 连接；没有动作时为空串。
+    // 原理：+0x88、+0x128、+0x138 各是一组活动 Montage 实例数组；每个元素
+    // 按 0x1C8 步长读取，并兼容 item+0/item+0x18 两种 Montage 指针位置；
+    // 再从 Montage+0x18 解出 FName。合并、去重和排序保证比较键稳定。
     vars.ReadActionNames = (Func<IntPtr, string>)(anim =>
     {
         if (anim == IntPtr.Zero) return "";
-        IntPtr montages = vars.Resolver.Read<IntPtr>((IntPtr)((long)anim + 0x88));
-        int montageCount = vars.Resolver.Read<int>((IntPtr)((long)anim + 0x90));
-        if (montages == IntPtr.Zero || montageCount <= 0 || montageCount > 16)
-            return "";
 
+        // 当前构建有三组活动 Montage 实例数组：
+        // +0x88 是常规主数组；灵虚子的攻击、BIdle 等动作会落在
+        // +0x128/+0x138 的次级数组中。只读 +0x88 会在初见战斗阶段漏动作。
+        int[] arrayOffsets = new int[] { 0x88, 0x128, 0x138 };
+        int[] montagePointerOffsets = new int[] { 0x0, 0x18 };
         List<string> names = new List<string>();
-        for (int index = 0; index < montageCount; index++)
+        for (int arrayIndex = 0; arrayIndex < arrayOffsets.Length; arrayIndex++)
         {
-            IntPtr montage = vars.Resolver.Read<IntPtr>(
-                (IntPtr)((long)montages + index * 0x1C8));
-            if (montage == IntPtr.Zero) continue;
-            string montageName = vars.Utils.FNameToString(
-                vars.Resolver.Read<ulong>((IntPtr)((long)montage + 0x18)));
-            if (string.IsNullOrEmpty(montageName)) continue;
-            if (montageName.Equals("None", StringComparison.OrdinalIgnoreCase)) continue;
+            int arrayOffset = arrayOffsets[arrayIndex];
+            IntPtr montages = vars.Resolver.Read<IntPtr>(
+                (IntPtr)((long)anim + arrayOffset));
+            int montageCount = vars.Resolver.Read<int>(
+                (IntPtr)((long)anim + arrayOffset + 8));
+            int montageCapacity = vars.Resolver.Read<int>(
+                (IntPtr)((long)anim + arrayOffset + 12));
+            if (montages == IntPtr.Zero
+                || montageCount <= 0
+                || montageCount > 16
+                || montageCapacity < montageCount
+                || montageCapacity > montageCount + 64)
+                continue;
 
-            bool duplicate = false;
-            for (int nameIndex = 0; nameIndex < names.Count; nameIndex++)
+            for (int index = 0; index < montageCount; index++)
             {
-                if (names[nameIndex].Equals(montageName, StringComparison.OrdinalIgnoreCase))
+                IntPtr item = (IntPtr)((long)montages + index * 0x1C8);
+                IntPtr montage = IntPtr.Zero;
+                string montageName = "";
+                for (int pointerIndex = 0;
+                    pointerIndex < montagePointerOffsets.Length;
+                    pointerIndex++)
                 {
-                    duplicate = true;
+                    int pointerOffset = montagePointerOffsets[pointerIndex];
+                    IntPtr candidate = vars.Resolver.Read<IntPtr>(
+                        (IntPtr)((long)item + pointerOffset));
+                    if (candidate == IntPtr.Zero) continue;
+                    string candidateClass =
+                        ((Func<IntPtr, string>)vars.ReadClassName)(candidate);
+                    if (string.IsNullOrEmpty(candidateClass)
+                        || !candidateClass.Contains("AnimMontage"))
+                        continue;
+                    string candidateName = vars.Utils.FNameToString(
+                        vars.Resolver.Read<ulong>((IntPtr)((long)candidate + 0x18)));
+                    if (string.IsNullOrEmpty(candidateName)
+                        || candidateName.Equals("None", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    montage = candidate;
+                    montageName = candidateName;
                     break;
                 }
+                if (montage == IntPtr.Zero) continue;
+
+                bool duplicate = false;
+                for (int nameIndex = 0; nameIndex < names.Count; nameIndex++)
+                {
+                    if (names[nameIndex].Equals(montageName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        duplicate = true;
+                        break;
+                    }
+                }
+                if (!duplicate) names.Add(montageName);
             }
-            if (!duplicate) names.Add(montageName);
         }
 
         names.Sort(StringComparer.OrdinalIgnoreCase);
@@ -1053,8 +1090,7 @@ update
             if (deathAction)
                 deathActionSeen = true;
 
-            // 动作变化日志默认关闭，避免高频 Montage 切换刷日志；排查时移除块注释即可。
-            /*
+            // 只在动作集合变化时记录当前动作，避免每帧输出指针和数组详情。
             bool actionChanged = sameActor
                 ? actionNames != previousAction
                 : !string.IsNullOrEmpty(actionNames);
@@ -1065,28 +1101,11 @@ update
 
                 string currentAction = string.IsNullOrEmpty(actionNames)
                     ? "<none>" : actionNames;
-                string previousActionText = string.IsNullOrEmpty(previousAction)
-                    ? "<none>" : previousAction;
-                string lastActionText = string.IsNullOrEmpty(lastNonEmptyAction)
-                    ? "<none>" : lastNonEmptyAction;
-                string settingActionNames = string.IsNullOrEmpty(actionNames)
-                    ? lastNonEmptyAction : actionNames;
-                string customSettings = ((Func<string, string, string>)
-                    vars.BuildActionSettingList)(uid, settingActionNames);
-                if (string.IsNullOrEmpty(customSettings)) customSettings = "<none>";
-
                 ((Action<string>)vars.Log)(
                     "[BMW-action] actor action changed: uid=" + uid
-                    + " class=" + actorClass
-                    + " actor=0x" + actorKey
                     + " action=" + currentAction
-                    + " previous=" + previousActionText
-                    + " lastAction=" + lastActionText
-                    + " deathAction=" + deathAction
-                    + " custom=" + customSettings
-                    + " world=" + worldName);
+                    + " deathAction=" + deathAction);
             }
-            */
 
             actionStates[uid] = new string[]
             {
@@ -1105,7 +1124,6 @@ update
             bool hasDualSetting = ((Dictionary<string, List<string>>)
                 vars.DualSettingsByActor).ContainsKey(uid);
             if (!settings.ContainsKey(setting) && !hasDualSetting) continue;
-
             long[] previous;
             if (((Dictionary<string, long[]>)vars.ActorSeen).TryGetValue(uid, out previous)
                 && previous[0] == (long)actor)

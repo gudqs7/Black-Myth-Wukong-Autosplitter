@@ -114,32 +114,66 @@ init
     vars.ReadActionNames = (Func<IntPtr, string>)(anim =>
     {
         if (anim == IntPtr.Zero) return "";
-        IntPtr montages = vars.Resolver.Read<IntPtr>((IntPtr)((long)anim + 0x88));
-        int montageCount = vars.Resolver.Read<int>((IntPtr)((long)anim + 0x90));
-        if (montages == IntPtr.Zero || montageCount <= 0 || montageCount > 16)
-            return "";
 
+        int[] arrayOffsets = new int[] { 0x88, 0x128, 0x138 };
+        int[] montagePointerOffsets = new int[] { 0x0, 0x18 };
         List<string> names = new List<string>();
-        for (int index = 0; index < montageCount; index++)
+        for (int arrayIndex = 0; arrayIndex < arrayOffsets.Length; arrayIndex++)
         {
-            IntPtr montage = vars.Resolver.Read<IntPtr>(
-                (IntPtr)((long)montages + index * 0x1C8));
-            if (montage == IntPtr.Zero) continue;
-            string montageName = vars.Utils.FNameToString(
-                vars.Resolver.Read<ulong>((IntPtr)((long)montage + 0x18)));
-            if (string.IsNullOrEmpty(montageName)) continue;
-            if (montageName.Equals("None", StringComparison.OrdinalIgnoreCase)) continue;
+            int arrayOffset = arrayOffsets[arrayIndex];
+            IntPtr montages = vars.Resolver.Read<IntPtr>(
+                (IntPtr)((long)anim + arrayOffset));
+            int montageCount = vars.Resolver.Read<int>(
+                (IntPtr)((long)anim + arrayOffset + 8));
+            int montageCapacity = vars.Resolver.Read<int>(
+                (IntPtr)((long)anim + arrayOffset + 12));
+            if (montages == IntPtr.Zero
+                || montageCount <= 0
+                || montageCount > 16
+                || montageCapacity < montageCount
+                || montageCapacity > montageCount + 64)
+                continue;
 
-            bool duplicate = false;
-            for (int nameIndex = 0; nameIndex < names.Count; nameIndex++)
+            for (int index = 0; index < montageCount; index++)
             {
-                if (names[nameIndex].Equals(montageName, StringComparison.OrdinalIgnoreCase))
+                IntPtr item = (IntPtr)((long)montages + index * 0x1C8);
+                IntPtr montage = IntPtr.Zero;
+                string montageName = "";
+                for (int pointerIndex = 0;
+                    pointerIndex < montagePointerOffsets.Length;
+                    pointerIndex++)
                 {
-                    duplicate = true;
+                    int pointerOffset = montagePointerOffsets[pointerIndex];
+                    IntPtr candidate = vars.Resolver.Read<IntPtr>(
+                        (IntPtr)((long)item + pointerOffset));
+                    if (candidate == IntPtr.Zero) continue;
+                    string candidateClass =
+                        ((Func<IntPtr, string>)vars.ReadClassName)(candidate);
+                    if (string.IsNullOrEmpty(candidateClass)
+                        || !candidateClass.Contains("AnimMontage"))
+                        continue;
+                    string candidateName = vars.Utils.FNameToString(
+                        vars.Resolver.Read<ulong>((IntPtr)((long)candidate + 0x18)));
+                    if (string.IsNullOrEmpty(candidateName)
+                        || candidateName.Equals("None", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    montage = candidate;
+                    montageName = candidateName;
                     break;
                 }
+                if (montage == IntPtr.Zero) continue;
+
+                bool duplicate = false;
+                for (int nameIndex = 0; nameIndex < names.Count; nameIndex++)
+                {
+                    if (names[nameIndex].Equals(montageName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        duplicate = true;
+                        break;
+                    }
+                }
+                if (!duplicate) names.Add(montageName);
             }
-            if (!duplicate) names.Add(montageName);
         }
 
         names.Sort(StringComparer.OrdinalIgnoreCase);
@@ -820,6 +854,22 @@ update
             if (deathAction)
                 deathActionSeen = true;
 
+            bool actionChanged = sameActor
+                ? actionNames != previousAction
+                : !string.IsNullOrEmpty(actionNames);
+            if (actionChanged)
+            {
+                if (string.IsNullOrEmpty(actorClass))
+                    actorClass = ((Func<IntPtr, string>)vars.ReadClassName)(actor);
+
+                string currentAction = string.IsNullOrEmpty(actionNames)
+                    ? "<none>" : actionNames;
+                ((Action<string>)vars.Log)(
+                    "[BMW-action] actor action changed: uid=" + uid
+                    + " action=" + currentAction
+                    + " deathAction=" + deathAction);
+            }
+
             actionStates[uid] = new string[]
             {
                 actorKey,
@@ -835,7 +885,6 @@ update
             bool hasDualSetting = ((Dictionary<string, List<string>>)
                 vars.DualSettingsByActor).ContainsKey(uid);
             if (!settings.ContainsKey(setting) && !hasDualSetting) continue;
-
             long[] previous;
             if (((Dictionary<string, long[]>)vars.ActorSeen).TryGetValue(uid, out previous)
                 && previous[0] == (long)actor)

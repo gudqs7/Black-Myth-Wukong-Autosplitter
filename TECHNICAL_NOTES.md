@@ -22,9 +22,12 @@
 ### 指定动作 Montage
 
 - 读取 AnimInstance 当前活动 Montage 名称，按名称精确匹配（不区分大小写）。
+- 当前构建需合并读取 `AnimInstance+0x88`、`+0x128`、`+0x138` 三组活动 Montage 数组；灵虚子的攻击和 `BIdle` 会进入后两组，只读主数组会在初见战斗阶段漏掉 action。
+- Montage 数组 item 的指针位置存在版本/实例差异：需同时尝试 `item+0` 和 `item+0x18`，并用对象类名必须包含 `AnimMontage` 做校验。
 - 配置格式为 `Action_UGuid.*@动作名`，动作名末尾加 `*` 可做前缀匹配，单独的 `*` 匹配任意非空动作。
 - `Action_` 设置独立于 `Dead_`/`Montage_`/`Despawn_` 解析，因此同一 UGuid 可以配置多个事件。
-- 逐动作变化日志默认关闭；Actor 消失日志和死亡 Montage 日志仍会输出当前/最终动作与可复制设置键。
+- 逐动作变化日志当前直接开启，只输出 `uid`、`action` 和 `deathAction`；不再输出 AnimInstance、数组头或 item 指针详情。
+- Actor 消失日志和死亡 Montage 日志仍会输出当前/最终动作与可复制设置键。
 
 ### 击杀慢动作
 
