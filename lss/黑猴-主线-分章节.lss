@@ -409,7 +409,7 @@
       <Setting id="Despawn_UGuid.MGD.yangjian.start" type="bool">True</Setting>
       <Setting id="Chapter1Bosses" type="bool">True</Setting>
       <Setting id="Chapter1MainBosses" type="bool">True</Setting>
-      <Setting id="Despawn_UGuid.HFS.Niu.Teacher" type="bool">True</Setting>
+      <Setting id="Montage_UGuid.HFS.Niu.Teacher" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HFS.GuangZhi" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HFS.TongChi01" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HFS.DBL0" type="bool">True</Setting>

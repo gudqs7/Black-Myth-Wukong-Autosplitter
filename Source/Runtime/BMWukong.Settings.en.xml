@@ -6,7 +6,7 @@
     </Setting>
     <Setting Id="Chapter1Bosses" Label="Chapter 1 - Black Wind Mountain" State="true">
         <Setting Id="Chapter1MainBosses" Label="Main Bosses" State="true">
-            <Setting Id="Despawn_UGuid.HFS.Niu.Teacher" Label="Bullguard" State="true"/>
+            <Setting Id="Montage_UGuid.HFS.Niu.Teacher" Label="Bullguard" State="true"/>
             <Setting Id="Dead_UGuid.HFS.GuangZhi" Label="Guangzhi" State="true"/>
             <Setting Id="Dead_UGuid.HFS.TongChi01" Label="Wandering Wight" State="true"/>
             <Setting Id="Dead_UGuid.HFS.DBL0" Label="Lingxuzi" State="true"/>
