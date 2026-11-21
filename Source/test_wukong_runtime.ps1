@@ -194,7 +194,8 @@ $expectedParents = @{
     'Dead_UGuid.LYS.TuiSeng.P1' = 'Chapter3ChiefBosses'
     'Dead_UGuid.LYS.TuiSeng.P2' = 'Chapter3ChiefBosses'
     'Dead_TAMER_psd_renshenjing_02a' = 'Chapter3ChiefBosses'
-    'Dead_TAMER_psd_wulong_C_4' = 'Chapter4YaoguaiKingBosses'
+    'Montage_UGuid.PSD.WuLong' = 'Chapter4YaoguaiKingBosses'
+    'Montage_UGuid.PSD.WuLong.4H' = 'Chapter4YaoguaiKingBosses'
     'Dead_UGuid.PSD.Dage' = 'Chapter4YaoguaiKingBosses'
     'Dead_UGuid.ZYS.XieZi.MRXG' = 'Chapter4YaoguaiKingBosses'
     'Montage_UGuid.ZYS.MRXG' = 'Chapter4YaoguaiKingBosses'
@@ -266,8 +267,6 @@ if ($legacyBossSettings.Count -gt 0) {
 }
 $expectedDirectTamerSettings = @(
     'Dead_TAMER_hfm_hou_01a',
-    'Dead_TAMER_psd_wulong_C_4',
-    'Dead_TAMER_psd_wulong_C_3',
     'Dead_TAMER_HFM_ShiTongLing_02a',
     'Dead_TAMER_hys_shixianfeng_02',
     'Dead_TAMER_hys_huolingsha_01',
@@ -562,8 +561,6 @@ if ($aslText.Contains('BossActorAliases')) {
 }
 foreach ($directId in @(
     'Dead_TAMER_hfm_hou_01a',
-    'Dead_TAMER_psd_wulong_C_4',
-    'Dead_TAMER_psd_wulong_C_3',
     'Dead_TAMER_HFM_ShiTongLing_02a',
     'Dead_TAMER_hys_shixianfeng_02',
     'Dead_TAMER_hys_huolingsha_01',

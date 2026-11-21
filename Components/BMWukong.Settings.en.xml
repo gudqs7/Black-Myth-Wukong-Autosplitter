@@ -93,8 +93,8 @@
             <Setting Id="Dead_UGuid.PSD.BaiYanMoJun" Label="Hundred-Eyed Daoist Master" State="true"/>
         </Setting>
         <Setting Id="Chapter4YaoguaiKingBosses" Label="All Yaoguai Kings" State="true">
-            <Setting Id="Dead_TAMER_psd_wulong_C_4" Label="Venom Daoist (First Encounter)" State="true"/>
-            <Setting Id="Dead_TAMER_psd_wulong_C_3" Label="Venom Daoist (Before Purple Cloud Mountain)" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.WuLong" Label="Venom Daoist (First Encounter)" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.WuLong.4H" Label="Venom Daoist (Before Purple Cloud Mountain)" State="true"/>
             <Setting Id="Dead_UGuid.PSD.Dage" Label="Yellow Loong" State="true"/>
             <Setting Id="Dead_UGuid.ZYS.XieZi.MRXG" Label="The Scorpionlord" State="false"/>
             <Setting Id="Montage_UGuid.ZYS.MRXG" Label="The Duskveil" State="true"/>

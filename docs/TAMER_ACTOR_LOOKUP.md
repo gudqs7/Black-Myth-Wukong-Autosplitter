@@ -98,11 +98,12 @@ GUID-TAMER_hfm_hou_01a_C_1@_1
   -> Dead_TAMER_hfm_hou_01a
 ```
 
-同一基础 Tamer 对应多个独立战斗时，使用完整后缀：
+只有没有稳定 UGuid、但同一基础 Tamer 对应多个独立战斗时，才考虑完整后缀。
+当前黑手道人以用户确认的 UGuid/死亡 Montage 设置为准：
 
 ```text
-Dead_TAMER_psd_wulong_C_4   # 黑手道人(初见)
-Dead_TAMER_psd_wulong_C_3   # 黑手道人(进紫云山前)
+Montage_UGuid.PSD.WuLong      # 黑手道人(初见)
+Montage_UGuid.PSD.WuLong.4H   # 黑手道人(进紫云山前)
 ```
 
 前缀语义仍与其他 Boss 一致：
@@ -120,8 +121,8 @@ Action_TAMER_*@* 只接受匹配的当前动作 Montage
 |---|---|---|
 | 百目真人 | `GUID-TAMER_hfm_hou_01a_C_1@_1` | `Dead_TAMER_hfm_hou_01a` |
 | 老人参精 | `GUID-TAMER_psd_renshenjing_02a_C_1@_1` | `Dead_TAMER_psd_renshenjing_02a` |
-| 黑手道人·初见 | `GUID-TAMER_psd_wulong_C_4@_1` | `Dead_TAMER_psd_wulong_C_4` |
-| 黑手道人·进紫云山前 | `GUID-TAMER_psd_wulong_C_3@_1` | `Dead_TAMER_psd_wulong_C_3` |
+| 黑手道人·初见 | `GUID-TAMER_psd_wulong_C_4@_1` | `Montage_UGuid.PSD.WuLong` |
+| 黑手道人·进紫云山前 | `GUID-TAMER_psd_wulong_C_3@_1` | `Montage_UGuid.PSD.WuLong.4H` |
 | 燧统领 | `GUID-TAMER_HFM_ShiTongLing_02a_C_3@_1` | `Dead_TAMER_HFM_ShiTongLing_02a` |
 | 燧先锋 | `GUID-TAMER_hys_shixianfeng_02_C_8@_1` | `Dead_TAMER_hys_shixianfeng_02` |
 | 火灵元母 | `GUID-TAMER_hys_huolingsha_01_C_1@_1` | `Dead_TAMER_hys_huolingsha_01` |

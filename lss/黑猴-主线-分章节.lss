@@ -483,8 +483,8 @@
       <Setting id="Dead_UGuid.PSD.LaoZhiZhu" type="bool">True</Setting>
       <Setting id="Dead_UGuid.PSD.BaiYanMoJun" type="bool">True</Setting>
       <Setting id="Chapter4YaoguaiKingBosses" type="bool">True</Setting>
-      <Setting id="Dead_TAMER_psd_wulong_C_4" type="bool">True</Setting>
-      <Setting id="Dead_TAMER_psd_wulong_C_3" type="bool">True</Setting>
+      <Setting id="Montage_UGuid.PSD.WuLong" type="bool">True</Setting>
+      <Setting id="Montage_UGuid.PSD.WuLong.4H" type="bool">True</Setting>
       <Setting id="Dead_UGuid.PSD.Dage" type="bool">True</Setting>
       <Setting id="Dead_UGuid.ZYS.XieZi.MRXG" type="bool">False</Setting>
       <Setting id="Montage_UGuid.ZYS.MRXG" type="bool">True</Setting>
