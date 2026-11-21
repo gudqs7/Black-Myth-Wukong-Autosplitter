@@ -327,6 +327,9 @@ if ($defaultYangjian.State -ne 'true' -or $englishYangjian.State -ne 'true') {
 }
 
 $aslText = [IO.File]::ReadAllText($aslPath)
+if (-not $aslText.Contains('vars.MinBossActorSeenTicks = TimeSpan.TicksPerMillisecond * 500;')) {
+    throw "Generated ASL must use the 500ms Boss Actor observation window."
+}
 if (-not $aslText.Contains('vars.LoadingStateSlot = vars.Uhara.ScanRel(')) {
     throw "Generated ASL does not resolve the BGWGameInstance loading state slot."
 }

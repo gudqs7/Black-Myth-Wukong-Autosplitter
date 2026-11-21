@@ -566,7 +566,7 @@ init
     });
 
     vars.ScanIntervalTicks = TimeSpan.TicksPerMillisecond * 50;
-    vars.MinBossActorSeenTicks = TimeSpan.TicksPerMillisecond * 1500;
+    vars.MinBossActorSeenTicks = TimeSpan.TicksPerMillisecond * 500;
     vars.NextActorScanTicks = 0L;
     vars.LastUpdateErrorTicks = 0L;
     vars.LastSlowMotion = false;

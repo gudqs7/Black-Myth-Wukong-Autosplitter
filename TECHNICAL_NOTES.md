@@ -58,7 +58,7 @@ UWorldSettings + 0x3A8
 ### Actor 消失
 
 - `Despawn_UGuid.*` 只在 Actor 从当前世界真正消失时打点。
-- 最短观察时间为 1500 ms，避免加载过程中的瞬态 Actor 误触发。
+- 最短观察时间为 500 ms，避免加载过程中的瞬态 Actor 误触发。
 - 这是死亡 Montage 不可靠时的显式回退，不依赖 `bHidden`。
 
 ### 双 Boss

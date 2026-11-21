@@ -754,7 +754,7 @@ init
 
     // 5. 扫描节流和判定窗口。
     // ScanIntervalTicks：Actor 扫描的最小间隔，固定 50ms，避免逐帧遍历世界。
-    // MinBossActorSeenTicks：Actor 必须持续存在 1500ms 才允许死亡/慢动作判定。
+    // MinBossActorSeenTicks：Actor 必须持续存在 500ms 才允许死亡/慢动作/消失判定。
     // NextActorScanTicks：下一次允许扫描的 UTC ticks；0 表示立即可扫描。
     // LastUpdateErrorTicks：update 异常日志限频，最多每秒一条。
     // LastSlowMotion：上一轮慢动作布尔值，用于只处理 false -> true 边沿。
@@ -1230,7 +1230,7 @@ update
             else
             {
                 // Actor 指针变化说明同一 UID 换成了新实例；清除旧实例的双 Boss
-                // Montage 命中，并以当前时间重新开始 1500ms 观察窗口。
+                // Montage 命中，并以当前时间重新开始 500ms 观察窗口。
                 vars.ResetDualActor(uid);
                 nextSeen[uid] = new long[]
                 {
@@ -1292,7 +1292,7 @@ update
         vars.LastSlowMotion = slowMotion;
 
         // Despawn_* 只在已配置 Actor 真正从当前世界消失时打点。
-        // 仅比较上一轮 ActorSeen 和本轮 nextSeen；仍要求观察满 1500ms，
+        // 仅比较上一轮 ActorSeen 和本轮 nextSeen；仍要求观察满 500ms，
         // 且只接受 Despawn_ 前缀，防止加载瞬态或旧实例被误打点。
         foreach (KeyValuePair<string, long[]> pair
             in (Dictionary<string, long[]>)vars.ActorSeen)
