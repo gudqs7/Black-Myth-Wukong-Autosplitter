@@ -17,6 +17,16 @@ comment-free runtime distribution.
   them from `Source/Runtime`.
 - Preserve user-selected `State="true"` / `State="false"` values in
   `BMWukong.Settings.xml` unless the requested change explicitly covers them.
+- Invoke delegates and collection methods stored on `vars` directly; do not
+  add explicit delegate or collection type wrappers around the call. Use
+  `vars.Log(...)`, `vars.IsSettingEnabled(...)`, and
+  `vars.PendingSplits.Enqueue(...)`, not `((Action<string>)vars.Log)(...)`,
+  `((Func<...>)vars.X)(...)`, or
+  `((Queue<string>)vars.PendingSplits).Enqueue(...)`. Keep explicit delegate
+  types when assigning an implementation to `vars`, such as
+  `vars.Log = (Action<string>)(...)`.
+- Keep structural source checks in `Source/test_wukong_runtime.ps1` aligned
+  with the direct-call form.
 
 ## Source map
 
@@ -93,6 +103,12 @@ The test must report `WUKONG_LSS_TEST_OK`, `ASL_PARSE_OK`, and `WUKONG_RUNTIME_T
 
 - The splitter observes all `UGuid___*` actors for appearance/despawn logs but
   performs split logic only for configured Boss settings through `uhara10-BMW`.
+- Some Boss actors use runtime names such as
+  `GUID-TAMER_hfm_hou_01a_C_1@_1` instead of `UGuid___*`. These use direct
+  `Dead_TAMER_*` settings; appearance logs include both the resolved Tamer key
+  and the raw object name.
+- Detailed live lookup and resource-table workflow:
+  [docs/TAMER_ACTOR_LOOKUP.md](docs/TAMER_ACTOR_LOOKUP.md).
 - Action Montage detection reads `AnimInstance+0x88`, `+0x128`, and `+0x138`,
   tries both `item+0` and `item+0x18` pointer layouts, and accepts only objects
   whose class name contains `AnimMontage`.
@@ -109,8 +125,8 @@ The test must report `WUKONG_LSS_TEST_OK`, `ASL_PARSE_OK`, and `WUKONG_RUNTIME_T
 - Each chapter wraps Main Bosses, All Yaoguai Kings, and Yaoguai Chiefs. The
   user-maintained Main Boss list is preserved; remaining entries follow the
   ArtBook CardDesc `UnitType` classification (`0` = king, `2` = chief).
-  Unmapped `Boss_*` entries are retained for manual maintenance and do not
-  trigger the UGuid-only runtime yet.
+  GUID-TAMER actors use direct `Dead_TAMER_*` setting ids. There is no runtime
+  Boss alias table; the setting id itself is the Actor-to-config mapping.
 - All Boss settings default to `State="true"`. Production logging includes all
   UGuid appearance/despawn edges plus loading/cutscene transitions, queued and
   actual splits, and exceptions.

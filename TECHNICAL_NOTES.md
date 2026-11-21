@@ -4,11 +4,15 @@
 
 ## Boss 识别模型
 
-- 以场景中的 `UGuid___*` Actor 作为 Boss 唯一键。
+- 以场景中的 `UGuid___*` Actor 作为主要 Boss 唯一键。
 - Actor 名会转换为形如 `UGuid.HFS.GuangZhi` 的 UID，再映射到设置 ID。
+- 部分 Boss 的运行时 Actor 名不是 `UGuid___*`，而是 `GUID-TAMER_xxx_C_n@_n`。这类 Boss 直接使用 `Dead_TAMER_*` 设置，不维护运行时别名表；出现日志同时记录解析后的 `uid` 和原始 `name`。
 - Actor 扫描间隔为 50 ms，只跟踪配置中存在的 Boss Actor。
 - 每个 Actor 的缓存只保留 Actor 指针、首次观察时间和死亡 Montage 是否已触发。
 - 世界切换、计时器重置和双 Boss 进度重置都走同一套清理流程。
+
+GUID-TAMER Actor 的完整查找、名称确认和 setting 转换流程见
+[docs/TAMER_ACTOR_LOOKUP.md](docs/TAMER_ACTOR_LOOKUP.md)。
 
 ## 打点信号
 
@@ -94,6 +98,7 @@ Dual_UGuid.A+UGuid.B
 ## 验证清单
 
 - 普通 Boss 的死亡 Montage。
+- 百目真人与其他 `GUID-TAMER` 命名的 Boss 能产生 actor appeared 日志并命中对应 `Dead_TAMER_*` 设置。
 - 高闪避频率下的完美闪避、识破和退寸均不触发慢动作打点。
 - Boss 击杀慢动作能正常触发。
 - `Montage_UGuid.*` 不被慢动作或消失信号触发。

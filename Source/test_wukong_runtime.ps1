@@ -126,7 +126,7 @@ $expectedMain = @{
     2 = @('Dead_UGuid.HFM.FuZiShu.ZS0','Dead_UGuid.HFM.ShiXianFeng','Dead_UGuid.HFM.HuXianFeng.Hu0','Dead_UGuid.HFM.HFDS.H0')
     3 = @('Action_UGuid.LYS.XueHou.NM@AM_lys_xuehou_leave_01','Montage_UGuid.LYS.XueHou.NM','Montage_UGuid.LYS.KJL.Long','Dead_UGuid.LYS.Mo_01','Montage_UGuid.LYS.XueHou.AnShen','Dead_UGuid.LYS.KJL.Women','Dead_UGuid.LYS.SengMian','Dead_UGuid.LYS.SengMian02','Dead_UGuid.LYS.Mo2','Action_UGuid.LYS.HuangMei.Big@AM_LYS_HuangMei_02_FinalTWZ','Dead_UGuid.LYS.RBM','Dead_UGuid.LYS.HuangMei.Small')
     4 = @('Dead_UGuid.PSD.Erjie.Village','Dead_UGuid.PSD.FSC01.foshouchong','Dead_UGuid.PSD.Wa.01','Dead_UGuid.PSD.BaJie.Mo','Montage_UGuid.PSD.BaJie.Ye','Dead_UGuid.PSD.LaoZhiZhu','Dead_UGuid.PSD.BaiYanMoJun')
-    5 = @('Dual_UGuid.HYS.JiRuHuo01+UGuid.HYS.KuaiRuFeng01','Dual_UGuid.HYS.WuLiYun+UGuid.HYS.YunLiWu','Dead_UGuid.HYS.HongHaiEr','Dead_UGuid.HYS.YeChaWang')
+    5 = @('Dual_UGuid.HYS.JiRuHuo01+UGuid.HYS.KuaiRuFeng01','Dead_TAMER_hys_huijingtitan_01','Dual_UGuid.HYS.WuLiYun+UGuid.HYS.YunLiWu','Dead_UGuid.HYS.HongHaiEr','Dead_UGuid.HYS.YeChaWang')
     6 = @('Dead_UGuid.BYS.WLG.01','Dead_UGuid.BYS.Xiniu','Dead_UGuid.BYS.Xuelu','Montage_UGuid.BYS.TangLang','Dead_UGuid.MGD.Yuan','Dead_UGuid.MGD.JSDS.P2')
 }
 foreach ($chapter in 1..6) {
@@ -154,8 +154,8 @@ foreach ($chapter in 1..6) {
 
 $bossSettings = @($defaultDocument.SelectNodes('//Setting[not(Setting) and (starts-with(@Id,"Dead_") or starts-with(@Id,"Dual_") or starts-with(@Id,"Despawn_") or starts-with(@Id,"Montage_") or starts-with(@Id,"Action_") or starts-with(@Id,"UGuid.") or starts-with(@Id,"Boss_"))]'))
 $expectedDisabledBossIds = @(
-    'Dead_UGuid.HFM.YSCheng',
-    'Dead_UGuid.ZYS.XieZi.MRXG'
+    'Dead_UGuid.ZYS.XieZi.MRXG',
+    'Dead_TAMER_hys_huijingtitan_01'
 )
 $disabledBossSettings = @($bossSettings | Where-Object { $_.State -ne 'true' })
 $unexpectedDisabledBossSettings = @($disabledBossSettings | Where-Object { $_.Id -notin $expectedDisabledBossIds })
@@ -193,8 +193,8 @@ $expectedParents = @{
     'Dead_UGuid.LYS.Mo3.FM' = 'Chapter3ChiefBosses'
     'Dead_UGuid.LYS.TuiSeng.P1' = 'Chapter3ChiefBosses'
     'Dead_UGuid.LYS.TuiSeng.P2' = 'Chapter3ChiefBosses'
-    'Dead_UGuid.HFM.YSCheng' = 'Chapter3ChiefBosses'
-    'UGuid.PSD.WuLong' = 'Chapter4YaoguaiKingBosses'
+    'Dead_TAMER_psd_renshenjing_02a' = 'Chapter3ChiefBosses'
+    'Dead_TAMER_psd_wulong_C_4' = 'Chapter4YaoguaiKingBosses'
     'Dead_UGuid.PSD.Dage' = 'Chapter4YaoguaiKingBosses'
     'Dead_UGuid.ZYS.XieZi.MRXG' = 'Chapter4YaoguaiKingBosses'
     'Montage_UGuid.ZYS.MRXG' = 'Chapter4YaoguaiKingBosses'
@@ -260,17 +260,23 @@ foreach ($setting in $dualSettings) {
     }
 }
 
-$optionalBossSettings = @($defaultDocument.SelectNodes('//Setting[starts-with(@Id,"Boss_")]'))
-if ($optionalBossSettings.Count -eq 0) {
-    throw "Unmapped optional Boss_* settings must be retained for manual maintenance."
+$legacyBossSettings = @($defaultDocument.SelectNodes('//Setting[starts-with(@Id,"Boss_")]'))
+if ($legacyBossSettings.Count -gt 0) {
+    throw "Legacy Boss_* settings must be replaced by direct Tamer setting ids: $($legacyBossSettings.Id -join ', ')"
 }
-$expectedUnmappedBossIds = @(
-    'Boss_202004', 'Boss_402011',
-    'Boss_502009', 'Boss_502008', 'Boss_502014'
+$expectedDirectTamerSettings = @(
+    'Dead_TAMER_hfm_hou_01a',
+    'Dead_TAMER_psd_wulong_C_4',
+    'Dead_TAMER_psd_wulong_C_3',
+    'Dead_TAMER_HFM_ShiTongLing_02a',
+    'Dead_TAMER_hys_shixianfeng_02',
+    'Dead_TAMER_hys_huolingsha_01',
+    'Dead_TAMER_psd_renshenjing_02a',
+    'Dead_TAMER_hys_huijingtitan_01'
 )
-foreach ($id in $expectedUnmappedBossIds) {
+foreach ($id in $expectedDirectTamerSettings) {
     if ($null -eq $defaultDocument.SelectSingleNode("//Setting[@Id='$id']")) {
-        throw "Unmapped Boss_* setting was removed without a verified replacement: $id"
+        throw "Direct Tamer Boss setting is missing: $id"
     }
 }
 
@@ -532,7 +538,33 @@ if (-not $aslText.Contains('if (source != "despawn"')) {
     throw "Generated ASL does not restrict Despawn_ settings to the despawn source: $aslPath"
 }
 if (-not $aslText.Contains('"[BMW-splitter] actor appeared: uid="') -or -not $aslText.Contains('"[BMW-splitter] actor despawn observed: uid="') -or -not $aslText.Contains('vars.ObservedActors')) {
-    throw "Generated ASL must retain appearance/despawn logs for all UGuid actors: $aslPath"
+    throw "Generated ASL must retain appearance/despawn logs for all tracked Boss actors: $aslPath"
+}
+if (-not $aslText.Contains('vars.StripActorInstanceSuffix = (Func<string, string>)') -or
+    -not $aslText.Contains('vars.ResolveActorUid = (Func<string, string>)') -or
+    -not $aslText.Contains('actorName.IndexOf("-TAMER_", StringComparison.OrdinalIgnoreCase)') -or
+    -not $aslText.Contains('settings.ContainsKey("Dead_" + token)')) {
+    throw "Generated ASL does not resolve GUID-TAMER Boss actors directly through Dead_TAMER_* settings: $aslPath"
+}
+if ($aslText.Contains('BossActorAliases')) {
+    throw "Generated ASL must not contain the removed BossActorAliases table: $aslPath"
+}
+foreach ($directId in @(
+    'Dead_TAMER_hfm_hou_01a',
+    'Dead_TAMER_psd_wulong_C_4',
+    'Dead_TAMER_psd_wulong_C_3',
+    'Dead_TAMER_HFM_ShiTongLing_02a',
+    'Dead_TAMER_hys_shixianfeng_02',
+    'Dead_TAMER_hys_huolingsha_01',
+    'Dead_TAMER_psd_renshenjing_02a',
+    'Dead_TAMER_hys_huijingtitan_01'
+)) {
+    if ($null -eq $defaultDocument.SelectSingleNode("//Setting[@Id='$directId']")) {
+        throw "Generated settings are missing direct Tamer Boss id ${directId}: $aslPath"
+    }
+}
+if (-not $aslText.Contains('+ " name=" + actorName')) {
+    throw "Generated ASL appearance logs do not include the raw Actor name: $aslPath"
 }
 
 if (-not $aslText.Contains('"[BMW-splitter] death montage visible: uid="')) {
@@ -566,7 +598,7 @@ if (-not $aslText.Contains('vars.RegisterDualMontage = (Func<string, bool>)') -o
 if (-not $aslText.Contains('&& !hasDualSetting')) {
     throw "Generated ASL does not exclude dual Boss Actors from single-Boss slow motion: $aslPath"
 }
-if (-not $aslText.Contains('((Func<string, bool>)vars.RegisterDualMontage)(uid);')) {
+if (-not $aslText.Contains('vars.RegisterDualMontage(uid);')) {
     throw "Generated ASL does not feed death-montage edges into dual Boss tracking: $aslPath"
 }
 if ($aslText.Contains('"hidden"') -or
@@ -576,7 +608,7 @@ if ($aslText.Contains('"hidden"') -or
     throw "Generated ASL still contains hidden-based split logic: $aslPath"
 }
 if (-not $aslText.Contains('vars.ResetDualActor = (Action<string>)') -or
-    -not $aslText.Contains('foreach (string setting in ((Dictionary<string, string[]>)vars.DualSplits).Keys)') -or
+    -not $aslText.Contains('foreach (string setting in vars.DualSplits.Keys)') -or
     -not $aslText.Contains('dualHits[setting] = new HashSet<string>();')) {
     throw "Generated ASL does not reset stale dual Boss montage progress: $aslPath"
 }

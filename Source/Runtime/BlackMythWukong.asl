@@ -9,7 +9,8 @@
  * - 注释必须描述当前实现，不能把计划、猜测或已经删除的旧方案写成事实。
  *
  * 运行时约定:
- * - UGuid 是唯一可靠的 Boss 观察键；Boss_* 只保留给尚未完成 UGuid 映射的项。
+ * - UGuid 是主要 Boss 观察键；GUID-TAMER Actor 直接匹配 Dead_TAMER_* 设置，
+ *   设置 ID 本身承担资源映射，不使用运行时别名表。
  * - Dual_UGuid.A+UGuid.B 只在两个 Boss 都出现死亡 Montage 后打点。
  * - Montage_* 只接受死亡 Montage，Despawn_* 只接受 Actor 消失。
  * - Action_<UGuid>@<动作名> 只接受匹配的动作 Montage；动作名和可复制配置键来自 [BMW-action] 日志。
@@ -65,7 +66,7 @@ startup
 
     vars.SettingsPath = settingsPath;
     vars.Uhara.Settings.CreateFromXml(settingsPath);
-    ((Action<string>)vars.Log)("[BMW-loading] settings loaded: " + settingsPath);
+    vars.Log("[BMW-loading] settings loaded: " + settingsPath);
 }
 // LiveSplit 生命周期钩子：init
 // 作用：解析 UE 基础对象、创建内存读取和打点委托、注册过场 Hook，并初始化
@@ -174,7 +175,7 @@ init
             IntPtr component = vars.Resolver.Read<IntPtr>(
                 (IntPtr)((long)componentItems + index * 8));
             if (component == IntPtr.Zero) continue;
-            string componentClass = ((Func<IntPtr, string>)vars.ReadClassName)(component);
+            string componentClass = vars.ReadClassName(component);
             if (!componentClass.Contains("ACharacterComponent")) continue;
 
             mesh = vars.Resolver.Read<IntPtr>((IntPtr)((long)component + 0x40));
@@ -232,7 +233,7 @@ init
                         (IntPtr)((long)item + pointerOffset));
                     if (candidate == IntPtr.Zero) continue;
                     string candidateClass =
-                        ((Func<IntPtr, string>)vars.ReadClassName)(candidate);
+                        vars.ReadClassName(candidate);
                     if (string.IsNullOrEmpty(candidateClass)
                         || !candidateClass.Contains("AnimMontage"))
                         continue;
@@ -344,6 +345,7 @@ init
     // ActionSplitsByActor：UGuid -> 该 Actor 的 Action_ 设置 id 列表。
     // ActionSplitPatterns：Action_ 设置 id -> @ 后面的动作匹配模式。
     // ActorActionState：所有已见 UGuid -> [Actor 指针, 当前动作]。
+    // GUID-TAMER Actor 不维护运行时别名表，而是直接按 Tamer 名匹配 Dead_TAMER_*。
     vars.CompletedSplits = new HashSet<string>();
     vars.ActorSeen = new Dictionary<string, long[]>();
     vars.PendingSplits = new Queue<string>();
@@ -354,6 +356,55 @@ init
     vars.ActionSplitsByActor = new Dictionary<string, List<string>>();
     vars.ActionSplitPatterns = new Dictionary<string, string>();
     vars.ActorActionState = new Dictionary<string, string[]>();
+
+    // StripActorInstanceSuffix 委托。
+    // 入参：GUID-TAMER Actor 名中提取出的完整 Tamer token。
+    // 返回：去掉末尾 _C_<数字> 的 Tamer 资源名；不符合后缀时原样返回。
+    // 原理：百目真人等 Actor 名称形如 TAMER_hfm_hou_01a_C_1@_1，而设置只需
+    // Dead_TAMER_hfm_hou_01a；黑手道人的两个场景则可用完整 _C_3/_C_4 精确区分。
+    vars.StripActorInstanceSuffix = (Func<string, string>)(token =>
+    {
+        int marker = token.LastIndexOf("_C_", StringComparison.OrdinalIgnoreCase);
+        if (marker < 0 || marker + 3 >= token.Length) return token;
+        for (int index = marker + 3; index < token.Length; index++)
+        {
+            if (!char.IsDigit(token[index])) return token;
+        }
+        return token.Substring(0, marker);
+    });
+
+    // ResolveActorUid 委托。
+    // 入参：Actor 的对象名。
+    // 返回：UGuid 唯一键、已配置的 Tamer token，或空字符串表示不跟踪。
+    // 原理：常规 Boss 使用 UGuid___... 名称；GUID-TAMER Actor 先尝试完整
+    // TAMER_xxx_C_n 设置，再回退到 Dead_TAMER_xxx。只有存在对应设置才返回，
+    // 因此普通 Tamer 单位不会进入出现/消失日志。
+    vars.ResolveActorUid = (Func<string, string>)(actorName =>
+    {
+        if (string.IsNullOrEmpty(actorName)) return "";
+        if (actorName.StartsWith("UGuid___", StringComparison.Ordinal))
+            return actorName.Split('@')[0].Replace("___", ".");
+
+        int tokenStart = actorName.IndexOf("-TAMER_", StringComparison.OrdinalIgnoreCase);
+        if (tokenStart < 0) return "";
+        tokenStart += 1;
+        int at = actorName.IndexOf('@', tokenStart);
+        string token = at < 0
+            ? actorName.Substring(tokenStart)
+            : actorName.Substring(tokenStart, at - tokenStart);
+        if (string.IsNullOrEmpty(token)) return "";
+
+        bool fullTracked = settings.ContainsKey("Dead_" + token)
+            || settings.ContainsKey("Montage_" + token)
+            || settings.ContainsKey("Despawn_" + token);
+        if (fullTracked) return token;
+
+        string baseToken = vars.StripActorInstanceSuffix(token);
+        bool baseTracked = settings.ContainsKey("Dead_" + baseToken)
+            || settings.ContainsKey("Montage_" + baseToken)
+            || settings.ContainsKey("Despawn_" + baseToken);
+        return baseTracked ? baseToken : "";
+    });
 
     // IsSettingEnabled 委托。
     // 入参：id 是设置键，defaultValue 是键缺失或读取异常时的回退值。
@@ -376,14 +427,13 @@ init
     // 返回：AutoSplitEnabled 的设置值；缺失时返回 false。
     // 原理：自动打点总开关必须默认关闭，避免首次安装后无意打点。
     vars.IsAutoSplitEnabled = (Func<bool>)(() =>
-        ((Func<string, bool, bool>)vars.IsSettingEnabled)("AutoSplitEnabled", false));
+        vars.IsSettingEnabled("AutoSplitEnabled", false));
 
     // GetActorSetting 委托。
-    // 入参：uid，由 UGuid Actor 名称转换出的 Boss 唯一键。
+    // 入参：uid，由 UGuid Actor 名称或 GUID-TAMER Actor 直接解析出的设置键。
     // 返回：优先存在的 Despawn_ 或 Montage_ 设置；两者都不存在时返回 Dead_ 键。
     // 原理：同一 Actor 只能使用一种打点语义，因此优先级固定为
-    // Despawn_ > Montage_ > Dead_。返回的 Dead_ 键仍可能不在 XML 中，
-    // 调用方必须再用 settings.ContainsKey 判断是否跟踪。
+    // Despawn_ > Montage_ > Dead_。GUID-TAMER Actor 使用同样的前缀规则。
     vars.GetActorSetting = (Func<string, string>)(uid =>
     {
         string despawnSetting = "Despawn_" + uid;
@@ -412,7 +462,7 @@ init
             string[] uids = setting.Substring("Dual_".Length).Split('+');
             if (uids.Length != 2)
             {
-                ((Action<string>)vars.Log)(
+                vars.Log(
                     "[BMW-splitter] invalid dual setting: " + setting);
                 continue;
             }
@@ -423,7 +473,7 @@ init
                 || !uids[0].StartsWith("UGuid.", StringComparison.Ordinal)
                 || !uids[1].StartsWith("UGuid.", StringComparison.Ordinal))
             {
-                ((Action<string>)vars.Log)(
+                vars.Log(
                     "[BMW-splitter] invalid dual setting: " + setting);
                 continue;
             }
@@ -432,7 +482,7 @@ init
                 (Dictionary<string, string[]>)vars.DualSplits;
             if (dualSplits.ContainsKey(setting)) continue;
             dualSplits[setting] = uids;
-            ((Dictionary<string, HashSet<string>>)vars.DualMontageHits)[setting] =
+            vars.DualMontageHits[setting] =
                 new HashSet<string>();
 
             foreach (string uid in uids)
@@ -470,7 +520,7 @@ init
                 || separator >= setting.Length - 1
                 || setting.IndexOf('@', separator + 1) >= 0)
             {
-                ((Action<string>)vars.Log)(
+                vars.Log(
                     "[BMW-action] invalid action setting: " + setting);
                 continue;
             }
@@ -480,7 +530,7 @@ init
             if (!uid.StartsWith("UGuid.", StringComparison.Ordinal)
                 || string.IsNullOrEmpty(pattern))
             {
-                ((Action<string>)vars.Log)(
+                vars.Log(
                     "[BMW-action] invalid action setting: " + setting);
                 continue;
             }
@@ -510,14 +560,14 @@ init
     // PendingSplits。CompletedSplits 在入队前更新，因此同一设置不会重复排队。
     vars.TryQueueSetting = (Func<string, string, bool>)((setting, source) =>
     {
-        if (!((Func<bool>)vars.IsAutoSplitEnabled)()) return false;
+        if (!vars.IsAutoSplitEnabled()) return false;
         if (timer.CurrentPhase != TimerPhase.Running) return false;
-        if (!((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false))
+        if (!vars.IsSettingEnabled(setting, false))
             return false;
-        if (!((HashSet<string>)vars.CompletedSplits).Add(setting)) return false;
+        if (!vars.CompletedSplits.Add(setting)) return false;
 
-        ((Queue<string>)vars.PendingSplits).Enqueue(setting);
-        ((Action<string>)vars.Log)(
+        vars.PendingSplits.Enqueue(setting);
+        vars.Log(
             "[BMW-splitter] split queued: setting=" + setting + " source=" + source);
         return true;
     });
@@ -530,7 +580,7 @@ init
     vars.TryQueueActionSplits = (Func<string, string, bool>)((uid, actionNames) =>
     {
         List<string> settingIds;
-        if (!((Dictionary<string, List<string>>)vars.ActionSplitsByActor)
+        if (!vars.ActionSplitsByActor
             .TryGetValue(uid, out settingIds))
         {
             return false;
@@ -539,18 +589,18 @@ init
         bool queued = false;
         foreach (string setting in settingIds)
         {
-            if (((HashSet<string>)vars.CompletedSplits).Contains(setting)) continue;
+            if (vars.CompletedSplits.Contains(setting)) continue;
 
             string pattern;
-            if (!((Dictionary<string, string>)vars.ActionSplitPatterns)
+            if (!vars.ActionSplitPatterns
                 .TryGetValue(setting, out pattern))
             {
                 continue;
             }
-            if (!((Func<string, string, bool>)vars.MatchAction)(actionNames, pattern))
+            if (!vars.MatchAction(actionNames, pattern))
                 continue;
 
-            if (((Func<string, string, bool>)vars.TryQueueSetting)(
+            if (vars.TryQueueSetting(
                 setting,
                 "action:" + pattern))
             {
@@ -568,8 +618,8 @@ init
     // Despawn_* 只接受 despawn。Dual_* 不经过这里，避免单个 Boss 提前触发。
     vars.TryQueueSplit = (Func<string, string, bool>)((uid, source) =>
     {
-        string setting = ((Func<string, string>)vars.GetActorSetting)(uid);
-        if (!((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false))
+        string setting = vars.GetActorSetting(uid);
+        if (!vars.IsSettingEnabled(setting, false))
             return false;
         if (source != "despawn"
             && setting.StartsWith("Despawn_", StringComparison.Ordinal))
@@ -578,7 +628,7 @@ init
             && setting.StartsWith("Montage_", StringComparison.Ordinal))
             return false;
 
-        return ((Func<string, string, bool>)vars.TryQueueSetting)(setting, source);
+        return vars.TryQueueSetting(setting, source);
     });
 
     // RegisterDualMontage 委托。
@@ -589,7 +639,7 @@ init
     vars.RegisterDualMontage = (Func<string, bool>)(uid =>
     {
         List<string> dualSettings;
-        if (!((Dictionary<string, List<string>>)vars.DualSettingsByActor)
+        if (!vars.DualSettingsByActor
             .TryGetValue(uid, out dualSettings))
         {
             return false;
@@ -597,10 +647,10 @@ init
 
         foreach (string setting in dualSettings)
         {
-            if (((HashSet<string>)vars.CompletedSplits).Contains(setting)) continue;
+            if (vars.CompletedSplits.Contains(setting)) continue;
 
             string[] pair;
-            if (!((Dictionary<string, string[]>)vars.DualSplits)
+            if (!vars.DualSplits
                 .TryGetValue(setting, out pair))
             {
                 continue;
@@ -617,7 +667,7 @@ init
             hits.Add(uid);
             if (hits.Contains(pair[0]) && hits.Contains(pair[1]))
             {
-                ((Func<string, string, bool>)vars.TryQueueSetting)(
+                vars.TryQueueSetting(
                     setting,
                     "dual-montage");
             }
@@ -633,13 +683,13 @@ init
     vars.ResetDualActor = (Action<string>)(uid =>
     {
         List<string> dualSettings;
-        if (((Dictionary<string, List<string>>)vars.DualSettingsByActor)
+        if (vars.DualSettingsByActor
             .TryGetValue(uid, out dualSettings))
         {
             foreach (string setting in dualSettings)
             {
                 HashSet<string> hits;
-                if (((Dictionary<string, HashSet<string>>)vars.DualMontageHits)
+                if (vars.DualMontageHits
                     .TryGetValue(setting, out hits))
                 {
                     hits.Remove(uid);
@@ -660,7 +710,7 @@ init
         vars.ActorActionState = new Dictionary<string, string[]>();
         Dictionary<string, HashSet<string>> dualHits =
             (Dictionary<string, HashSet<string>>)vars.DualMontageHits;
-        foreach (string setting in ((Dictionary<string, string[]>)vars.DualSplits).Keys)
+        foreach (string setting in vars.DualSplits.Keys)
             dualHits[setting] = new HashSet<string>();
         vars.LastSlowMotion = false;
     });
@@ -672,8 +722,8 @@ init
     // 双 Boss 命中、待处理队列和扫描节流；StartArmed 也在这里清除。
     vars.ResetSession = (Action)(() =>
     {
-        ((HashSet<string>)vars.CompletedSplits).Clear();
-        ((Action)vars.ClearActorTracking)();
+        vars.CompletedSplits.Clear();
+        vars.ClearActorTracking();
         vars.PendingSplits = new Queue<string>();
         vars.NextActorScanTicks = 0L;
         vars.StartArmed = false;
@@ -756,8 +806,8 @@ init
             IntPtr player = (IntPtr)current.SeqPlayerPlayInstance;
             if (player != IntPtr.Zero)
             {
-                byte status = ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(player);
-                string sequenceName = ((Func<IntPtr, string>)vars.ReadSequenceName)(player);
+                byte status = vars.ReadSequenceStatus(player);
+                string sequenceName = vars.ReadSequenceName(player);
                 bool cutsceneSequence = sequenceName.IndexOf(
                         "LS_", StringComparison.OrdinalIgnoreCase) >= 0
                     || sequenceName.IndexOf("cpt", StringComparison.OrdinalIgnoreCase) >= 0
@@ -771,7 +821,7 @@ init
                     vars.ActiveSequencePlayTicks = nowTicks;
                     vars.CutscenePending = true;
                 }
-                ((Action<string>)vars.Log)(
+                vars.Log(
                     "[BMW-seq] play player=0x" + player.ToInt64().ToString("X")
                     + " status=" + status
                     + " cutscene=" + cutsceneSequence
@@ -789,11 +839,11 @@ init
             bool matchesActive = player != IntPtr.Zero && player == activePlayer;
             byte status = player == IntPtr.Zero
                 ? (byte)0
-                : ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(player);
+                : vars.ReadSequenceStatus(player);
             string sequenceName = player == IntPtr.Zero
                 ? ""
-                : ((Func<IntPtr, string>)vars.ReadSequenceName)(player);
-            ((Action<string>)vars.Log)(
+                : vars.ReadSequenceName(player);
+            vars.Log(
                 "[BMW-seq] stop player=0x" + player.ToInt64().ToString("X")
                 + " active=0x" + activePlayer.ToInt64().ToString("X")
                 + " match=" + matchesActive
@@ -802,7 +852,7 @@ init
             if (matchesActive)
             {
                 vars.ActiveSequencePlayer = IntPtr.Zero;
-                ((Action<string>)vars.Log)(
+                vars.Log(
                     "[BMW-seq] end reason=stop player=0x"
                     + player.ToInt64().ToString("X")
                     + " name=" + sequenceName);
@@ -823,8 +873,8 @@ init
                 && cameraCutsElapsed > (long)vars.SeqCameraCutsGuardTicks;
             string sequenceName = player == IntPtr.Zero
                 ? ""
-                : ((Func<IntPtr, string>)vars.ReadSequenceName)(player);
-            ((Action<string>)vars.Log)(
+                : vars.ReadSequenceName(player);
+            vars.Log(
                 "[BMW-seq] camera-cuts player=0x" + player.ToInt64().ToString("X")
                 + " active=0x" + activePlayer.ToInt64().ToString("X")
                 + " match=" + matchesActive
@@ -834,7 +884,7 @@ init
             if (controlReturned)
             {
                 vars.ActiveSequencePlayer = IntPtr.Zero;
-                ((Action<string>)vars.Log)(
+                vars.Log(
                     "[BMW-seq] end reason=camera-cuts player=0x"
                     + player.ToInt64().ToString("X")
                     + " elapsedMs=" + cameraCutsElapsed
@@ -854,7 +904,7 @@ init
                     vars.Resolver.Read<ulong>((IntPtr)((long)bink + 0x18)));
             }
             bool chapterEndBink = binkName == "BinkMoviePlayer_Chapter";
-            ((Action<string>)vars.Log)(
+            vars.Log(
                 "[BMW-bink] play player=0x" + bink.ToInt64().ToString("X")
                 + " chapter=" + chapterEndBink
                 + " participates=" + chapterEndBink
@@ -886,7 +936,7 @@ init
                 && chapterEndBink
                 && stopElapsed >= 0
                 && stopElapsed <= (long)vars.BinkEarlyStopGuardTicks;
-            ((Action<string>)vars.Log)(
+            vars.Log(
                 "[BMW-bink] stop player=0x" + bink.ToInt64().ToString("X")
                 + " active=0x" + activeBink.ToInt64().ToString("X")
                 + " chapter=" + chapterEndBink
@@ -897,7 +947,7 @@ init
             if (matchesActive && !earlyStop)
             {
                 vars.ActiveBinkPlayer = IntPtr.Zero;
-                ((Action<string>)vars.Log)(
+                vars.Log(
                     "[BMW-bink] end reason=stop player=0x"
                     + bink.ToInt64().ToString("X")
                     + " elapsedMs=" + stopElapsed
@@ -910,13 +960,13 @@ init
         IntPtr activeSequence = (IntPtr)vars.ActiveSequencePlayer;
         if (activeSequence != IntPtr.Zero)
         {
-            byte status = ((Func<IntPtr, byte>)vars.ReadSequenceStatus)(activeSequence);
+            byte status = vars.ReadSequenceStatus(activeSequence);
             if (status != 1)
             {
-                string sequenceName = ((Func<IntPtr, string>)vars.ReadSequenceName)(
+                string sequenceName = vars.ReadSequenceName(
                     activeSequence);
                 vars.ActiveSequencePlayer = IntPtr.Zero;
-                ((Action<string>)vars.Log)(
+                vars.Log(
                     "[BMW-seq] end reason=status player=0x"
                     + activeSequence.ToInt64().ToString("X")
                     + " status=" + status
@@ -959,7 +1009,7 @@ update
         vars.NativeLoadingPending = nativeLoadingState != 0;
 
         // 过场 Hook 和原生加载状态每轮都更新；Actor 扫描则严格限制为 50ms 一次。
-        ((Action)vars.UpdateCutsceneHooks)();
+        vars.UpdateCutsceneHooks();
 
         long nowTicks = DateTime.UtcNow.Ticks;
         if (nowTicks < (long)vars.NextActorScanTicks) return;
@@ -972,7 +1022,7 @@ update
         {
             current.World = "";
             current.WorldPending = true;
-            ((Action)vars.ClearActorTracking)();
+            vars.ClearActorTracking();
             vars.LastWorld = "";
             vars.LastWorldPtr = IntPtr.Zero;
             return;
@@ -984,7 +1034,7 @@ update
         {
             current.World = "";
             current.WorldPending = true;
-            ((Action)vars.ClearActorTracking)();
+            vars.ClearActorTracking();
             vars.LastWorld = "";
             vars.LastWorldPtr = IntPtr.Zero;
             return;
@@ -1006,10 +1056,10 @@ update
         {
             if (!string.IsNullOrEmpty(previousWorld))
             {
-                ((Action<string>)vars.Log)(
+                vars.Log(
                     "[BMW-loading] world changed: " + previousWorld + " -> " + worldName);
             }
-            ((Action)vars.ClearActorTracking)();
+            vars.ClearActorTracking();
             vars.PendingSplits = new Queue<string>();
             vars.LastWorld = worldName;
             vars.LastWorldPtr = worldPtr;
@@ -1039,8 +1089,8 @@ update
         HashSet<string> previousObservedActors = (HashSet<string>)vars.ObservedActors;
         HashSet<string> observedActors = new HashSet<string>();
 
-        // 逐个读取 Actor 指针和对象名，只处理名称以 UGuid___ 开头的实体。
-        // UID 规则：取 @ 前的名称，并把三个下划线替换为一个点。
+        // 逐个读取 Actor 指针和对象名。常规 Boss 由 UGuid___ 名称识别；
+        // 少数场景 Actor 的运行时名称为 GUID-TAMER_xxx_C_n@_n，由别名表还原设置 id。
         for (int index = 0; index < actorCount; index++)
         {
             IntPtr actor = vars.Resolver.Read<IntPtr>(
@@ -1050,18 +1100,19 @@ update
             string actorName = vars.Utils.FNameToString(
                 vars.Resolver.Read<ulong>((IntPtr)((long)actor + 0x18)));
             if (string.IsNullOrEmpty(actorName)) continue;
-            if (!actorName.StartsWith("UGuid___", StringComparison.Ordinal)) continue;
 
-            string uid = actorName.Split('@')[0].Replace("___", ".");
+            string uid = vars.ResolveActorUid(actorName);
+            if (string.IsNullOrEmpty(uid)) continue;
             observedActors.Add(uid);
 
             bool firstObserved = !previousObservedActors.Contains(uid);
             if (firstObserved)
             {
-                string actorClass = ((Func<IntPtr, string>)vars.ReadClassName)(actor);
-                ((Action<string>)vars.Log)(
+                string actorClass = vars.ReadClassName(actor);
+                vars.Log(
                     "[BMW-splitter] actor appeared: uid=" + uid
                     + " class=" + actorClass
+                    + " name=" + actorName
                     + " actor=0x" + actor.ToString("X")
                     + " world=" + worldName);
             }
@@ -1069,9 +1120,9 @@ update
             // 动作观测覆盖所有 UGuid，不受 Dead_/Montage_/Despawn_ 配置限制。
             // ActorActionState 用 Actor 指针区分同 UID 的新实例；动作集合只在发生
             // 变化时写日志，但每个扫描周期仍用当前动作检查 Action_ 自定义打点。
-            IntPtr anim = ((Func<IntPtr, IntPtr>)vars.FindAnimation)(actor);
-            string actionNames = ((Func<IntPtr, string>)vars.ReadActionNames)(anim);
-            bool deathAction = ((Func<string, bool>)vars.IsDeathAction)(actionNames);
+            IntPtr anim = vars.FindAnimation(actor);
+            string actionNames = vars.ReadActionNames(anim);
+            bool deathAction = vars.IsDeathAction(actionNames);
             string actorKey = actor.ToString("X");
             Dictionary<string, string[]> actionStates =
                 (Dictionary<string, string[]>)vars.ActorActionState;
@@ -1088,7 +1139,7 @@ update
             {
                 string currentAction = string.IsNullOrEmpty(actionNames)
                     ? "<none>" : actionNames;
-                ((Action<string>)vars.Log)(
+                vars.Log(
                     "[BMW-action] actor action changed: uid=" + uid
                     + " action=" + currentAction
                     + " deathAction=" + deathAction);
@@ -1100,16 +1151,16 @@ update
                 actionNames
             };
 
-            ((Func<string, string, bool>)vars.TryQueueActionSplits)(uid, actionNames);
+            vars.TryQueueActionSplits(uid, actionNames);
             // 出现/消失日志覆盖所有 UGuid；后续分割状态只跟踪已配置 Actor。
             // GetActorSetting 返回的是语义优先级，最终仍要检查 settings 中是否真实存在；
             // Dual_ 只通过 DualSettingsByActor 判断，不需要单 Actor 的 Dead_ 设置。
-            string setting = ((Func<string, string>)vars.GetActorSetting)(uid);
+            string setting = vars.GetActorSetting(uid);
             bool hasDualSetting = ((Dictionary<string, List<string>>)
                 vars.DualSettingsByActor).ContainsKey(uid);
             if (!settings.ContainsKey(setting) && !hasDualSetting) continue;
             long[] previous;
-            if (((Dictionary<string, long[]>)vars.ActorSeen).TryGetValue(uid, out previous)
+            if (vars.ActorSeen.TryGetValue(uid, out previous)
                 && previous[0] == (long)actor)
             {
                 long previousDeathMontage = previous[2];
@@ -1125,10 +1176,10 @@ update
                 {
                     deathMontage = 1L;
                     deathMontageSplits.Add(uid);
-                    ((Action<string>)vars.Log)(
+                    vars.Log(
                         "[BMW-splitter] death montage visible: uid=" + uid
                         + " setting=" + setting
-                        + " enabled=" + ((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false)
+                        + " enabled=" + vars.IsSettingEnabled(setting, false)
                         + " dual=" + hasDualSetting
                         + " action=" + actionNames
                         + " custom=" + ((Func<string, string, string>)
@@ -1139,7 +1190,7 @@ update
                 // 只有已启用、非 Dual_、非 Despawn_、非 Montage_ 的普通 Boss
                 // 才能成为单 Boss 慢动作候选；Dual_ 和专用前缀必须忽略该信号。
                 if (seenTicks >= (long)vars.MinBossActorSeenTicks
-                    && ((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false)
+                    && vars.IsSettingEnabled(setting, false)
                     && !hasDualSetting
                     && !setting.StartsWith("Despawn_", StringComparison.Ordinal)
                     && !setting.StartsWith("Montage_", StringComparison.Ordinal))
@@ -1158,7 +1209,7 @@ update
             {
                 // Actor 指针变化说明同一 UID 换成了新实例；清除旧实例的双 Boss
                 // Montage 命中，并以当前时间重新开始 1500ms 观察窗口。
-                ((Action<string>)vars.ResetDualActor)(uid);
+                vars.ResetDualActor(uid);
                 nextSeen[uid] = new long[]
                 {
                     (long)actor,
@@ -1172,10 +1223,10 @@ update
         {
             if (!observedActors.Contains(previousUid))
             {
-                ((Action<string>)vars.Log)(
+                vars.Log(
                     "[BMW-splitter] actor despawn observed: uid=" + previousUid
                     + " world=" + worldName);
-                ((Dictionary<string, string[]>)vars.ActorActionState).Remove(previousUid);
+                vars.ActorActionState.Remove(previousUid);
             }
         }
         vars.ObservedActors = observedActors;
@@ -1196,14 +1247,14 @@ update
         // death-montage 来源。顺序固定可避免同一事件同时被两条路径重复入队。
         foreach (string uid in deathMontageSplits)
         {
-            if (!((Dictionary<string, List<string>>)vars.DualSettingsByActor)
+            if (!vars.DualSettingsByActor
                 .ContainsKey(uid))
             {
-                ((Func<string, string, bool>)vars.TryQueueSplit)(
+                vars.TryQueueSplit(
                     uid,
                     "death-montage");
             }
-            ((Func<string, bool>)vars.RegisterDualMontage)(uid);
+            vars.RegisterDualMontage(uid);
         }
 
         // 全局慢动作只在场上恰好有一个已启用 Boss 时使用，防止双 Boss 或
@@ -1212,7 +1263,7 @@ update
             && !(bool)vars.LastSlowMotion
             && slowMotionCandidates.Count == 1)
         {
-            ((Func<string, string, bool>)vars.TryQueueSplit)(
+            vars.TryQueueSplit(
                 slowMotionCandidates[0],
                 "slow-motion");
         }
@@ -1229,12 +1280,12 @@ update
             long seenTicks = nowTicks - pair.Value[1];
             if (seenTicks < (long)vars.MinBossActorSeenTicks) continue;
 
-            string setting = ((Func<string, string>)vars.GetActorSetting)(pair.Key);
+            string setting = vars.GetActorSetting(pair.Key);
             if (!setting.StartsWith("Despawn_", StringComparison.Ordinal)) continue;
-            if (!((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false))
+            if (!vars.IsSettingEnabled(setting, false))
                 continue;
 
-            ((Func<string, string, bool>)vars.TryQueueSplit)(pair.Key, "despawn");
+            vars.TryQueueSplit(pair.Key, "despawn");
         }
         // 整轮 Actor 扫描和边沿收集成功后才提交新的观测快照；中途失败不会
         // 只更新一部分 ActorSeen，从而避免下一轮生成假的消失边沿。
@@ -1248,7 +1299,7 @@ update
         if (errorTicks - (long)vars.LastUpdateErrorTicks >= TimeSpan.TicksPerSecond)
         {
             vars.LastUpdateErrorTicks = errorTicks;
-            ((Action<string>)vars.Log)("[BMW-splitter] update error: " + ex.ToString());
+            vars.Log("[BMW-splitter] update error: " + ex.ToString());
         }
     }
 }
@@ -1265,7 +1316,7 @@ start
         return false;
 
     vars.StartArmed = false;
-    ((Action<string>)vars.Log)("[BMW-splitter] auto start: world=" + (string)current.World);
+    vars.Log("[BMW-splitter] auto start: world=" + (string)current.World);
     return true;
 }
 
@@ -1277,9 +1328,9 @@ start
 // 一次调用最多返回一次 true，避免同一轮连续打多个点。
 split
 {
-    if (!((Func<bool>)vars.IsAutoSplitEnabled)())
+    if (!vars.IsAutoSplitEnabled())
     {
-        ((Queue<string>)vars.PendingSplits).Clear();
+        vars.PendingSplits.Clear();
         return false;
     }
     if (timer.CurrentPhase != TimerPhase.Running) return false;
@@ -1288,9 +1339,9 @@ split
     while (pending.Count > 0)
     {
         string setting = pending.Dequeue();
-        if (((Func<string, bool, bool>)vars.IsSettingEnabled)(setting, false))
+        if (vars.IsSettingEnabled(setting, false))
         {
-            ((Action<string>)vars.Log)("[BMW-splitter] split: " + setting);
+            vars.Log("[BMW-splitter] split: " + setting);
             return true;
         }
     }
@@ -1309,14 +1360,14 @@ isLoading
     bool worldLoading = (bool)current.WorldPending;
     bool nativeLoading = (bool)vars.NativeLoadingPending;
     bool cutsceneLoading =
-        ((Func<string, bool, bool>)vars.IsSettingEnabled)("RemoveCutscenes", true)
+        vars.IsSettingEnabled("RemoveCutscenes", true)
         && (bool)vars.CutscenePending;
     bool loading = worldLoading || nativeLoading || cutsceneLoading;
 
     if (loading != (bool)vars.LastLoading)
     {
         vars.LastLoading = loading;
-        ((Action<string>)vars.Log)(
+        vars.Log(
             "[BMW-loading] isLoading=" + loading
             + " world=" + (string)current.World
             + " native=" + nativeLoading
@@ -1334,7 +1385,7 @@ isLoading
 onStart
 {
     timer.IsGameTimePaused = true;
-    ((Action)vars.ResetSession)();
+    vars.ResetSession();
 }
 
 // LiveSplit 生命周期钩子：onReset
@@ -1344,7 +1395,7 @@ onStart
 // 原理：只重置状态，不主动改变启动前世界的暂停状态；下一次 isLoading 会重新计算。
 onReset
 {
-    ((Action)vars.ResetSession)();
+    vars.ResetSession();
 }
 
 // LiveSplit 生命周期钩子：exit
@@ -1355,7 +1406,7 @@ onReset
 exit
 {
     timer.IsGameTimePaused = true;
-    ((Action<string>)vars.Log)("[BMW-splitter] game process exit");
+    vars.Log("[BMW-splitter] game process exit");
 }
 
 // LiveSplit 生命周期钩子：shutdown
@@ -1366,5 +1417,5 @@ exit
 // 包住 ResetSession，避免清理异常阻止 LiveSplit 正常卸载脚本。
 shutdown
 {
-    try { ((Action)vars.ResetSession)(); } catch {}
+    try { vars.ResetSession(); } catch {}
 }

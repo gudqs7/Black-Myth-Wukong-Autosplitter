@@ -443,7 +443,7 @@
       <Setting id="Dead_UGuid.HFM.Wa.01" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HFM.Suoyang" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HFM.LaPapesse" type="bool">True</Setting>
-      <Setting id="Boss_202004" type="bool">True</Setting>
+      <Setting id="Dead_TAMER_hfm_hou_01a" type="bool">True</Setting>
       <Setting id="Chapter3Bosses" type="bool">True</Setting>
       <Setting id="Chapter3MainBosses" type="bool">True</Setting>
       <Setting id="Action_UGuid.LYS.XueHou.NM@AM_lys_xuehou_leave_01" type="bool">True</Setting>
@@ -472,7 +472,7 @@
       <Setting id="Dead_UGuid.LYS.TuiSeng.P1" type="bool">True</Setting>
       <Setting id="Dead_UGuid.LYS.TuiSeng.P2" type="bool">True</Setting>
       <Setting id="Dead_UGuid.LYS.fsys" type="bool">True</Setting>
-      <Setting id="Dead_UGuid.HFM.YSCheng" type="bool">False</Setting>
+      <Setting id="Dead_TAMER_psd_renshenjing_02a" type="bool">True</Setting>
       <Setting id="Chapter4Bosses" type="bool">True</Setting>
       <Setting id="Chapter4MainBosses" type="bool">True</Setting>
       <Setting id="Dead_UGuid.PSD.Erjie.Village" type="bool">True</Setting>
@@ -483,8 +483,8 @@
       <Setting id="Dead_UGuid.PSD.LaoZhiZhu" type="bool">True</Setting>
       <Setting id="Dead_UGuid.PSD.BaiYanMoJun" type="bool">True</Setting>
       <Setting id="Chapter4YaoguaiKingBosses" type="bool">True</Setting>
-      <Setting id="UGuid.PSD.WuLong" type="bool">True</Setting>
-      <Setting id="Boss_402011" type="bool">True</Setting>
+      <Setting id="Dead_TAMER_psd_wulong_C_4" type="bool">True</Setting>
+      <Setting id="Dead_TAMER_psd_wulong_C_3" type="bool">True</Setting>
       <Setting id="Dead_UGuid.PSD.Dage" type="bool">True</Setting>
       <Setting id="Dead_UGuid.ZYS.XieZi.MRXG" type="bool">False</Setting>
       <Setting id="Montage_UGuid.ZYS.MRXG" type="bool">True</Setting>
@@ -497,6 +497,7 @@
       <Setting id="Chapter5Bosses" type="bool">True</Setting>
       <Setting id="Chapter5MainBosses" type="bool">True</Setting>
       <Setting id="Dual_UGuid.HYS.JiRuHuo01+UGuid.HYS.KuaiRuFeng01" type="bool">True</Setting>
+      <Setting id="Dead_TAMER_hys_huijingtitan_01" type="bool">False</Setting>
       <Setting id="Dual_UGuid.HYS.WuLiYun+UGuid.HYS.YunLiWu" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HYS.HongHaiEr" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HYS.YeChaWang" type="bool">True</Setting>
@@ -514,9 +515,9 @@
       <Setting id="Dead_UGuid.HYS.HMS.Outside" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HYS.Wa.01" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HYS.YSCheng" type="bool">True</Setting>
-      <Setting id="Boss_502009" type="bool">True</Setting>
-      <Setting id="Boss_502008" type="bool">True</Setting>
-      <Setting id="Boss_502014" type="bool">True</Setting>
+      <Setting id="Dead_TAMER_HFM_ShiTongLing_02a" type="bool">True</Setting>
+      <Setting id="Dead_TAMER_hys_shixianfeng_02" type="bool">True</Setting>
+      <Setting id="Dead_TAMER_hys_huolingsha_01" type="bool">True</Setting>
       <Setting id="Chapter6Bosses" type="bool">True</Setting>
       <Setting id="Chapter6MainBosses" type="bool">True</Setting>
       <Setting id="Dead_UGuid.BYS.WLG.01" type="bool">True</Setting>
