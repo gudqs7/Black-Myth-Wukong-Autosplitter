@@ -434,7 +434,7 @@
       <Setting id="Dead_UGuid.HFM.ShiGanDang.1" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HFM.HuangPaoZhu.Battle" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HFM.Hu.01" type="bool">True</Setting>
-      <Setting id="Dead_UGuid.LSH.DuJiaoXian" type="bool">True</Setting>
+      <Setting id="Montage_UGuid.LSH.DuJiaoXian" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HFM.LiLong" type="bool">True</Setting>
       <Setting id="Chapter2ChiefBosses" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HFM.Shawuliang" type="bool">True</Setting>
@@ -462,16 +462,17 @@
       <Setting id="Dead_UGuid.LYS.JianLong.Fight" type="bool">True</Setting>
       <Setting id="Chapter3ChiefBosses" type="bool">True</Setting>
       <Setting id="Dead_UGuid.LYS.Mo4" type="bool">True</Setting>
-      <Setting id="Dead_UGuid.LYS.Mo3.Fly" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.Mo3.FM" type="bool">True</Setting>
       <Setting id="Dead_UGuid.LYS.XueWa" type="bool">True</Setting>
       <Setting id="Dead_UGuid.LYS.bujing" type="bool">True</Setting>
       <Setting id="Dead_UGuid.LYS.LaoSeng" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HFM.HuanWuZhe" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HFM.Hu_Wind_Battle.HZSJ" type="bool">True</Setting>
       <Setting id="Dead_UGuid.LYS.Mo3.OutsideTemple" type="bool">True</Setting>
-      <Setting id="Boss_302016" type="bool">True</Setting>
-      <Setting id="Boss_302007" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.TuiSeng.P1" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.LYS.TuiSeng.P2" type="bool">True</Setting>
       <Setting id="Dead_UGuid.LYS.fsys" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.HFM.YSCheng" type="bool">False</Setting>
       <Setting id="Chapter4Bosses" type="bool">True</Setting>
       <Setting id="Chapter4MainBosses" type="bool">True</Setting>
       <Setting id="Dead_UGuid.PSD.Erjie.Village" type="bool">True</Setting>
@@ -482,12 +483,13 @@
       <Setting id="Dead_UGuid.PSD.LaoZhiZhu" type="bool">True</Setting>
       <Setting id="Dead_UGuid.PSD.BaiYanMoJun" type="bool">True</Setting>
       <Setting id="Chapter4YaoguaiKingBosses" type="bool">True</Setting>
+      <Setting id="UGuid.PSD.WuLong" type="bool">True</Setting>
       <Setting id="Boss_402011" type="bool">True</Setting>
-      <Setting id="Dead_UGuid.PSD.WuLong.4H" type="bool">True</Setting>
-      <Setting id="Dead_UGuid.ZYS.MRXG" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.PSD.Dage" type="bool">True</Setting>
+      <Setting id="Dead_UGuid.ZYS.XieZi.MRXG" type="bool">False</Setting>
+      <Setting id="Montage_UGuid.ZYS.MRXG" type="bool">True</Setting>
       <Setting id="Chapter4ChiefBosses" type="bool">True</Setting>
       <Setting id="Dead_UGuid.PSD.YouYan" type="bool">True</Setting>
-      <Setting id="Dead_UGuid.ZYS.XieZi.MRXG" type="bool">True</Setting>
       <Setting id="Dead_UGuid.PSD.qinlang" type="bool">True</Setting>
       <Setting id="Dead_UGuid.PSD.JCZB" type="bool">True</Setting>
       <Setting id="Dead_UGuid.ZYS.DaoShi.Fight" type="bool">True</Setting>
@@ -499,13 +501,13 @@
       <Setting id="Dead_UGuid.HYS.HongHaiEr" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HYS.YeChaWang" type="bool">True</Setting>
       <Setting id="Chapter5YaoguaiKingBosses" type="bool">True</Setting>
-      <Setting id="Dead_UGuid.HYS.JDS.01" type="bool">True</Setting>
+      <Setting id="Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HYS.ZhanChe.01a" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HYS.ZhanChe.01b" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HYS.ZhanChe.01c" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HYS.ZhanChe.01d" type="bool">True</Setting>
       <Setting id="Dead_UGuid.HYS.JDS.05" type="bool">True</Setting>
-      <Setting id="Dead_UGuid.HYS.TuDi.YS" type="bool">True</Setting>
+      <Setting id="Montage_UGuid.HYS.TuDi.YS" type="bool">True</Setting>
       <Setting id="Dual_UGuid.HYS.XingGongXian+UGuid.HYS.XianGongXing" type="bool">True</Setting>
       <Setting id="Dead_UGuid.BSD.JJS" type="bool">True</Setting>
       <Setting id="Chapter5ChiefBosses" type="bool">True</Setting>

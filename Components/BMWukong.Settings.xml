@@ -39,7 +39,7 @@
             <Setting Id="Dead_UGuid.HFM.ShiGanDang.1" Label="石敢当" State="true"/>
             <Setting Id="Dead_UGuid.HFM.HuangPaoZhu.Battle" Label="黄袍员外" State="true"/>
             <Setting Id="Dead_UGuid.HFM.Hu.01" Label="“虎先锋”" State="true"/>
-            <Setting Id="Dead_UGuid.LSH.DuJiaoXian" Label="蝜蝂" State="true"/>
+            <Setting Id="Montage_UGuid.LSH.DuJiaoXian" Label="蝜蝂" State="true"/>
             <Setting Id="Dead_UGuid.HFM.LiLong" Label="小骊龙" State="true"/>
         </Setting>
         <Setting Id="Chapter2ChiefBosses" Label="头目 Boss" State="true">
@@ -73,16 +73,17 @@
         </Setting>
         <Setting Id="Chapter3ChiefBosses" Label="头目 Boss" State="true">
             <Setting Id="Dead_UGuid.LYS.Mo4" Label="魔将·莲眼" State="true"/>
-            <Setting Id="Dead_UGuid.LYS.Mo3.Fly" Label="无量蝠" State="true"/>
+            <Setting Id="Dead_UGuid.LYS.Mo3.FM" Label="无量蝠" State="true"/>
             <Setting Id="Dead_UGuid.LYS.XueWa" Label="浪里个浪" State="true"/>
             <Setting Id="Dead_UGuid.LYS.bujing" Label="不净" State="true"/>
             <Setting Id="Dead_UGuid.LYS.LaoSeng" Label="不空" State="true"/>
             <Setting Id="Dead_UGuid.HFM.HuanWuZhe" Label="翠笠武师" State="true"/>
             <Setting Id="Dead_UGuid.HFM.Hu_Wind_Battle.HZSJ" Label="寅虎" State="true"/>
             <Setting Id="Dead_UGuid.LYS.Mo3.OutsideTemple" Label="魔将·妄相" State="true"/>
-            <Setting Id="Boss_302016" Label="老人参精" State="true"/>
-            <Setting Id="Boss_302007" Label="不能" State="true"/>
+            <Setting Id="Dead_UGuid.LYS.TuiSeng.P1" Label="不能一阶段" State="true"/>
+            <Setting Id="Dead_UGuid.LYS.TuiSeng.P2" Label="不能二阶段" State="true"/>
             <Setting Id="Dead_UGuid.LYS.fsys" Label="海上僧" State="true"/>
+            <Setting Id="Dead_UGuid.HFM.YSCheng" Label="老人参精(未实现)" State="false"/>
         </Setting>
     </Setting>
 
@@ -97,13 +98,14 @@
             <Setting Id="Dead_UGuid.PSD.BaiYanMoJun" Label="百眼魔君" State="true"/>
         </Setting>
         <Setting Id="Chapter4YaoguaiKingBosses" Label="全妖王 Boss" State="true">
-            <Setting Id="Boss_402011" Label="黑手道人" State="true"/>
-            <Setting Id="Dead_UGuid.PSD.WuLong.4H" Label="小黄龙" State="true"/>
-            <Setting Id="Dead_UGuid.ZYS.MRXG" Label="晦月魔君" State="true"/>
+            <Setting Id="UGuid.PSD.WuLong" Label="黑手道人(初见)" State="true"/>
+            <Setting Id="Boss_402011" Label="黑手道人(进紫云山前)" State="true"/>
+            <Setting Id="Dead_UGuid.PSD.Dage" Label="小黄龙" State="true"/>
+            <Setting Id="Dead_UGuid.ZYS.XieZi.MRXG" Label="毒敌大王" State="false"/>
+            <Setting Id="Montage_UGuid.ZYS.MRXG" Label="晦月魔君" State="true"/>
         </Setting>
         <Setting Id="Chapter4ChiefBosses" Label="头目 Boss" State="true">
             <Setting Id="Dead_UGuid.PSD.YouYan" Label="百足虫" State="true"/>
-            <Setting Id="Dead_UGuid.ZYS.XieZi.MRXG" Label="毒敌大王" State="true"/>
             <Setting Id="Dead_UGuid.PSD.qinlang" Label="琴螂仙" State="true"/>
             <Setting Id="Dead_UGuid.PSD.JCZB" Label="虫总兵" State="true"/>
             <Setting Id="Dead_UGuid.ZYS.DaoShi.Fight" Label="靡道人一阶段" State="true"/>
@@ -119,13 +121,13 @@
             <Setting Id="Dead_UGuid.HYS.YeChaWang" Label="夜叉王" State="true"/>
         </Setting>
         <Setting Id="Chapter5YaoguaiKingBosses" Label="全妖王 Boss" State="true">
-            <Setting Id="Dead_UGuid.HYS.JDS.01" Label="皓斧力士" State="true"/>
+            <Setting Id="Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01" Label="皓斧力士" State="true"/>
             <Setting Id="Dead_UGuid.HYS.ZhanChe.01a" Label="五行战车 1号" State="true"/>
             <Setting Id="Dead_UGuid.HYS.ZhanChe.01b" Label="五行战车 2号" State="true"/>
             <Setting Id="Dead_UGuid.HYS.ZhanChe.01c" Label="五行战车 3号" State="true"/>
             <Setting Id="Dead_UGuid.HYS.ZhanChe.01d" Label="五行战车 4号" State="true"/>
             <Setting Id="Dead_UGuid.HYS.JDS.05" Label="五行战车 5号" State="true"/>
-            <Setting Id="Dead_UGuid.HYS.TuDi.YS" Label="阴阳鱼" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.TuDi.YS" Label="阴阳鱼" State="true"/>
             <Setting Id="Dual_UGuid.HYS.XingGongXian+UGuid.HYS.XianGongXing" Label="兴烘掀、掀烘兴" State="true"/>
             <Setting Id="Dead_UGuid.BSD.JJS" Label="璧水金睛兽" State="true"/>
         </Setting>

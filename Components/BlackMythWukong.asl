@@ -823,12 +823,12 @@ update
             observedActors.Add(uid);
 
             bool firstObserved = !previousObservedActors.Contains(uid);
-            string actorClass = "";
             if (firstObserved)
             {
-                actorClass = ((Func<IntPtr, string>)vars.ReadClassName)(actor);
+                string actorClass = ((Func<IntPtr, string>)vars.ReadClassName)(actor);
                 ((Action<string>)vars.Log)(
                     "[BMW-splitter] actor appeared: uid=" + uid
+                    + " actorName=" + actorName
                     + " class=" + actorClass
                     + " actor=0x" + actor.ToString("X")
                     + " world=" + worldName);
@@ -844,24 +844,12 @@ update
             bool sameActor = actionStates.TryGetValue(uid, out actionState)
                 && actionState[0] == actorKey;
             string previousAction = sameActor ? actionState[1] : "";
-            string lastNonEmptyAction = sameActor ? actionState[2] : "";
-            bool deathActionSeen = sameActor && actionState[4] == "1";
-            if (sameActor && string.IsNullOrEmpty(actorClass) && actionState.Length > 3)
-                actorClass = actionState[3];
-
-            if (!string.IsNullOrEmpty(actionNames))
-                lastNonEmptyAction = actionNames;
-            if (deathAction)
-                deathActionSeen = true;
 
             bool actionChanged = sameActor
                 ? actionNames != previousAction
                 : !string.IsNullOrEmpty(actionNames);
             if (actionChanged)
             {
-                if (string.IsNullOrEmpty(actorClass))
-                    actorClass = ((Func<IntPtr, string>)vars.ReadClassName)(actor);
-
                 string currentAction = string.IsNullOrEmpty(actionNames)
                     ? "<none>" : actionNames;
                 ((Action<string>)vars.Log)(
@@ -873,10 +861,7 @@ update
             actionStates[uid] = new string[]
             {
                 actorKey,
-                actionNames,
-                lastNonEmptyAction,
-                actorClass,
-                deathActionSeen ? "1" : "0"
+                actionNames
             };
 
             ((Func<string, string, bool>)vars.TryQueueActionSplits)(uid, actionNames);
@@ -943,36 +928,6 @@ update
         {
             if (!observedActors.Contains(previousUid))
             {
-                string lastName = "<unknown>";
-                string lastCurrent = "<unknown>";
-                string lastClass = "<unknown>";
-                string lastDeathAction = "unknown";
-                string[] previousActionState;
-                if (((Dictionary<string, string[]>)vars.ActorActionState)
-                    .TryGetValue(previousUid, out previousActionState))
-                {
-                    lastCurrent = string.IsNullOrEmpty(previousActionState[1])
-                        ? "<none>" : previousActionState[1];
-                    lastName = string.IsNullOrEmpty(previousActionState[2])
-                        ? "<none>" : previousActionState[2];
-                    lastClass = string.IsNullOrEmpty(previousActionState[3])
-                        ? "<none>" : previousActionState[3];
-                    lastDeathAction = previousActionState[4] == "1" ? "true" : "false";
-                }
-
-                string lastActionNames = lastName == "<none>" ? "" : lastName;
-                string lastCustomSettings = ((Func<string, string, string>)
-                    vars.BuildActionSettingList)(previousUid, lastActionNames);
-                if (string.IsNullOrEmpty(lastCustomSettings))
-                    lastCustomSettings = "<none>";
-                ((Action<string>)vars.Log)(
-                    "[BMW-action] actor despawn: uid=" + previousUid
-                    + " class=" + lastClass
-                    + " current=" + lastCurrent
-                    + " lastAction=" + lastName
-                    + " deathActionSeen=" + lastDeathAction
-                    + " custom=" + lastCustomSettings
-                    + " world=" + worldName);
                 ((Action<string>)vars.Log)(
                     "[BMW-splitter] actor despawn observed: uid=" + previousUid
                     + " world=" + worldName);

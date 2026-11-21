@@ -152,10 +152,21 @@ foreach ($chapter in 1..6) {
     }
 }
 
-$bossSettings = @($defaultDocument.SelectNodes('//Setting[not(Setting) and (starts-with(@Id,"Dead_") or starts-with(@Id,"Dual_") or starts-with(@Id,"Despawn_") or starts-with(@Id,"Montage_") or starts-with(@Id,"Boss_"))]'))
+$bossSettings = @($defaultDocument.SelectNodes('//Setting[not(Setting) and (starts-with(@Id,"Dead_") or starts-with(@Id,"Dual_") or starts-with(@Id,"Despawn_") or starts-with(@Id,"Montage_") or starts-with(@Id,"Action_") or starts-with(@Id,"UGuid.") or starts-with(@Id,"Boss_"))]'))
+$expectedDisabledBossIds = @(
+    'Dead_UGuid.HFM.YSCheng',
+    'Dead_UGuid.ZYS.XieZi.MRXG'
+)
 $disabledBossSettings = @($bossSettings | Where-Object { $_.State -ne 'true' })
-if ($disabledBossSettings.Count -gt 0) {
-    throw "Boss settings must all default to enabled: $($disabledBossSettings.Id -join ', ')"
+$unexpectedDisabledBossSettings = @($disabledBossSettings | Where-Object { $_.Id -notin $expectedDisabledBossIds })
+if ($unexpectedDisabledBossSettings.Count -gt 0) {
+    throw "Unexpected disabled Boss settings: $($unexpectedDisabledBossSettings.Id -join ', ')"
+}
+foreach ($id in $expectedDisabledBossIds) {
+    $setting = $defaultDocument.SelectSingleNode("//Setting[@Id='$id']")
+    if ($null -eq $setting -or $setting.State -ne 'false') {
+        throw "Expected disabled Boss setting is missing or enabled: $id"
+    }
 }
 
 $expectedParents = @{
@@ -173,12 +184,21 @@ $expectedParents = @{
     'Dead_UGuid.ZYS.DaoShi.Fight' = 'Chapter4ChiefBosses'
     'Dead_UGuid.ZYS.Daoshi.P2' = 'Chapter4ChiefBosses'
     'Dead_UGuid.HYS.YSCheng' = 'Chapter5ChiefBosses'
-    'Dead_UGuid.HYS.JDS.01' = 'Chapter5YaoguaiKingBosses'
+    'Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01' = 'Chapter5YaoguaiKingBosses'
     'Dead_UGuid.BYS.HMS.02' = 'Chapter6ChiefBosses'
     'Dead_UGuid.BYS.Shitongling.03' = 'Chapter6ChiefBosses'
     'Dead_UGuid.BYS.hema.king' = 'Chapter6ChiefBosses'
     'Dead_UGuid.BYS.Baishe' = 'Chapter6ChiefBosses'
     'Dead_UGuid.SL.sgd' = 'Chapter6YaoguaiKingBosses'
+    'Dead_UGuid.LYS.Mo3.FM' = 'Chapter3ChiefBosses'
+    'Dead_UGuid.LYS.TuiSeng.P1' = 'Chapter3ChiefBosses'
+    'Dead_UGuid.LYS.TuiSeng.P2' = 'Chapter3ChiefBosses'
+    'Dead_UGuid.HFM.YSCheng' = 'Chapter3ChiefBosses'
+    'UGuid.PSD.WuLong' = 'Chapter4YaoguaiKingBosses'
+    'Dead_UGuid.PSD.Dage' = 'Chapter4YaoguaiKingBosses'
+    'Dead_UGuid.ZYS.XieZi.MRXG' = 'Chapter4YaoguaiKingBosses'
+    'Montage_UGuid.ZYS.MRXG' = 'Chapter4YaoguaiKingBosses'
+    'Montage_UGuid.HYS.TuDi.YS' = 'Chapter5YaoguaiKingBosses'
 }
 foreach ($expected in $expectedParents.GetEnumerator()) {
     $node = $defaultDocument.SelectSingleNode("//Setting[@Id='$($expected.Key)']")
@@ -191,14 +211,14 @@ $expectedMappings = @{
     'Boss_103006' = 'Dead_UGuid.HFS.JCZL'
     'Boss_103007' = 'Dead_UGuid.HFS.WoodDragon'
     'Boss_203002' = 'Dead_UGuid.HFM.ShuWang_01a.SW0'
-    'Boss_302003' = 'Dead_UGuid.LYS.Mo3.Fly'
+    'Boss_302003' = 'Dead_UGuid.LYS.Mo3.FM'
     'Boss_302013' = 'Dead_UGuid.LYS.Mo4'
     'Boss_302004' = 'Dead_UGuid.LYS.JianLong.Fight'
-    'Boss_402012' = 'Dead_UGuid.PSD.WuLong.4H'
+    'Boss_402012' = 'Dead_UGuid.PSD.Dage'
     'Boss_502005' = 'Dual_UGuid.HYS.XingGongXian+UGuid.HYS.XianGongXing'
     'Boss_703001' = 'Dead_UGuid.BSD.JJS'
     'Boss_803001' = 'Dead_UGuid.ZYS.XieZi.MRXG'
-    'Boss_803002' = 'Dead_UGuid.ZYS.MRXG'
+    'Boss_803002' = 'Montage_UGuid.ZYS.MRXG'
     'Boss_202001' = 'Dead_UGuid.HFS.WaBig'
     'Boss_202028' = 'Dead_UGuid.HFM.Suoyang'
     'Boss_202007' = 'Dead_UGuid.HFM.LaPapesse'
@@ -208,7 +228,7 @@ $expectedMappings = @{
     'Boss_402009' = 'Dead_UGuid.PSD.JCZB'
     'Boss_402007' = 'Dead_UGuid.ZYS.DaoShi.Fight'
     'Boss_501017' = 'Dead_UGuid.HYS.YSCheng'
-    'Boss_502013' = 'Dead_UGuid.HYS.JDS.01'
+    'Boss_502013' = 'Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01'
     'Boss_602007' = 'Dead_UGuid.BYS.HMS.02'
     'Boss_602006' = 'Dead_UGuid.BYS.Shitongling.03'
     'Boss_602009' = 'Dead_UGuid.BYS.hema.king'
@@ -245,7 +265,7 @@ if ($optionalBossSettings.Count -eq 0) {
     throw "Unmapped optional Boss_* settings must be retained for manual maintenance."
 }
 $expectedUnmappedBossIds = @(
-    'Boss_202004', 'Boss_302016', 'Boss_302007', 'Boss_402011',
+    'Boss_202004', 'Boss_402011',
     'Boss_502009', 'Boss_502008', 'Boss_502014'
 )
 foreach ($id in $expectedUnmappedBossIds) {
@@ -451,6 +471,12 @@ if ($aslText.Contains('BMW-Hook-AutoSplitter.log') -or $aslText.Contains('vars.L
 }
 if (-not $aslText.Contains('"[BMW-action] actor action changed: uid="')) {
     throw "Generated ASL action-change log is missing: $aslPath"
+}
+if ($aslText.Contains('"[BMW-action] actor despawn: uid="') -or
+    $aslText.Contains('lastNonEmptyAction') -or
+    $aslText.Contains('deathActionSeen') -or
+    $aslText.Contains('lastCustomSettings')) {
+    throw "Generated ASL still contains the removed verbose actor-despawn diagnostics: $aslPath"
 }
 if ($aslText.Contains('"ActionDebugLog", false')) {
     throw "Generated ASL action-change log must not depend on ActionDebugLog: $aslPath"

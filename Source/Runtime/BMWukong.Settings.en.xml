@@ -36,7 +36,7 @@
             <Setting Id="Dead_UGuid.HFM.ShiGanDang.1" Label="Shigandang" State="true"/>
             <Setting Id="Dead_UGuid.HFM.HuangPaoZhu.Battle" Label="Yellow-Robed Squire" State="true"/>
             <Setting Id="Dead_UGuid.HFM.Hu.01" Label="&quot;Tiger Vanguard&quot;" State="true"/>
-            <Setting Id="Dead_UGuid.LSH.DuJiaoXian" Label="Fuban" State="true"/>
+            <Setting Id="Montage_UGuid.LSH.DuJiaoXian" Label="Fuban" State="true"/>
             <Setting Id="Dead_UGuid.HFM.LiLong" Label="Black Loong" State="true"/>
         </Setting>
         <Setting Id="Chapter2ChiefBosses" Label="Yaoguai Chiefs" State="true">
@@ -69,16 +69,17 @@
         </Setting>
         <Setting Id="Chapter3ChiefBosses" Label="Yaoguai Chiefs" State="true">
             <Setting Id="Dead_UGuid.LYS.Mo4" Label="Captain Lotus-Vision" State="true"/>
-            <Setting Id="Dead_UGuid.LYS.Mo3.Fly" Label="Apramana Bat" State="true"/>
+            <Setting Id="Dead_UGuid.LYS.Mo3.FM" Label="Apramana Bat" State="true"/>
             <Setting Id="Dead_UGuid.LYS.XueWa" Label="Lang-Li-Guhh-Lang" State="true"/>
             <Setting Id="Dead_UGuid.LYS.bujing" Label="Non-Pure" State="true"/>
             <Setting Id="Dead_UGuid.LYS.LaoSeng" Label="Non-Void" State="true"/>
             <Setting Id="Dead_UGuid.HFM.HuanWuZhe" Label="Green-Capped Martialist" State="true"/>
             <Setting Id="Dead_UGuid.HFM.Hu_Wind_Battle.HZSJ" Label="Yin Tiger" State="true"/>
             <Setting Id="Dead_UGuid.LYS.Mo3.OutsideTemple" Label="Captain Void-Illusion" State="true"/>
-            <Setting Id="Boss_302016" Label="Old Ginseng Guai" State="true"/>
-            <Setting Id="Boss_302007" Label="Non-Able" State="true"/>
+            <Setting Id="Dead_UGuid.LYS.TuiSeng.P1" Label="Non-Able (Phase 1)" State="true"/>
+            <Setting Id="Dead_UGuid.LYS.TuiSeng.P2" Label="Non-Able (Phase 2)" State="true"/>
             <Setting Id="Dead_UGuid.LYS.fsys" Label="Monk from the Sea" State="true"/>
+            <Setting Id="Dead_UGuid.HFM.YSCheng" Label="Old Ginseng Guai (Not Implemented)" State="false"/>
         </Setting>
     </Setting>
     <Setting Id="Chapter4Bosses" Label="Chapter 4 - Webbed Hollow" State="true">
@@ -92,13 +93,14 @@
             <Setting Id="Dead_UGuid.PSD.BaiYanMoJun" Label="Hundred-Eyed Daoist Master" State="true"/>
         </Setting>
         <Setting Id="Chapter4YaoguaiKingBosses" Label="All Yaoguai Kings" State="true">
-            <Setting Id="Boss_402011" Label="Venom Daoist" State="true"/>
-            <Setting Id="Dead_UGuid.PSD.WuLong.4H" Label="Yellow Loong" State="true"/>
-            <Setting Id="Dead_UGuid.ZYS.MRXG" Label="The Duskveil" State="true"/>
+            <Setting Id="UGuid.PSD.WuLong" Label="Venom Daoist (First Encounter)" State="true"/>
+            <Setting Id="Boss_402011" Label="Venom Daoist (Before Purple Cloud Mountain)" State="true"/>
+            <Setting Id="Dead_UGuid.PSD.Dage" Label="Yellow Loong" State="true"/>
+            <Setting Id="Dead_UGuid.ZYS.XieZi.MRXG" Label="The Scorpionlord" State="false"/>
+            <Setting Id="Montage_UGuid.ZYS.MRXG" Label="The Duskveil" State="true"/>
         </Setting>
         <Setting Id="Chapter4ChiefBosses" Label="Yaoguai Chiefs" State="true">
             <Setting Id="Dead_UGuid.PSD.YouYan" Label="Centipede Guai" State="true"/>
-            <Setting Id="Dead_UGuid.ZYS.XieZi.MRXG" Label="The Scorpionlord" State="true"/>
             <Setting Id="Dead_UGuid.PSD.qinlang" Label="Elder Amourworm" State="true"/>
             <Setting Id="Dead_UGuid.PSD.JCZB" Label="Commander Beetle" State="true"/>
             <Setting Id="Dead_UGuid.ZYS.DaoShi.Fight" Label="Daoist Mi (Phase 1)" State="true"/>
@@ -113,13 +115,13 @@
             <Setting Id="Dead_UGuid.HYS.YeChaWang" Label="Yaksha King" State="true"/>
         </Setting>
         <Setting Id="Chapter5YaoguaiKingBosses" Label="All Yaoguai Kings" State="true">
-            <Setting Id="Dead_UGuid.HYS.JDS.01" Label="Pale-Axe Stalwart" State="true"/>
+            <Setting Id="Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01" Label="Pale-Axe Stalwart" State="true"/>
             <Setting Id="Dead_UGuid.HYS.ZhanChe.01a" Label="Five Elemental Cart 1" State="true"/>
             <Setting Id="Dead_UGuid.HYS.ZhanChe.01b" Label="Five Elemental Cart 2" State="true"/>
             <Setting Id="Dead_UGuid.HYS.ZhanChe.01c" Label="Five Elemental Cart 3" State="true"/>
             <Setting Id="Dead_UGuid.HYS.ZhanChe.01d" Label="Five Elemental Cart 4" State="true"/>
             <Setting Id="Dead_UGuid.HYS.JDS.05" Label="Five Elemental Cart 5" State="true"/>
-            <Setting Id="Dead_UGuid.HYS.TuDi.YS" Label="Yin-Yang Fish" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.TuDi.YS" Label="Yin-Yang Fish" State="true"/>
             <Setting Id="Dual_UGuid.HYS.XingGongXian+UGuid.HYS.XianGongXing" Label="Top Takes Bottom, Bottom Takes Top" State="true"/>
             <Setting Id="Dead_UGuid.BSD.JJS" Label="Bishui Golden-Eyed Beast" State="true"/>
         </Setting>
