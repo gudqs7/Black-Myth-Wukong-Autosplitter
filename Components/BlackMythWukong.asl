@@ -137,7 +137,6 @@ init
             for (int index = 0; index < montageCount; index++)
             {
                 IntPtr item = (IntPtr)((long)montages + index * 0x1C8);
-                IntPtr montage = IntPtr.Zero;
                 string montageName = "";
                 for (int pointerIndex = 0;
                     pointerIndex < montagePointerOffsets.Length;
@@ -157,11 +156,10 @@ init
                     if (string.IsNullOrEmpty(candidateName)
                         || candidateName.Equals("None", StringComparison.OrdinalIgnoreCase))
                         continue;
-                    montage = candidate;
                     montageName = candidateName;
                     break;
                 }
-                if (montage == IntPtr.Zero) continue;
+                if (string.IsNullOrEmpty(montageName)) continue;
 
                 bool duplicate = false;
                 for (int nameIndex = 0; nameIndex < names.Count; nameIndex++)
@@ -289,15 +287,15 @@ init
             : actorName.Substring(tokenStart, at - tokenStart);
         if (string.IsNullOrEmpty(token)) return "";
 
-        bool fullTracked = settings.ContainsKey("Dead_" + token)
-            || settings.ContainsKey("Montage_" + token)
+        bool fullTracked = settings.ContainsKey("Montage_" + token)
+            || settings.ContainsKey("Slow_" + token)
             || settings.ContainsKey("Despawn_" + token)
             || vars.ActionSplitsByActor.ContainsKey(token);
         if (fullTracked) return token;
 
         string baseToken = vars.StripActorInstanceSuffix(token);
-        bool baseTracked = settings.ContainsKey("Dead_" + baseToken)
-            || settings.ContainsKey("Montage_" + baseToken)
+        bool baseTracked = settings.ContainsKey("Montage_" + baseToken)
+            || settings.ContainsKey("Slow_" + baseToken)
             || settings.ContainsKey("Despawn_" + baseToken)
             || vars.ActionSplitsByActor.ContainsKey(baseToken);
         return baseTracked ? baseToken : "";
@@ -326,7 +324,10 @@ init
         string montageSetting = "Montage_" + uid;
         if (settings.ContainsKey(montageSetting)) return montageSetting;
 
-        return "Dead_" + uid;
+        string slowSetting = "Slow_" + uid;
+        if (settings.ContainsKey(slowSetting)) return slowSetting;
+
+        return "";
     });
 
     vars.LoadDualSplits = (Action)(() =>
@@ -430,8 +431,7 @@ init
     {
         if (!vars.IsAutoSplitEnabled()) return false;
         if (timer.CurrentPhase != TimerPhase.Running) return false;
-        if (!vars.IsSettingEnabled(setting, false))
-            return false;
+        if (!vars.IsSettingEnabled(setting, false)) return false;
         if (!vars.CompletedSplits.Add(setting)) return false;
 
         vars.PendingSplits.Enqueue(setting);
@@ -476,14 +476,13 @@ init
     vars.TryQueueSplit = (Func<string, string, bool>)((uid, source) =>
     {
         string setting = vars.GetActorSetting(uid);
-        if (!vars.IsSettingEnabled(setting, false))
-            return false;
+        if (!vars.IsSettingEnabled(setting, false)) return false;
         if (source != "despawn"
-            && setting.StartsWith("Despawn_", StringComparison.Ordinal))
-            return false;
+            && setting.StartsWith("Despawn_", StringComparison.Ordinal)) return false;
         if (source != "death-montage"
-            && setting.StartsWith("Montage_", StringComparison.Ordinal))
-            return false;
+            && setting.StartsWith("Montage_", StringComparison.Ordinal)) return false;
+        if (source != "slow-motion"
+            && setting.StartsWith("Slow_", StringComparison.Ordinal)) return false;
 
         return vars.TryQueueSetting(setting, source);
     });
@@ -956,8 +955,7 @@ update
                 if (seenTicks >= (long)vars.MinBossActorSeenTicks
                     && vars.IsSettingEnabled(setting, false)
                     && !hasDualSetting
-                    && !setting.StartsWith("Despawn_", StringComparison.Ordinal)
-                    && !setting.StartsWith("Montage_", StringComparison.Ordinal))
+                    && setting.StartsWith("Slow_", StringComparison.Ordinal))
                 {
                     slowMotionCandidates.Add(uid);
                 }

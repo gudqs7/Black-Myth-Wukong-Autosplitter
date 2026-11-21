@@ -105,7 +105,8 @@ The test must report `WUKONG_LSS_TEST_OK`, `ASL_PARSE_OK`, and `WUKONG_RUNTIME_T
   performs split logic only for configured Boss settings through `uhara10-BMW`.
 - Some Boss actors use runtime names such as
   `GUID-TAMER_hfm_hou_01a_C_1@_1` instead of `UGuid___*`. These use direct
-  `Dead_TAMER_*` settings; appearance logs include both the resolved Tamer key
+  `Montage_TAMER_*`, `Slow_TAMER_*`, or `Despawn_TAMER_*` settings;
+  appearance logs include both the resolved Tamer key
   and the raw object name. `Action_TAMER_*@pattern` also counts as a tracked
   Tamer setting. Action patterns support exact, `foo*`, `*foo`, and `*foo*`.
 - Detailed live lookup and resource-table workflow:
@@ -117,8 +118,8 @@ The test must report `WUKONG_LSS_TEST_OK`, `ASL_PARSE_OK`, and `WUKONG_RUNTIME_T
   Boss-kill slow motion requires `0.001 < timeDilation < 0.16`; this excludes
   perfect dodge, See-Through, and Thrust attacks. It is ignored when more than
   one enabled Boss Actor is present.
-- `Dead_UGuid.*` settings use the normal split signals. `Montage_UGuid.*`
-  only accepts death-montage. `Despawn_UGuid.*` only splits when the Actor
+- `Montage_UGuid.*` only accepts death-montage. `Slow_UGuid.*` only accepts
+  single-Boss kill slow motion. `Despawn_UGuid.*` only splits when the Actor
   disappears, for bosses whose health bar hides mid-fight before the real kill.
 - `Dual_UGuid.A+UGuid.B` requires death-montage edges from both Actors before
   queueing. Dual settings ignore slow-motion signals; the list is parsed once
@@ -126,7 +127,8 @@ The test must report `WUKONG_LSS_TEST_OK`, `ASL_PARSE_OK`, and `WUKONG_RUNTIME_T
 - Each chapter wraps Main Bosses, All Yaoguai Kings, and Yaoguai Chiefs. The
   user-maintained Main Boss list is preserved; remaining entries follow the
   ArtBook CardDesc `UnitType` classification (`0` = king, `2` = chief).
-  GUID-TAMER actors use direct `Dead_TAMER_*` setting ids. There is no runtime
+  GUID-TAMER actors use direct `Montage_TAMER_*` / `Slow_TAMER_*` /
+  `Despawn_TAMER_*` setting ids. There is no runtime
   Boss alias table; the setting id itself is the Actor-to-config mapping.
 - All Boss settings default to `State="true"`. Production logging includes all
   UGuid appearance/despawn edges plus loading/cutscene transitions, queued and

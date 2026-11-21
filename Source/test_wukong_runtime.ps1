@@ -99,6 +99,13 @@ $documents = foreach ($xmlPath in $xmlPaths) {
 
 $defaultDocument = $documents[0]
 $englishDocument = $documents[1]
+$obsoleteBossPrefix = 'Dead_'
+foreach ($document in $documents) {
+    $obsoleteBossSettings = @($document.SelectNodes("//Setting[starts-with(@Id,'$obsoleteBossPrefix')]"))
+    if ($obsoleteBossSettings.Count -gt 0) {
+        throw "Obsolete Boss setting prefix must be removed: $($obsoleteBossSettings.Id -join ', ')"
+    }
+}
 $defaultAutoSplit = $defaultDocument.SelectSingleNode('//Setting[@Id="AutoSplitEnabled"]')
 $englishAutoSplit = $englishDocument.SelectSingleNode('//Setting[@Id="AutoSplitEnabled"]')
 if ($null -eq $defaultAutoSplit -or $defaultAutoSplit.State -ne "true") {
@@ -128,12 +135,12 @@ foreach ($lssPair in @(
 }
 
 $expectedMain = @{
-    1 = @('Dead_UGuid.HFS.Niu.Teacher','Dead_UGuid.HFS.GuangZhi','Dead_UGuid.HFS.TongChi01','Dead_UGuid.HFS.DBL0','Dead_UGuid.HFS.GuangM0','Dead_UGuid.HFS.Baiyi0','Montage_UGuid.HFS.BaiyiT2','Dead_UGuid.HFS.XiongR0','Dead_UGuid.HFS.XiongX0')
-    2 = @('Dead_UGuid.HFM.FuZiShu.ZS0','Dead_UGuid.HFM.ShiXianFeng','Dead_UGuid.HFM.HuXianFeng.Hu0','Dead_UGuid.HFM.HFDS.H0')
-    3 = @('Action_UGuid.LYS.XueHou.NM@AM_lys_xuehou_leave_01','Montage_UGuid.LYS.XueHou.NM','Montage_UGuid.LYS.KJL.Long','Dead_UGuid.LYS.Mo_01','Montage_UGuid.LYS.XueHou.AnShen','Dead_UGuid.LYS.KJL.Women','Dead_UGuid.LYS.SengMian','Dead_UGuid.LYS.SengMian02','Dead_UGuid.LYS.Mo2','Action_UGuid.LYS.HuangMei.Big@AM_LYS_HuangMei_02_FinalTWZ','Dead_UGuid.LYS.RBM','Dead_UGuid.LYS.HuangMei.Small')
-    4 = @('Dead_UGuid.PSD.Erjie.Village','Dead_UGuid.PSD.FSC01.foshouchong','Dead_UGuid.PSD.Wa.01','Dead_UGuid.PSD.BaJie.Mo','Montage_UGuid.PSD.BaJie.Ye','Dead_UGuid.PSD.LaoZhiZhu','Dead_UGuid.PSD.BaiYanMoJun')
-    5 = @('Dual_UGuid.HYS.JiRuHuo01+UGuid.HYS.KuaiRuFeng01','Dead_TAMER_hys_huijingtitan_01','Dual_UGuid.HYS.WuLiYun+UGuid.HYS.YunLiWu','Dead_UGuid.HYS.HongHaiEr','Dead_UGuid.HYS.YeChaWang')
-    6 = @('Dead_UGuid.BYS.WLG.01','Dead_UGuid.BYS.Xiniu','Dead_UGuid.BYS.Xuelu','Montage_UGuid.BYS.TangLang','Dead_UGuid.MGD.Yuan','Dead_UGuid.MGD.JSDS.P2')
+    1 = @('Montage_UGuid.HFS.Niu.Teacher','Montage_UGuid.HFS.GuangZhi','Montage_UGuid.HFS.TongChi01','Montage_UGuid.HFS.DBL0','Montage_UGuid.HFS.GuangM0','Montage_UGuid.HFS.Baiyi0','Montage_UGuid.HFS.BaiyiT2','Montage_UGuid.HFS.XiongR0','Montage_UGuid.HFS.XiongX0')
+    2 = @('Montage_UGuid.HFM.FuZiShu.ZS0','Montage_UGuid.HFM.ShiXianFeng','Montage_UGuid.HFM.HuXianFeng.Hu0','Montage_UGuid.HFM.HFDS.H0')
+    3 = @('Action_UGuid.LYS.XueHou.NM@AM_lys_xuehou_leave_01','Montage_UGuid.LYS.XueHou.NM','Montage_UGuid.LYS.KJL.Long','Montage_UGuid.LYS.Mo_01','Montage_UGuid.LYS.XueHou.AnShen','Montage_UGuid.LYS.KJL.Women','Slow_UGuid.LYS.SengMian','Montage_UGuid.LYS.SengMian02','Montage_UGuid.LYS.Mo2','Action_UGuid.LYS.HuangMei.Big@AM_LYS_HuangMei_02_FinalTWZ','Montage_UGuid.LYS.RBM','Montage_UGuid.LYS.HuangMei.Small')
+    4 = @('Montage_UGuid.PSD.Erjie.Village','Montage_UGuid.PSD.FSC01.foshouchong','Montage_UGuid.PSD.Wa.01','Montage_UGuid.PSD.BaJie.Mo','Montage_UGuid.PSD.BaJie.Ye','Montage_UGuid.PSD.LaoZhiZhu','Montage_UGuid.PSD.BaiYanMoJun')
+    5 = @('Dual_UGuid.HYS.JiRuHuo01+UGuid.HYS.KuaiRuFeng01','Montage_TAMER_hys_huijingtitan_01','Dual_UGuid.HYS.WuLiYun+UGuid.HYS.YunLiWu','Montage_UGuid.HYS.HongHaiEr','Montage_UGuid.HYS.YeChaWang')
+    6 = @('Montage_UGuid.BYS.WLG.01','Montage_UGuid.BYS.Xiniu','Montage_UGuid.BYS.Xuelu','Montage_UGuid.BYS.TangLang','Montage_UGuid.MGD.Yuan','Montage_UGuid.MGD.JSDS.P2')
 }
 foreach ($chapter in 1..6) {
     $chapterId = "Chapter${chapter}Bosses"
@@ -151,17 +158,17 @@ foreach ($chapter in 1..6) {
             throw "Chapter boss category is empty: $groupId"
         }
     }
-    $actualMain = @($chapterNode.SelectSingleNode("./Setting[@Id='Chapter${chapter}MainBosses']").SelectNodes('./Setting') | ForEach-Object { ($_.Id -replace '^Action_(UGuid\.[^@]+)@.*$', '$1') -replace '^(Dead_|Montage_|Despawn_|Dual_)', '' })
-    $expectedMainIds = @($expectedMain[$chapter] | ForEach-Object { ($_ -replace '^Action_(UGuid\.[^@]+)@.*$', '$1') -replace '^(Dead_|Montage_|Despawn_|Dual_)', '' })
+    $actualMain = @($chapterNode.SelectSingleNode("./Setting[@Id='Chapter${chapter}MainBosses']").SelectNodes('./Setting') | ForEach-Object { ($_.Id -replace '^Action_(UGuid\.[^@]+)@.*$', '$1') -replace '^(Montage_|Slow_|Despawn_|Dual_)', '' })
+    $expectedMainIds = @($expectedMain[$chapter] | ForEach-Object { ($_ -replace '^Action_(UGuid\.[^@]+)@.*$', '$1') -replace '^(Montage_|Slow_|Despawn_|Dual_)', '' })
     if (($actualMain -join '|') -ne ($expectedMainIds -join '|')) {
         throw "Main Boss classification changed unexpectedly for chapter $chapter"
     }
 }
 
-$bossSettings = @($defaultDocument.SelectNodes('//Setting[not(Setting) and (starts-with(@Id,"Dead_") or starts-with(@Id,"Dual_") or starts-with(@Id,"Despawn_") or starts-with(@Id,"Montage_") or starts-with(@Id,"Action_") or starts-with(@Id,"UGuid.") or starts-with(@Id,"Boss_"))]'))
+$bossSettings = @($defaultDocument.SelectNodes('//Setting[not(Setting) and (starts-with(@Id,"Montage_") or starts-with(@Id,"Slow_") or starts-with(@Id,"Dual_") or starts-with(@Id,"Despawn_") or starts-with(@Id,"Action_") or starts-with(@Id,"UGuid.") or starts-with(@Id,"Boss_"))]'))
 $expectedDisabledBossIds = @(
-    'Dead_UGuid.ZYS.XieZi.MRXG',
-    'Dead_TAMER_hys_huijingtitan_01'
+    'Montage_UGuid.ZYS.XieZi.MRXG',
+    'Montage_TAMER_hys_huijingtitan_01'
 )
 $disabledBossSettings = @($bossSettings | Where-Object { $_.State -ne 'true' })
 $unexpectedDisabledBossSettings = @($disabledBossSettings | Where-Object { $_.Id -notin $expectedDisabledBossIds })
@@ -176,34 +183,34 @@ foreach ($id in $expectedDisabledBossIds) {
 }
 
 $expectedParents = @{
-    'Dead_UGuid.HFS.TongChi01' = 'Chapter1MainBosses'
+    'Montage_UGuid.HFS.TongChi01' = 'Chapter1MainBosses'
     'Montage_UGuid.HFS.BaiyiT2' = 'Chapter1MainBosses'
-    'Dead_UGuid.HFS.JCZL' = 'Chapter1YaoguaiKingBosses'
-    'Dead_UGuid.HFS.WaBig' = 'Chapter1ChiefBosses'
-    'Dead_UGuid.HFM.Suoyang' = 'Chapter2ChiefBosses'
-    'Dead_UGuid.HFM.LaPapesse' = 'Chapter2ChiefBosses'
-    'Dead_UGuid.LYS.Mo4' = 'Chapter3ChiefBosses'
-    'Dead_UGuid.LYS.Mo3.OutsideTemple' = 'Chapter3ChiefBosses'
-    'Dead_UGuid.LYS.fsys' = 'Chapter3ChiefBosses'
-    'Dead_UGuid.PSD.YouYan' = 'Chapter4ChiefBosses'
-    'Dead_UGuid.PSD.JCZB' = 'Chapter4ChiefBosses'
-    'Dead_UGuid.ZYS.DaoShi.Fight' = 'Chapter4ChiefBosses'
-    'Dead_UGuid.ZYS.Daoshi.P2' = 'Chapter4ChiefBosses'
-    'Dead_UGuid.HYS.YSCheng' = 'Chapter5ChiefBosses'
+    'Montage_UGuid.HFS.JCZL' = 'Chapter1YaoguaiKingBosses'
+    'Montage_UGuid.HFS.WaBig' = 'Chapter1ChiefBosses'
+    'Montage_UGuid.HFM.Suoyang' = 'Chapter2ChiefBosses'
+    'Montage_UGuid.HFM.LaPapesse' = 'Chapter2ChiefBosses'
+    'Montage_UGuid.LYS.Mo4' = 'Chapter3ChiefBosses'
+    'Montage_UGuid.LYS.Mo3.OutsideTemple' = 'Chapter3ChiefBosses'
+    'Montage_UGuid.LYS.fsys' = 'Chapter3ChiefBosses'
+    'Montage_UGuid.PSD.YouYan' = 'Chapter4ChiefBosses'
+    'Montage_UGuid.PSD.JCZB' = 'Chapter4ChiefBosses'
+    'Montage_UGuid.ZYS.DaoShi.Fight' = 'Chapter4ChiefBosses'
+    'Montage_UGuid.ZYS.Daoshi.P2' = 'Chapter4ChiefBosses'
+    'Montage_UGuid.HYS.YSCheng' = 'Chapter5ChiefBosses'
     'Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01' = 'Chapter5YaoguaiKingBosses'
-    'Dead_UGuid.BYS.HMS.02' = 'Chapter6ChiefBosses'
-    'Dead_UGuid.BYS.Shitongling.03' = 'Chapter6ChiefBosses'
-    'Dead_UGuid.BYS.hema.king' = 'Chapter6ChiefBosses'
-    'Dead_UGuid.BYS.Baishe' = 'Chapter6ChiefBosses'
+    'Montage_UGuid.BYS.HMS.02' = 'Chapter6ChiefBosses'
+    'Montage_UGuid.BYS.Shitongling.03' = 'Chapter6ChiefBosses'
+    'Montage_UGuid.BYS.hema.king' = 'Chapter6ChiefBosses'
+    'Montage_UGuid.BYS.Baishe' = 'Chapter6ChiefBosses'
     'Action_UGuid.SL.sgd@*break*' = 'Chapter6YaoguaiKingBosses'
-    'Dead_UGuid.LYS.Mo3.FM' = 'Chapter3ChiefBosses'
-    'Dead_UGuid.LYS.TuiSeng.P1' = 'Chapter3ChiefBosses'
-    'Dead_UGuid.LYS.TuiSeng.P2' = 'Chapter3ChiefBosses'
-    'Dead_TAMER_psd_renshenjing_02a' = 'Chapter3ChiefBosses'
+    'Montage_UGuid.LYS.Mo3.FM' = 'Chapter3ChiefBosses'
+    'Montage_UGuid.LYS.TuiSeng.P1' = 'Chapter3ChiefBosses'
+    'Montage_UGuid.LYS.TuiSeng.P2' = 'Chapter3ChiefBosses'
+    'Montage_TAMER_psd_renshenjing_02a' = 'Chapter3ChiefBosses'
     'Montage_UGuid.PSD.WuLong' = 'Chapter4YaoguaiKingBosses'
     'Montage_UGuid.PSD.WuLong.4H' = 'Chapter4YaoguaiKingBosses'
-    'Dead_UGuid.PSD.Dage' = 'Chapter4YaoguaiKingBosses'
-    'Dead_UGuid.ZYS.XieZi.MRXG' = 'Chapter4YaoguaiKingBosses'
+    'Montage_UGuid.PSD.Dage' = 'Chapter4YaoguaiKingBosses'
+    'Montage_UGuid.ZYS.XieZi.MRXG' = 'Chapter4YaoguaiKingBosses'
     'Montage_UGuid.ZYS.MRXG' = 'Chapter4YaoguaiKingBosses'
     'Montage_UGuid.HYS.TuDi.YS' = 'Chapter5YaoguaiKingBosses'
 }
@@ -215,31 +222,31 @@ foreach ($expected in $expectedParents.GetEnumerator()) {
 }
 
 $expectedMappings = @{
-    'Boss_103006' = 'Dead_UGuid.HFS.JCZL'
-    'Boss_103007' = 'Dead_UGuid.HFS.WoodDragon'
-    'Boss_203002' = 'Dead_UGuid.HFM.ShuWang_01a.SW0'
-    'Boss_302003' = 'Dead_UGuid.LYS.Mo3.FM'
-    'Boss_302013' = 'Dead_UGuid.LYS.Mo4'
-    'Boss_302004' = 'Dead_UGuid.LYS.JianLong.Fight'
-    'Boss_402012' = 'Dead_UGuid.PSD.Dage'
+    'Boss_103006' = 'Montage_UGuid.HFS.JCZL'
+    'Boss_103007' = 'Montage_UGuid.HFS.WoodDragon'
+    'Boss_203002' = 'Montage_UGuid.HFM.ShuWang_01a.SW0'
+    'Boss_302003' = 'Montage_UGuid.LYS.Mo3.FM'
+    'Boss_302013' = 'Montage_UGuid.LYS.Mo4'
+    'Boss_302004' = 'Montage_UGuid.LYS.JianLong.Fight'
+    'Boss_402012' = 'Montage_UGuid.PSD.Dage'
     'Boss_502005' = 'Dual_UGuid.HYS.XingGongXian+UGuid.HYS.XianGongXing'
-    'Boss_703001' = 'Dead_UGuid.BSD.JJS'
-    'Boss_803001' = 'Dead_UGuid.ZYS.XieZi.MRXG'
+    'Boss_703001' = 'Montage_UGuid.BSD.JJS'
+    'Boss_803001' = 'Montage_UGuid.ZYS.XieZi.MRXG'
     'Boss_803002' = 'Montage_UGuid.ZYS.MRXG'
-    'Boss_202001' = 'Dead_UGuid.HFS.WaBig'
-    'Boss_202028' = 'Dead_UGuid.HFM.Suoyang'
-    'Boss_202007' = 'Dead_UGuid.HFM.LaPapesse'
-    'Boss_302014' = 'Dead_UGuid.LYS.Mo3.OutsideTemple'
-    'Boss_301002' = 'Dead_UGuid.LYS.fsys'
-    'Boss_402001' = 'Dead_UGuid.PSD.YouYan'
-    'Boss_402009' = 'Dead_UGuid.PSD.JCZB'
-    'Boss_402007' = 'Dead_UGuid.ZYS.DaoShi.Fight'
-    'Boss_501017' = 'Dead_UGuid.HYS.YSCheng'
+    'Boss_202001' = 'Montage_UGuid.HFS.WaBig'
+    'Boss_202028' = 'Montage_UGuid.HFM.Suoyang'
+    'Boss_202007' = 'Montage_UGuid.HFM.LaPapesse'
+    'Boss_302014' = 'Montage_UGuid.LYS.Mo3.OutsideTemple'
+    'Boss_301002' = 'Montage_UGuid.LYS.fsys'
+    'Boss_402001' = 'Montage_UGuid.PSD.YouYan'
+    'Boss_402009' = 'Montage_UGuid.PSD.JCZB'
+    'Boss_402007' = 'Montage_UGuid.ZYS.DaoShi.Fight'
+    'Boss_501017' = 'Montage_UGuid.HYS.YSCheng'
     'Boss_502013' = 'Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01'
-    'Boss_602007' = 'Dead_UGuid.BYS.HMS.02'
-    'Boss_602006' = 'Dead_UGuid.BYS.Shitongling.03'
-    'Boss_602009' = 'Dead_UGuid.BYS.hema.king'
-    'Boss_103003' = 'Dead_UGuid.BYS.Baishe'
+    'Boss_602007' = 'Montage_UGuid.BYS.HMS.02'
+    'Boss_602006' = 'Montage_UGuid.BYS.Shitongling.03'
+    'Boss_602009' = 'Montage_UGuid.BYS.hema.king'
+    'Boss_103003' = 'Montage_UGuid.BYS.Baishe'
     'Boss_603001' = 'Action_UGuid.SL.sgd@*break*'
 }
 foreach ($mapping in $expectedMappings.GetEnumerator()) {
@@ -272,12 +279,12 @@ if ($legacyBossSettings.Count -gt 0) {
     throw "Legacy Boss_* settings must be replaced by direct Tamer setting ids: $($legacyBossSettings.Id -join ', ')"
 }
 $expectedDirectTamerSettings = @(
-    'Dead_TAMER_hfm_hou_01a',
-    'Dead_TAMER_HFM_ShiTongLing_02a',
-    'Dead_TAMER_hys_shixianfeng_02',
-    'Dead_TAMER_hys_huolingsha_01',
-    'Dead_TAMER_psd_renshenjing_02a',
-    'Dead_TAMER_hys_huijingtitan_01'
+    'Montage_TAMER_hfm_hou_01a',
+    'Montage_TAMER_HFM_ShiTongLing_02a',
+    'Montage_TAMER_hys_shixianfeng_02',
+    'Montage_TAMER_hys_huolingsha_01',
+    'Montage_TAMER_psd_renshenjing_02a',
+    'Montage_TAMER_hys_huijingtitan_01'
 )
 foreach ($id in $expectedDirectTamerSettings) {
     if ($null -eq $defaultDocument.SelectSingleNode("//Setting[@Id='$id']")) {
@@ -304,12 +311,12 @@ if ($untranslated.Count -gt 0) {
 
 $defaultYangjian = $defaultDocument.SelectSingleNode('//Setting[@Id="Despawn_UGuid.MGD.yangjian.start"]')
 $englishYangjian = $englishDocument.SelectSingleNode('//Setting[@Id="Despawn_UGuid.MGD.yangjian.start"]')
-$legacyYangjian = $defaultDocument.SelectSingleNode('//Setting[@Id="Dead_UGuid.MGD.yangjian.start"]')
+$legacyYangjian = $defaultDocument.SelectSingleNode('//Setting[@Id="Montage_UGuid.MGD.yangjian.start"]')
 if ($null -eq $defaultYangjian -or $null -eq $englishYangjian) {
     throw "Erlang must use the Despawn_UGuid setting prefix."
 }
 if ($null -ne $legacyYangjian) {
-    throw "Erlang must not keep the legacy Dead_UGuid setting."
+    throw "Erlang must not keep the legacy Montage_UGuid setting."
 }
 if ($defaultYangjian.Label -match '推荐|Recommended|Fight Manually' -or
     $englishYangjian.Label -match 'Recommended|Fight Manually') {
@@ -539,8 +546,14 @@ foreach ($sourceName in @('"death-montage"', '"dual-montage"', '"slow-motion"', 
 if (-not $aslText.Contains('slowMotionCandidates.Count == 1')) {
     throw "Generated ASL must avoid ambiguous multi-Boss slow-motion splits: $aslPath"
 }
-if (-not $aslText.Contains('"Dead_" + uid')) {
-    throw "Generated ASL does not map UGuid actors to Dead_UGuid settings: $aslPath"
+if (-not $aslText.Contains('"Montage_" + uid')) {
+    throw "Generated ASL does not map UGuid actors to Montage_UGuid settings: $aslPath"
+}
+if (-not $aslText.Contains('string slowSetting = "Slow_" + uid;')) {
+    throw "Generated ASL does not resolve Slow_UGuid settings: $aslPath"
+}
+if ($aslText.Contains($obsoleteBossPrefix)) {
+    throw "Generated ASL still contains the obsolete Boss setting prefix: $aslPath"
 }
 if (-not $aslText.Contains('string despawnSetting = "Despawn_" + uid;')) {
     throw "Generated ASL does not resolve Despawn_UGuid settings: $aslPath"
@@ -557,21 +570,22 @@ if (-not $aslText.Contains('"[BMW-splitter] actor appeared: uid="') -or -not $as
 if (-not $aslText.Contains('vars.StripActorInstanceSuffix = (Func<string, string>)') -or
     -not $aslText.Contains('vars.ResolveActorUid = (Func<string, string>)') -or
     -not $aslText.Contains('actorName.IndexOf("-TAMER_", StringComparison.OrdinalIgnoreCase)') -or
-    -not $aslText.Contains('settings.ContainsKey("Dead_" + token)') -or
+    -not $aslText.Contains('settings.ContainsKey("Montage_" + token)') -or
+    -not $aslText.Contains('settings.ContainsKey("Slow_" + token)') -or
     -not $aslText.Contains('vars.ActionSplitsByActor.ContainsKey(token)') -or
     -not $aslText.Contains('vars.ActionSplitsByActor.ContainsKey(baseToken)')) {
-    throw "Generated ASL does not resolve GUID-TAMER Boss actors through Dead/Montage/Despawn/Action settings: $aslPath"
+    throw "Generated ASL does not resolve GUID-TAMER Boss actors through Montage/Slow/Despawn/Action settings: $aslPath"
 }
 if ($aslText.Contains('BossActorAliases')) {
     throw "Generated ASL must not contain the removed BossActorAliases table: $aslPath"
 }
 foreach ($directId in @(
-    'Dead_TAMER_hfm_hou_01a',
-    'Dead_TAMER_HFM_ShiTongLing_02a',
-    'Dead_TAMER_hys_shixianfeng_02',
-    'Dead_TAMER_hys_huolingsha_01',
-    'Dead_TAMER_psd_renshenjing_02a',
-    'Dead_TAMER_hys_huijingtitan_01'
+    'Montage_TAMER_hfm_hou_01a',
+    'Montage_TAMER_HFM_ShiTongLing_02a',
+    'Montage_TAMER_hys_shixianfeng_02',
+    'Montage_TAMER_hys_huolingsha_01',
+    'Montage_TAMER_psd_renshenjing_02a',
+    'Montage_TAMER_hys_huijingtitan_01'
 )) {
     if ($null -eq $defaultDocument.SelectSingleNode("//Setting[@Id='$directId']")) {
         throw "Generated settings are missing direct Tamer Boss id ${directId}: $aslPath"
@@ -595,9 +609,11 @@ if (-not $aslText.Contains('string montageSetting = "Montage_" + uid;')) {
 if (-not $aslText.Contains('if (source != "death-montage"') -or -not $aslText.Contains('setting.StartsWith("Montage_", StringComparison.Ordinal)')) {
     throw "Generated ASL does not restrict Montage_ settings to death-montage: $aslPath"
 }
-if (-not $aslText.Contains('!setting.StartsWith("Montage_", StringComparison.Ordinal)')) {
-    throw "Generated ASL does not exclude Montage_ settings from slow-motion: $aslPath"
+if (-not $aslText.Contains('if (source != "slow-motion"') -or
+    -not $aslText.Contains('setting.StartsWith("Slow_", StringComparison.Ordinal)')) {
+    throw "Generated ASL does not restrict Slow_ settings to slow-motion: $aslPath"
 }
+
 if (-not $aslText.Contains('vars.LoadDualSplits = (Action)') -or
     -not $aslText.Contains('//Setting[starts-with(@Id, ''Dual_'')]') -or
     -not $aslText.Contains('.Split(''+'')')) {

@@ -6,7 +6,7 @@
 
 - 以场景中的 `UGuid___*` Actor 作为主要 Boss 唯一键。
 - Actor 名会转换为形如 `UGuid.HFS.GuangZhi` 的 UID，再映射到设置 ID。
-- 部分 Boss 的运行时 Actor 名不是 `UGuid___*`，而是 `GUID-TAMER_xxx_C_n@_n`。这类 Boss 直接使用 `Dead_TAMER_*` 设置，不维护运行时别名表；出现日志同时记录解析后的 `uid` 和原始 `name`。
+- 部分 Boss 的运行时 Actor 名不是 `UGuid___*`，而是 `GUID-TAMER_xxx_C_n@_n`。这类 Boss 直接使用 `Montage_TAMER_*`、`Slow_TAMER_*` 或 `Despawn_TAMER_*` 设置，不维护运行时别名表；出现日志同时记录解析后的 `uid` 和原始 `name`。
 - Actor 扫描间隔为 50 ms，只跟踪配置中存在的 Boss Actor。
 - 每个 Actor 的缓存只保留 Actor 指针、首次观察时间和死亡 Montage 是否已触发。
 - 世界切换、计时器重置和双 Boss 进度重置都走同一套清理流程。
@@ -29,7 +29,7 @@ GUID-TAMER Actor 的完整查找、名称确认和 setting 转换流程见
 - 当前构建需合并读取 `AnimInstance+0x88`、`+0x128`、`+0x138` 三组活动 Montage 数组；灵虚子的攻击和 `BIdle` 会进入后两组，只读主数组会在初见战斗阶段漏掉 action。
 - Montage 数组 item 的指针位置存在版本/实例差异：需同时尝试 `item+0` 和 `item+0x18`，并用对象类名必须包含 `AnimMontage` 做校验。
 - 配置格式为 `Action_<UID>@动作名`；`<UID>` 可为 `UGuid.*` 或直接 Tamer 名。动作模式支持精确匹配、`foo*` 前缀、`*foo` 后缀、`*foo*` 包含，单独的 `*` 匹配任意非空动作。
-- `Action_` 设置独立于 `Dead_`/`Montage_`/`Despawn_` 解析，因此同一 UGuid 或 GUID-TAMER Actor 可以配置多个事件。
+- `Action_` 设置独立于 `Montage_`/`Slow_`/`Despawn_` 解析，因此同一 UGuid 或 GUID-TAMER Actor 可以配置多个事件。
 - 逐动作变化日志当前直接开启，只输出 `uid`、`action` 和 `deathAction`；不再输出 AnimInstance、数组头或 item 指针详情。
 - Actor 消失日志和死亡 Montage 日志仍会输出当前/最终动作与可复制设置键。
 
@@ -53,7 +53,7 @@ UWorldSettings + 0x3A8
 - 完美闪避：连续变化，但最低不低于 `0.3`。
 - Boss 击杀：约 `0.14x`，最低观察到 `0.125`。
 
-因此不能使用 `< 0.5`，否则玩家动作会产生误打点。全局慢动作还要求场上恰好有一个已启用 Boss 候选，避免双 Boss 或召唤物场景把同一事件分配给多个设置。
+因此不能使用 `< 0.5`，否则玩家动作会产生误打点。`Slow_UGuid.*` 只接受该信号。全局慢动作还要求场上恰好有一个已启用 `Slow_` Boss 候选，避免双 Boss 或召唤物场景把同一事件分配给多个设置。
 
 ### Actor 消失
 
@@ -98,10 +98,11 @@ Dual_UGuid.A+UGuid.B
 ## 验证清单
 
 - 普通 Boss 的死亡 Montage。
-- 百目真人与其他 `GUID-TAMER` 命名的 Boss 能产生 actor appeared 日志并命中对应 `Dead_TAMER_*` 设置。
+- 百目真人与其他 `GUID-TAMER` 命名的 Boss 能产生 actor appeared 日志并命中对应 `Montage_TAMER_*` 设置。
 - 高闪避频率下的完美闪避、识破和退寸均不触发慢动作打点。
 - Boss 击杀慢动作能正常触发。
 - `Montage_UGuid.*` 不被慢动作或消失信号触发。
+- `Slow_UGuid.*` 不被死亡 Montage 或消失信号触发。
 - `Despawn_UGuid.*` 不被 Montage 或慢动作触发。
 - 双 Boss 只击杀一个时不打点，两个都出现 Montage 后只打一次。
 - 世界切换、计时器重置和 Actor 重建后不保留旧双 Boss 进度。

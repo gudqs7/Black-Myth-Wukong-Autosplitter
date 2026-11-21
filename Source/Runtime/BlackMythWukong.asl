@@ -9,11 +9,12 @@
  * - 注释必须描述当前实现，不能把计划、猜测或已经删除的旧方案写成事实。
  *
  * 运行时约定:
- * - UGuid 是主要 Boss 观察键；GUID-TAMER Actor 直接匹配 Dead_TAMER_* 设置，
+ * - UGuid 是主要 Boss 观察键；GUID-TAMER Actor 直接匹配 Montage_TAMER_*、Slow_TAMER_* 或 Despawn_TAMER_* 设置，
  *   设置 ID 本身承担资源映射，不使用运行时别名表。
  * - Dual_UGuid.A+UGuid.B 只在两个 Boss 都出现死亡 Montage 后打点。
- * - Montage_* 只接受死亡 Montage，Despawn_* 只接受 Actor 消失。
- * - Action_<UGuid>@<动作名> 只接受匹配的动作 Montage；动作名和可复制配置键来自 [BMW-action] 日志。
+ * - Montage_* 只接受死亡 Montage，Slow_* 只接受单 Boss 击杀慢动作，
+ *   Despawn_* 只接受 Actor 消失。
+ * - Action_<UID>@<动作名> 只接受匹配的动作 Montage；动作名和可复制配置键来自 [BMW-action] 日志。
  * - isLoading 只暂停 Game Time，Real Time 始终由 LiveSplit 正常推进。
  */
 state("b1-Win64-Shipping") {}
@@ -222,7 +223,6 @@ init
             for (int index = 0; index < montageCount; index++)
             {
                 IntPtr item = (IntPtr)((long)montages + index * 0x1C8);
-                IntPtr montage = IntPtr.Zero;
                 string montageName = "";
                 for (int pointerIndex = 0;
                     pointerIndex < montagePointerOffsets.Length;
@@ -242,11 +242,10 @@ init
                     if (string.IsNullOrEmpty(candidateName)
                         || candidateName.Equals("None", StringComparison.OrdinalIgnoreCase))
                         continue;
-                    montage = candidate;
                     montageName = candidateName;
                     break;
                 }
-                if (montage == IntPtr.Zero) continue;
+                if (string.IsNullOrEmpty(montageName)) continue;
 
                 bool duplicate = false;
                 for (int nameIndex = 0; nameIndex < names.Count; nameIndex++)
@@ -336,7 +335,7 @@ init
     // BuildActionSettingList 委托。
     // 入参：uid 是 Actor 唯一键，actionNames 是当前动作集合。
     // 返回：可直接粘贴到 XML 的 Action_ 配置键，多个动作以逗号分隔。
-    // 原理：Actor 消失日志和死亡 Montage 日志输出该字符串，用户无需手工拼接 UID 和动作名。
+    // 原理：死亡 Montage 日志输出该字符串，用户无需手工拼接 UID 和动作名。
     vars.BuildActionSettingList = (Func<string, string, string>)((uid, actionNames) =>
     {
         if (string.IsNullOrEmpty(actionNames)) return "";
@@ -356,14 +355,15 @@ init
     // CompletedSplits：已完成/已入队的设置 id；保证单次尝试最多打一次。
     // ActorSeen：uid -> [Actor 指针, 首次观察 ticks, 死亡 Montage 是否已触发]。
     // PendingSplits：等待 split 钩子消费的设置 id 队列。
-    // ObservedActors：上一轮扫描到的 UGuid Actor 集合，用于生成出现/消失边沿。
+    // ObservedActors：上一轮解析出的 Actor UID 集合，用于生成出现/消失边沿。
     // DualSplits：Dual_ 设置 id -> 两个 UGuid。
     // DualSettingsByActor：UGuid -> 包含该 Actor 的 Dual_ 设置列表。
     // DualMontageHits：Dual_ 设置 id -> 已出现死亡 Montage 的 UGuid 集合。
-    // ActionSplitsByActor：UGuid -> 该 Actor 的 Action_ 设置 id 列表。
+    // ActionSplitsByActor：Actor UID -> 该 Actor 的 Action_ 设置 id 列表。
     // ActionSplitPatterns：Action_ 设置 id -> @ 后面的动作匹配模式。
-    // ActorActionState：所有已见 UGuid -> [Actor 指针, 当前动作]。
-    // GUID-TAMER Actor 不维护运行时别名表，而是直接按 Tamer 名匹配 Dead_TAMER_*。
+    // ActorActionState：Actor UID -> [Actor 指针, 当前动作]。
+    // GUID-TAMER Actor 不维护运行时别名表，而是直接按 Tamer 名匹配 Montage_TAMER_*、
+    // Slow_TAMER_* 或 Despawn_TAMER_*。
     vars.CompletedSplits = new HashSet<string>();
     vars.ActorSeen = new Dictionary<string, long[]>();
     vars.PendingSplits = new Queue<string>();
@@ -379,7 +379,7 @@ init
     // 入参：GUID-TAMER Actor 名中提取出的完整 Tamer token。
     // 返回：去掉末尾 _C_<数字> 的 Tamer 资源名；不符合后缀时原样返回。
     // 原理：百目真人等 Actor 名称形如 TAMER_hfm_hou_01a_C_1@_1，而设置只需
-    // Dead_TAMER_hfm_hou_01a；黑手道人的两个场景则可用完整 _C_3/_C_4 精确区分。
+    // Montage_TAMER_hfm_hou_01a；黑手道人的两个场景则可用完整 _C_3/_C_4 精确区分。
     vars.StripActorInstanceSuffix = (Func<string, string>)(token =>
     {
         int marker = token.LastIndexOf("_C_", StringComparison.OrdinalIgnoreCase);
@@ -395,8 +395,8 @@ init
     // 入参：Actor 的对象名。
     // 返回：UGuid 唯一键、已配置的 Tamer token，或空字符串表示不跟踪。
     // 原理：常规 Boss 使用 UGuid___... 名称；GUID-TAMER Actor 先尝试完整
-    // TAMER_xxx_C_n 设置，再回退到基础 TAMER_xxx。检查范围包括 Dead_、
-    // Montage_、Despawn_ 和 Action_；只有存在对应设置才返回，因此普通 Tamer
+    // TAMER_xxx_C_n 设置，再回退到基础 TAMER_xxx。检查范围包括 Montage_、
+    // Slow_、Despawn_ 和 Action_；只有存在对应设置才返回，因此普通 Tamer
     // 单位不会进入出现/消失日志。
     vars.ResolveActorUid = (Func<string, string>)(actorName =>
     {
@@ -413,15 +413,15 @@ init
             : actorName.Substring(tokenStart, at - tokenStart);
         if (string.IsNullOrEmpty(token)) return "";
 
-        bool fullTracked = settings.ContainsKey("Dead_" + token)
-            || settings.ContainsKey("Montage_" + token)
+        bool fullTracked = settings.ContainsKey("Montage_" + token)
+            || settings.ContainsKey("Slow_" + token)
             || settings.ContainsKey("Despawn_" + token)
             || vars.ActionSplitsByActor.ContainsKey(token);
         if (fullTracked) return token;
 
         string baseToken = vars.StripActorInstanceSuffix(token);
-        bool baseTracked = settings.ContainsKey("Dead_" + baseToken)
-            || settings.ContainsKey("Montage_" + baseToken)
+        bool baseTracked = settings.ContainsKey("Montage_" + baseToken)
+            || settings.ContainsKey("Slow_" + baseToken)
             || settings.ContainsKey("Despawn_" + baseToken)
             || vars.ActionSplitsByActor.ContainsKey(baseToken);
         return baseTracked ? baseToken : "";
@@ -452,9 +452,9 @@ init
 
     // GetActorSetting 委托。
     // 入参：uid，由 UGuid Actor 名称或 GUID-TAMER Actor 直接解析出的设置键。
-    // 返回：优先存在的 Despawn_ 或 Montage_ 设置；两者都不存在时返回 Dead_ 键。
+    // 返回：优先存在的 Despawn_、Montage_ 或 Slow_ 设置；都不存在时返回空字符串。
     // 原理：同一 Actor 只能使用一种打点语义，因此优先级固定为
-    // Despawn_ > Montage_ > Dead_。GUID-TAMER Actor 使用同样的前缀规则。
+    // Despawn_ > Montage_ > Slow_。没有共享的默认前缀，未配置 Actor 不参与打点。
     vars.GetActorSetting = (Func<string, string>)(uid =>
     {
         string despawnSetting = "Despawn_" + uid;
@@ -463,7 +463,10 @@ init
         string montageSetting = "Montage_" + uid;
         if (settings.ContainsKey(montageSetting)) return montageSetting;
 
-        return "Dead_" + uid;
+        string slowSetting = "Slow_" + uid;
+        if (settings.ContainsKey(slowSetting)) return slowSetting;
+
+        return "";
     });
 
     // LoadDualSplits 委托。
@@ -525,8 +528,8 @@ init
     // LoadActionSplits 委托。
     // 入参：无，使用 startup 保存的 vars.SettingsPath。
     // 返回：void；非法 Action_ 项只记录日志并跳过，不中断其余配置。
-    // 原理：配置格式固定为 Action_UGuid.<Boss>@<动作名>；@ 后面也可使用末尾 *
-    // 做前缀匹配，单独的 * 表示该 Actor 的任意非空动作。这里只解析一次 XML，
+    // 原理：配置格式固定为 Action_<UID>@<动作名>；UID 可为 UGuid.* 或 TAMER_*。
+    // @ 后支持首尾 *；单独的 * 表示该 Actor 的任意非空动作。这里只解析一次 XML，
     // 同时建立 Actor -> 设置列表和设置 -> 动作模式两个索引供 update 使用。
     vars.LoadActionSplits = (Action)(() =>
     {
@@ -575,8 +578,8 @@ init
     });
     vars.LoadActionSplits();
     // TryQueueSetting 委托。
-    // 入参：setting 是最终设置 id，source 是 death-montage/slow-motion/despawn/
-    // dual-montage 等打点来源文本。
+    // 入参：setting 是最终设置 id，source 是 death-montage/action/slow-motion/
+    // despawn/dual-montage 等打点来源文本。
     // 返回：成功入队时 true；总开关关闭、计时器未 Running、单项关闭或已处理时 false。
     // 原理：先通过所有启用条件，再把设置 id 加入 CompletedSplits，最后放入
     // PendingSplits。CompletedSplits 在入队前更新，因此同一设置不会重复排队。
@@ -584,8 +587,7 @@ init
     {
         if (!vars.IsAutoSplitEnabled()) return false;
         if (timer.CurrentPhase != TimerPhase.Running) return false;
-        if (!vars.IsSettingEnabled(setting, false))
-            return false;
+        if (!vars.IsSettingEnabled(setting, false)) return false;
         if (!vars.CompletedSplits.Add(setting)) return false;
 
         vars.PendingSplits.Enqueue(setting);
@@ -634,21 +636,20 @@ init
 
     // TryQueueSplit 委托。
     // 入参：uid 是 Boss 唯一键，source 是本次打点来源文本。
-    // 返回：映射后的设置成功交给 TryQueueSetting 时为 true，否则 false。
-    // 原理：先按 Despawn_ > Montage_ > Dead_ 映射设置，再按前缀过滤来源：
-    // Dead_* 接受死亡 Montage 和单 Boss 慢动作；Montage_* 只接受死亡 Montage；
+    // 返回：匹配设置成功交给 TryQueueSetting 时为 true，否则 false。
+    // 原理：先按 Despawn_ > Montage_ > Slow_ 映射设置，再按前缀严格过滤来源：
+    // Montage_* 只接受死亡 Montage；Slow_* 只接受单 Boss 击杀慢动作；
     // Despawn_* 只接受 despawn。Dual_* 不经过这里，避免单个 Boss 提前触发。
     vars.TryQueueSplit = (Func<string, string, bool>)((uid, source) =>
     {
         string setting = vars.GetActorSetting(uid);
-        if (!vars.IsSettingEnabled(setting, false))
-            return false;
+        if (!vars.IsSettingEnabled(setting, false)) return false;
         if (source != "despawn"
-            && setting.StartsWith("Despawn_", StringComparison.Ordinal))
-            return false;
+            && setting.StartsWith("Despawn_", StringComparison.Ordinal)) return false;
         if (source != "death-montage"
-            && setting.StartsWith("Montage_", StringComparison.Ordinal))
-            return false;
+            && setting.StartsWith("Montage_", StringComparison.Ordinal)) return false;
+        if (source != "slow-motion"
+            && setting.StartsWith("Slow_", StringComparison.Ordinal)) return false;
 
         return vars.TryQueueSetting(setting, source);
     });
@@ -656,8 +657,8 @@ init
     // RegisterDualMontage 委托。
     // 入参：uid，刚刚出现死亡 Montage 的 Boss 唯一键。
     // 返回：该 uid 是否属于至少一个 Dual_ 配置；与最终是否成功入队无关。
-    // 原理：把 uid 写入每个相关 Dual_ 设置的命中集合，两个指定 UID 都命中后
-    // 才调用 TryQueueSetting。一个 Actor 可同时参与多个 Dual_ 配置。
+    // 原理：两个指定 UID 都命中后才调用 TryQueueSetting。一个 Actor 可同时
+    // 参与多个 Dual_ 配置。
     vars.RegisterDualMontage = (Func<string, bool>)(uid =>
     {
         List<string> dualSettings;
@@ -761,7 +762,7 @@ init
     // StartArmed：从 Startup 菜单世界进入 MGD 时自动开始的武装位。
     // LastWorld / LastWorldPtr：上一轮世界名和地址，用于识别世界代际变化。
     vars.ScanIntervalTicks = TimeSpan.TicksPerMillisecond * 50;
-    vars.MinBossActorSeenTicks = TimeSpan.TicksPerMillisecond * 1500;
+    vars.MinBossActorSeenTicks = TimeSpan.TicksPerMillisecond * 500;
     vars.NextActorScanTicks = 0L;
     vars.LastUpdateErrorTicks = 0L;
     vars.LastSlowMotion = false;
@@ -772,7 +773,7 @@ init
     vars.LastWorldPtr = IntPtr.Zero;
 
     // current.World 是 update 生成的当前世界名；WorldPending 表示该世界不能用于
-    // Boss 扫描或尚未完成原生加载。初始值按“仍在加载”处理，失败时保持暂停。
+    // Boss 扫描。初始值按“仍在加载”处理，失败时保持暂停。
     current.World = "";
     current.WorldPending = true;
 
@@ -816,7 +817,7 @@ init
     // UpdateCutsceneHooks 委托。
     // 入参：无，读取 vars.Events 的 Hook 标志和 current 中的对象快照。
     // 返回：void。
-    // 原理：Sequence 状态和 Actor 备用路径参与 CutscenePending；只有
+    // 原理：Sequence 状态参与 CutscenePending；只有
     // BinkMoviePlayer_Chapter 会额外参与加载判断，其他 Bink 仅记录日志。
     vars.UpdateCutsceneHooks = (Action)(() =>
     {
@@ -1104,7 +1105,7 @@ update
 
         // 本轮扫描先把结果写入临时容器，扫描成功后再整体替换上一轮状态：
         // nextSeen 保存新的 ActorSeen，deathMontageSplits 保存本轮刚出现的死亡边沿，
-        // slowMotionCandidates 保存允许使用慢动作信号的已启用普通 Boss。
+        // slowMotionCandidates 保存已启用的 Slow_ Actor。
         Dictionary<string, long[]> nextSeen = new Dictionary<string, long[]>();
         List<string> deathMontageSplits = new List<string>();
         List<string> slowMotionCandidates = new List<string>();
@@ -1112,7 +1113,7 @@ update
         HashSet<string> observedActors = new HashSet<string>();
 
         // 逐个读取 Actor 指针和对象名。常规 Boss 由 UGuid___ 名称识别；
-        // 少数场景 Actor 的运行时名称为 GUID-TAMER_xxx_C_n@_n，由别名表还原设置 id。
+        // 少数场景 Actor 使用 GUID-TAMER_xxx_C_n@_n，由 ResolveActorUid 直接解析。
         for (int index = 0; index < actorCount; index++)
         {
             IntPtr actor = vars.Resolver.Read<IntPtr>(
@@ -1139,7 +1140,7 @@ update
                     + " world=" + worldName);
             }
 
-            // 动作观测覆盖所有 UGuid，不受 Dead_/Montage_/Despawn_ 配置限制。
+            // 动作观测覆盖所有已解析 Actor，不受 Montage_/Slow_/Despawn_ 配置限制。
             // ActorActionState 用 Actor 指针区分同 UID 的新实例；动作集合只在发生
             // 变化时写日志，但每个扫描周期仍用当前动作检查 Action_ 自定义打点。
             IntPtr anim = vars.FindAnimation(actor);
@@ -1174,9 +1175,9 @@ update
             };
 
             vars.TryQueueActionSplits(uid, actionNames);
-            // 出现/消失日志覆盖所有 UGuid；后续分割状态只跟踪已配置 Actor。
+            // 出现/消失日志覆盖所有已解析 Actor；后续分割状态只跟踪已配置 Actor。
             // GetActorSetting 返回的是语义优先级，最终仍要检查 settings 中是否真实存在；
-            // Dual_ 只通过 DualSettingsByActor 判断，不需要单 Actor 的 Dead_ 设置。
+            // Dual_ 只通过 DualSettingsByActor 判断，不需要单 Actor 的打点设置。
             string setting = vars.GetActorSetting(uid);
             bool hasDualSetting = ((Dictionary<string, List<string>>)
                 vars.DualSettingsByActor).ContainsKey(uid);
@@ -1209,13 +1210,12 @@ update
                         + " world=" + worldName);
                 }
 
-                // 只有已启用、非 Dual_、非 Despawn_、非 Montage_ 的普通 Boss
-                // 才能成为单 Boss 慢动作候选；Dual_ 和专用前缀必须忽略该信号。
+                // 只有已启用、非 Dual_ 的 Slow_ 设置才能成为单 Boss 慢动作候选。
+                // Montage_、Despawn_ 和 Action_ 不参与全局慢动作信号。
                 if (seenTicks >= (long)vars.MinBossActorSeenTicks
                     && vars.IsSettingEnabled(setting, false)
                     && !hasDualSetting
-                    && !setting.StartsWith("Despawn_", StringComparison.Ordinal)
-                    && !setting.StartsWith("Montage_", StringComparison.Ordinal))
+                    && setting.StartsWith("Slow_", StringComparison.Ordinal))
                 {
                     slowMotionCandidates.Add(uid);
                 }
@@ -1265,7 +1265,7 @@ update
         bool slowMotion = timeDilation > 0.001f && timeDilation < 0.16f;
 
         // 同周期先处理死亡 Montage，再处理极低时间膨胀的击杀慢动作。
-        // Dual_ Actor 在这里只登记命中，不直接调用 TryQueueSplit；普通 Boss 才走
+        // Dual_ Actor 在这里只登记命中，不直接调用 TryQueueSplit；非 Dual_ Actor 才走
         // death-montage 来源。顺序固定可避免同一事件同时被两条路径重复入队。
         foreach (string uid in deathMontageSplits)
         {
@@ -1279,8 +1279,8 @@ update
             vars.RegisterDualMontage(uid);
         }
 
-        // 全局慢动作只在场上恰好有一个已启用 Boss 时使用，防止双 Boss 或
-        // 召唤物同时在场时把同一死亡事件打给多个设置。
+        // 全局慢动作只在一个已启用 Slow_ 候选存在时触发，避免双 Boss 或
+        // 召唤物同时在场时把同一事件归给多个设置。
         if (slowMotion
             && !(bool)vars.LastSlowMotion
             && slowMotionCandidates.Count == 1)

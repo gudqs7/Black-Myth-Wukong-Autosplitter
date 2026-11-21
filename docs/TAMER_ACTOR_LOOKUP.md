@@ -32,7 +32,7 @@ LiveMontageInspect.exe --all-actors |
   Select-String -Pattern 'class=Unit_|class=UNIT_|class=TAMER_'
 ```
 
-当前运行时只会记录已经存在对应 `Dead_TAMER_*`、`Montage_TAMER_*`、
+当前运行时只会记录已经存在对应 `Montage_TAMER_*`、`Slow_TAMER_*`、
 `Despawn_TAMER_*` 或 `Action_TAMER_*` 设置的 GUID-TAMER Actor。未配置的普通小怪不会进入生产日志，
 因此找新小怪时必须使用上述独立诊断工具，或先临时添加 setting。
 
@@ -81,21 +81,21 @@ field 2 = 名称
 
 ```text
 GUID-TAMER_xxx_C_n@_m
-  -> 先查 Dead_TAMER_xxx_C_n
-  -> 未命中再去掉 _C_n，查 Dead_TAMER_xxx
+  -> 先查受支持前缀 + TAMER_xxx_C_n
+  -> 未命中再去掉 _C_n，查受支持前缀 + TAMER_xxx
 ```
 
 因此普通 Boss 使用基础名：
 
 ```text
-Dead_TAMER_<资源名>
+Montage_TAMER_<资源名>
 ```
 
 例如：
 
 ```text
 GUID-TAMER_hfm_hou_01a_C_1@_1
-  -> Dead_TAMER_hfm_hou_01a
+  -> Montage_TAMER_hfm_hou_01a
 ```
 
 只有没有稳定 UGuid、但同一基础 Tamer 对应多个独立战斗时，才考虑完整后缀。
@@ -109,25 +109,25 @@ Montage_UGuid.PSD.WuLong.4H   # 黑手道人(进紫云山前)
 前缀语义仍与其他 Boss 一致：
 
 ```text
-Dead_TAMER_*    死亡 Montage / 击杀慢动作
-Montage_TAMER_* 只接受死亡 Montage
-Despawn_TAMER_* 只接受 Actor 消失
-Action_TAMER_*@* 只接受匹配的当前动作 Montage
+Montage_TAMER_*    只接受死亡 Montage
+Slow_TAMER_*       只接受击杀慢动作
+Despawn_TAMER_*    只接受 Actor 消失
+Action_TAMER_*@*   只接受匹配的当前动作 Montage
 ```
 
 ## 4. 已确认案例
 
 | 敌人 | 运行时 Actor 示例 | Setting id |
 |---|---|---|
-| 百目真人 | `GUID-TAMER_hfm_hou_01a_C_1@_1` | `Dead_TAMER_hfm_hou_01a` |
-| 老人参精 | `GUID-TAMER_psd_renshenjing_02a_C_1@_1` | `Dead_TAMER_psd_renshenjing_02a` |
+| 百目真人 | `GUID-TAMER_hfm_hou_01a_C_1@_1` | `Montage_TAMER_hfm_hou_01a` |
+| 老人参精 | `GUID-TAMER_psd_renshenjing_02a_C_1@_1` | `Montage_TAMER_psd_renshenjing_02a` |
 | 黑手道人·初见 | `GUID-TAMER_psd_wulong_C_4@_1` | `Montage_UGuid.PSD.WuLong` |
 | 黑手道人·进紫云山前 | `GUID-TAMER_psd_wulong_C_3@_1` | `Montage_UGuid.PSD.WuLong.4H` |
-| 燧统领 | `GUID-TAMER_HFM_ShiTongLing_02a_C_3@_1` | `Dead_TAMER_HFM_ShiTongLing_02a` |
-| 燧先锋 | `GUID-TAMER_hys_shixianfeng_02_C_8@_1` | `Dead_TAMER_hys_shixianfeng_02` |
-| 火灵元母 | `GUID-TAMER_hys_huolingsha_01_C_1@_1` | `Dead_TAMER_hys_huolingsha_01` |
-| 金妞（用户确认） | `GUID-TAMER_hys_huijingtitan_01_C_4@_2` | `Dead_TAMER_hys_huijingtitan_01` 或精确 `_C_4` |
-| 牾提辖 | `GUID-TAMER_hys_niu_02_C_0@_2` | `Dead_TAMER_hys_niu_02` |
+| 燧统领 | `GUID-TAMER_HFM_ShiTongLing_02a_C_3@_1` | `Montage_TAMER_HFM_ShiTongLing_02a` |
+| 燧先锋 | `GUID-TAMER_hys_shixianfeng_02_C_8@_1` | `Montage_TAMER_hys_shixianfeng_02` |
+| 火灵元母 | `GUID-TAMER_hys_huolingsha_01_C_1@_1` | `Montage_TAMER_hys_huolingsha_01` |
+| 金妞（用户确认） | `GUID-TAMER_hys_huijingtitan_01_C_4@_2` | `Montage_TAMER_hys_huijingtitan_01` 或精确 `_C_4` |
+| 牾提辖 | `GUID-TAMER_hys_niu_02_C_0@_2` | `Montage_TAMER_hys_niu_02` |
 
 ## 5. 添加和验证
 
