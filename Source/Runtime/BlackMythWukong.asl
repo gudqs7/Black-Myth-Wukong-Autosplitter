@@ -287,27 +287,45 @@ init
 
     // MatchAction 委托。
     // 入参：actionNames 是当前动作集合，pattern 是 Action_ 设置 @ 后面的动作名。
-    // 返回：任一动作精确匹配（不区分大小写）时为 true；pattern 末尾 * 时按前缀匹配。
-    // 原理：当前动作可能同时包含多个 Montage，因此逐个拆分比较；单独的 * 匹配
-    // 任意非空动作，便于只观察某个 Actor 的第一个动作。
+    // 返回：任一动作匹配模式（不区分大小写）时为 true。
+    // 原理：支持四类模式：无通配符为精确匹配；foo* 为前缀匹配；*foo 为后缀
+    // 匹配；*foo* 为包含匹配；单独的 * 匹配任意非空动作。只识别首尾通配符，
+    // 不支持内部 * 的通用 glob。
     vars.MatchAction = (Func<string, string, bool>)((actionNames, pattern) =>
     {
         if (string.IsNullOrEmpty(actionNames) || string.IsNullOrEmpty(pattern))
             return false;
+        if (pattern == "*") return true;
 
         string[] actions = actionNames.Split('|');
-        bool prefixMatch = pattern.EndsWith("*", StringComparison.Ordinal);
-        string prefix = prefixMatch ? pattern.Substring(0, pattern.Length - 1) : pattern;
+        bool startsWithWildcard = pattern.StartsWith("*", StringComparison.Ordinal);
+        bool endsWithWildcard = pattern.EndsWith("*", StringComparison.Ordinal);
+        string value = pattern;
+        if (startsWithWildcard)
+            value = value.Substring(1);
+        if (endsWithWildcard && value.Length > 0)
+            value = value.Substring(0, value.Length - 1);
+        if (string.IsNullOrEmpty(value)) return true;
+
         for (int index = 0; index < actions.Length; index++)
         {
-            if (pattern == "*") return true;
-            if (prefixMatch
-                && actions[index].StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            string action = actions[index];
+            if (startsWithWildcard && endsWithWildcard)
             {
-                return true;
+                if (action.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
             }
-            if (!prefixMatch
-                && actions[index].Equals(pattern, StringComparison.OrdinalIgnoreCase))
+            else if (startsWithWildcard)
+            {
+                if (action.EndsWith(value, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            else if (endsWithWildcard)
+            {
+                if (action.StartsWith(value, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            else if (action.Equals(value, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
@@ -377,8 +395,9 @@ init
     // 入参：Actor 的对象名。
     // 返回：UGuid 唯一键、已配置的 Tamer token，或空字符串表示不跟踪。
     // 原理：常规 Boss 使用 UGuid___... 名称；GUID-TAMER Actor 先尝试完整
-    // TAMER_xxx_C_n 设置，再回退到 Dead_TAMER_xxx。只有存在对应设置才返回，
-    // 因此普通 Tamer 单位不会进入出现/消失日志。
+    // TAMER_xxx_C_n 设置，再回退到基础 TAMER_xxx。检查范围包括 Dead_、
+    // Montage_、Despawn_ 和 Action_；只有存在对应设置才返回，因此普通 Tamer
+    // 单位不会进入出现/消失日志。
     vars.ResolveActorUid = (Func<string, string>)(actorName =>
     {
         if (string.IsNullOrEmpty(actorName)) return "";
@@ -396,13 +415,15 @@ init
 
         bool fullTracked = settings.ContainsKey("Dead_" + token)
             || settings.ContainsKey("Montage_" + token)
-            || settings.ContainsKey("Despawn_" + token);
+            || settings.ContainsKey("Despawn_" + token)
+            || vars.ActionSplitsByActor.ContainsKey(token);
         if (fullTracked) return token;
 
         string baseToken = vars.StripActorInstanceSuffix(token);
         bool baseTracked = settings.ContainsKey("Dead_" + baseToken)
             || settings.ContainsKey("Montage_" + baseToken)
-            || settings.ContainsKey("Despawn_" + baseToken);
+            || settings.ContainsKey("Despawn_" + baseToken)
+            || vars.ActionSplitsByActor.ContainsKey(baseToken);
         return baseTracked ? baseToken : "";
     });
 
@@ -527,7 +548,8 @@ init
 
             string uid = setting.Substring("Action_".Length, separator - "Action_".Length);
             string pattern = setting.Substring(separator + 1);
-            if (!uid.StartsWith("UGuid.", StringComparison.Ordinal)
+            if ((!uid.StartsWith("UGuid.", StringComparison.Ordinal)
+                    && !uid.StartsWith("TAMER_", StringComparison.OrdinalIgnoreCase))
                 || string.IsNullOrEmpty(pattern))
             {
                 vars.Log(

@@ -527,7 +527,7 @@
       <Setting id="Dead_UGuid.MGD.Yuan" type="bool">True</Setting>
       <Setting id="Dead_UGuid.MGD.JSDS.P2" type="bool">True</Setting>
       <Setting id="Chapter6YaoguaiKingBosses" type="bool">True</Setting>
-      <Setting id="Dead_UGuid.SL.sgd" type="bool">True</Setting>
+      <Setting id="Action_UGuid.SL.sgd@*break*" type="bool">True</Setting>
       <Setting id="Chapter6ChiefBosses" type="bool">True</Setting>
       <Setting id="Dead_UGuid.SZLC.Wa.01" type="bool">True</Setting>
       <Setting id="Dead_UGuid.BYS.HMS.02" type="bool">True</Setting>

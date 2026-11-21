@@ -152,7 +152,7 @@
             <Setting Id="Dead_UGuid.MGD.JSDS.P2" Label="大圣残躯" State="true"/>
         </Setting>
         <Setting Id="Chapter6YaoguaiKingBosses" Label="全妖王 Boss" State="true">
-            <Setting Id="Dead_UGuid.SL.sgd" Label="大石敢当" State="true"/>
+            <Setting Id="Action_UGuid.SL.sgd@*break*" Label="大石敢当" State="true"/>
         </Setting>
         <Setting Id="Chapter6ChiefBosses" Label="头目 Boss" State="true">
             <Setting Id="Dead_UGuid.SZLC.Wa.01" Label="浪波波" State="true"/>

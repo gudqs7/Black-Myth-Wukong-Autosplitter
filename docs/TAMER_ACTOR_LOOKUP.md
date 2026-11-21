@@ -32,8 +32,8 @@ LiveMontageInspect.exe --all-actors |
   Select-String -Pattern 'class=Unit_|class=UNIT_|class=TAMER_'
 ```
 
-当前运行时只会记录已经存在对应 `Dead_TAMER_*`、`Montage_TAMER_*` 或
-`Despawn_TAMER_*` 设置的 GUID-TAMER Actor。未配置的普通小怪不会进入生产日志，
+当前运行时只会记录已经存在对应 `Dead_TAMER_*`、`Montage_TAMER_*`、
+`Despawn_TAMER_*` 或 `Action_TAMER_*` 设置的 GUID-TAMER Actor。未配置的普通小怪不会进入生产日志，
 因此找新小怪时必须使用上述独立诊断工具，或先临时添加 setting。
 
 ## 2. 从资源表补充名称和 ID
@@ -108,9 +108,10 @@ Dead_TAMER_psd_wulong_C_3   # 黑手道人(进紫云山前)
 前缀语义仍与其他 Boss 一致：
 
 ```text
-Dead_TAMER_*   死亡 Montage / 击杀慢动作
+Dead_TAMER_*    死亡 Montage / 击杀慢动作
 Montage_TAMER_* 只接受死亡 Montage
 Despawn_TAMER_* 只接受 Actor 消失
+Action_TAMER_*@* 只接受匹配的当前动作 Montage
 ```
 
 ## 4. 已确认案例
@@ -149,6 +150,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 - 不要用完整运行时名称作为普通 setting；时间戳/GUID 和 `@_n` 后缀会变化。
 - 不要在 ASL 中恢复 `BossActorAliases` 或类似硬编码映射表。
+- `Action_TAMER_*` 同样参与 Tamer 解析；动作模式支持精确匹配、`foo*`、`*foo` 和 `*foo*`。
 - 只有当 setting 已经存在时，GUID-TAMER Actor 才会进入生产日志。
 - 发现新小怪时先记录 `raw name + class + world + ResId/ExtendId`，再决定使用基础名还是完整 `_C_n`。
 - 不要仅凭 Actor 类名判定敌人身份；以当前场景实例、资源表和画面共同确认。

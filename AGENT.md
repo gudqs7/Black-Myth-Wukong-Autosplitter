@@ -106,7 +106,8 @@ The test must report `WUKONG_LSS_TEST_OK`, `ASL_PARSE_OK`, and `WUKONG_RUNTIME_T
 - Some Boss actors use runtime names such as
   `GUID-TAMER_hfm_hou_01a_C_1@_1` instead of `UGuid___*`. These use direct
   `Dead_TAMER_*` settings; appearance logs include both the resolved Tamer key
-  and the raw object name.
+  and the raw object name. `Action_TAMER_*@pattern` also counts as a tracked
+  Tamer setting. Action patterns support exact, `foo*`, `*foo`, and `*foo*`.
 - Detailed live lookup and resource-table workflow:
   [docs/TAMER_ACTOR_LOOKUP.md](docs/TAMER_ACTOR_LOOKUP.md).
 - Action Montage detection reads `AnimInstance+0x88`, `+0x128`, and `+0x138`,

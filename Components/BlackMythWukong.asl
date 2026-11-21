@@ -200,20 +200,37 @@ init
     {
         if (string.IsNullOrEmpty(actionNames) || string.IsNullOrEmpty(pattern))
             return false;
+        if (pattern == "*") return true;
 
         string[] actions = actionNames.Split('|');
-        bool prefixMatch = pattern.EndsWith("*", StringComparison.Ordinal);
-        string prefix = prefixMatch ? pattern.Substring(0, pattern.Length - 1) : pattern;
+        bool startsWithWildcard = pattern.StartsWith("*", StringComparison.Ordinal);
+        bool endsWithWildcard = pattern.EndsWith("*", StringComparison.Ordinal);
+        string value = pattern;
+        if (startsWithWildcard)
+            value = value.Substring(1);
+        if (endsWithWildcard && value.Length > 0)
+            value = value.Substring(0, value.Length - 1);
+        if (string.IsNullOrEmpty(value)) return true;
+
         for (int index = 0; index < actions.Length; index++)
         {
-            if (pattern == "*") return true;
-            if (prefixMatch
-                && actions[index].StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            string action = actions[index];
+            if (startsWithWildcard && endsWithWildcard)
             {
-                return true;
+                if (action.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
             }
-            if (!prefixMatch
-                && actions[index].Equals(pattern, StringComparison.OrdinalIgnoreCase))
+            else if (startsWithWildcard)
+            {
+                if (action.EndsWith(value, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            else if (endsWithWildcard)
+            {
+                if (action.StartsWith(value, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            else if (action.Equals(value, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
@@ -274,13 +291,15 @@ init
 
         bool fullTracked = settings.ContainsKey("Dead_" + token)
             || settings.ContainsKey("Montage_" + token)
-            || settings.ContainsKey("Despawn_" + token);
+            || settings.ContainsKey("Despawn_" + token)
+            || vars.ActionSplitsByActor.ContainsKey(token);
         if (fullTracked) return token;
 
         string baseToken = vars.StripActorInstanceSuffix(token);
         bool baseTracked = settings.ContainsKey("Dead_" + baseToken)
             || settings.ContainsKey("Montage_" + baseToken)
-            || settings.ContainsKey("Despawn_" + baseToken);
+            || settings.ContainsKey("Despawn_" + baseToken)
+            || vars.ActionSplitsByActor.ContainsKey(baseToken);
         return baseTracked ? baseToken : "";
     });
 
@@ -380,7 +399,8 @@ init
 
             string uid = setting.Substring("Action_".Length, separator - "Action_".Length);
             string pattern = setting.Substring(separator + 1);
-            if (!uid.StartsWith("UGuid.", StringComparison.Ordinal)
+            if ((!uid.StartsWith("UGuid.", StringComparison.Ordinal)
+                    && !uid.StartsWith("TAMER_", StringComparison.OrdinalIgnoreCase))
                 || string.IsNullOrEmpty(pattern))
             {
                 vars.Log(

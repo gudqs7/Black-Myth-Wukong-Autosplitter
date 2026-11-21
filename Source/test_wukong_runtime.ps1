@@ -189,7 +189,7 @@ $expectedParents = @{
     'Dead_UGuid.BYS.Shitongling.03' = 'Chapter6ChiefBosses'
     'Dead_UGuid.BYS.hema.king' = 'Chapter6ChiefBosses'
     'Dead_UGuid.BYS.Baishe' = 'Chapter6ChiefBosses'
-    'Dead_UGuid.SL.sgd' = 'Chapter6YaoguaiKingBosses'
+    'Action_UGuid.SL.sgd@*break*' = 'Chapter6YaoguaiKingBosses'
     'Dead_UGuid.LYS.Mo3.FM' = 'Chapter3ChiefBosses'
     'Dead_UGuid.LYS.TuiSeng.P1' = 'Chapter3ChiefBosses'
     'Dead_UGuid.LYS.TuiSeng.P2' = 'Chapter3ChiefBosses'
@@ -233,7 +233,7 @@ $expectedMappings = @{
     'Boss_602006' = 'Dead_UGuid.BYS.Shitongling.03'
     'Boss_602009' = 'Dead_UGuid.BYS.hema.king'
     'Boss_103003' = 'Dead_UGuid.BYS.Baishe'
-    'Boss_603001' = 'Dead_UGuid.SL.sgd'
+    'Boss_603001' = 'Action_UGuid.SL.sgd@*break*'
 }
 foreach ($mapping in $expectedMappings.GetEnumerator()) {
     if ($null -ne $defaultDocument.SelectSingleNode("//Setting[@Id='$($mapping.Key)']")) {
@@ -511,6 +511,15 @@ if (-not $aslText.Contains('vars.LoadActionSplits = (Action)') -or
     -not $aslText.Contains('"action:" + pattern')) {
     throw "Generated ASL does not parse and queue Action_UGuid@action settings: $aslPath"
 }
+if (-not $aslText.Contains('uid.StartsWith("TAMER_", StringComparison.OrdinalIgnoreCase)')) {
+    throw "Generated ASL rejects Action_TAMER_* settings during action parsing: $aslPath"
+}
+if (-not $aslText.Contains('bool startsWithWildcard = pattern.StartsWith("*", StringComparison.Ordinal);') -or
+    -not $aslText.Contains('action.IndexOf(value, StringComparison.OrdinalIgnoreCase) >= 0') -or
+    -not $aslText.Contains('action.EndsWith(value, StringComparison.OrdinalIgnoreCase)') -or
+    -not $aslText.Contains('action.StartsWith(value, StringComparison.OrdinalIgnoreCase)')) {
+    throw "Generated ASL does not support leading/trailing Action wildcards such as *break*: $aslPath"
+}
 if (-not $aslText.Contains('vars.TryQueueSetting = (Func<string, string, bool>)')) {
     throw "Generated ASL does not centralize setting queueing for dual Bosses: $aslPath"
 }
@@ -543,8 +552,10 @@ if (-not $aslText.Contains('"[BMW-splitter] actor appeared: uid="') -or -not $as
 if (-not $aslText.Contains('vars.StripActorInstanceSuffix = (Func<string, string>)') -or
     -not $aslText.Contains('vars.ResolveActorUid = (Func<string, string>)') -or
     -not $aslText.Contains('actorName.IndexOf("-TAMER_", StringComparison.OrdinalIgnoreCase)') -or
-    -not $aslText.Contains('settings.ContainsKey("Dead_" + token)')) {
-    throw "Generated ASL does not resolve GUID-TAMER Boss actors directly through Dead_TAMER_* settings: $aslPath"
+    -not $aslText.Contains('settings.ContainsKey("Dead_" + token)') -or
+    -not $aslText.Contains('vars.ActionSplitsByActor.ContainsKey(token)') -or
+    -not $aslText.Contains('vars.ActionSplitsByActor.ContainsKey(baseToken)')) {
+    throw "Generated ASL does not resolve GUID-TAMER Boss actors through Dead/Montage/Despawn/Action settings: $aslPath"
 }
 if ($aslText.Contains('BossActorAliases')) {
     throw "Generated ASL must not contain the removed BossActorAliases table: $aslPath"

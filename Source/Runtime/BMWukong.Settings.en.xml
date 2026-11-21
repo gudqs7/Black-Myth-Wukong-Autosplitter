@@ -145,7 +145,7 @@
             <Setting Id="Dead_UGuid.MGD.JSDS.P2" Label="The Great Sage&apos;s Broken Shell (Manual)" State="true"/>
         </Setting>
         <Setting Id="Chapter6YaoguaiKingBosses" Label="All Yaoguai Kings" State="true">
-            <Setting Id="Dead_UGuid.SL.sgd" Label="Giant Shigandang" State="true"/>
+            <Setting Id="Action_UGuid.SL.sgd@*break*" Label="Giant Shigandang" State="true"/>
         </Setting>
         <Setting Id="Chapter6ChiefBosses" Label="Yaoguai Chiefs" State="true">
             <Setting Id="Dead_UGuid.SZLC.Wa.01" Label="Lang-Baw-Baw" State="true"/>
