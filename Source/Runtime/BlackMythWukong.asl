@@ -822,7 +822,7 @@ init
     vars.UpdateCutsceneHooks = (Action)(() =>
     {
         long nowTicks = DateTime.UtcNow.Ticks;
-        // SequencePlayer.Play 是主过场信号：状态字节为 1，且名称包含 LS_/cpt/CG/Seq
+        // SequencePlayer.Play 是主过场信号：状态字节为 1，且名称包含 LS_/LSM_/cpt/CG/Seq
         // 时才锁存。名称过滤避免暂停页或普通动画序列被误当成剧情过场。
         if (vars.Resolver.CheckFlag("SeqPlayerPlayFlag"))
         {
@@ -833,14 +833,15 @@ init
                 string sequenceName = vars.ReadSequenceName(player);
                 bool cutsceneSequence = sequenceName.IndexOf(
                         "LS_", StringComparison.OrdinalIgnoreCase) >= 0
+                    || sequenceName.IndexOf("LSM_", StringComparison.OrdinalIgnoreCase) >= 0
                     || sequenceName.IndexOf("cpt", StringComparison.OrdinalIgnoreCase) >= 0
                     || sequenceName.IndexOf("CG", StringComparison.OrdinalIgnoreCase) >= 0
                     || sequenceName.IndexOf("Seq", StringComparison.OrdinalIgnoreCase) >= 0;
                 bool participates = status == 1 && cutsceneSequence;
 
-                vars.ActiveSequencePlayer = player;
                 if (participates)
                 {
+                    vars.ActiveSequencePlayer = player;
                     vars.ActiveSequencePlayTicks = nowTicks;
                     vars.CutscenePending = true;
                 }
@@ -889,11 +890,14 @@ init
             IntPtr player = (IntPtr)current.SeqCameraCutsInstance;
             IntPtr activePlayer = (IntPtr)vars.ActiveSequencePlayer;
             bool matchesActive = player != IntPtr.Zero && player == activePlayer;
-            long cameraCutsElapsed = matchesActive
+            long cameraCutsElapsedTicks = matchesActive
                 ? nowTicks - (long)vars.ActiveSequencePlayTicks
                 : -1L;
+            long cameraCutsElapsedMs = cameraCutsElapsedTicks < 0L
+                ? -1L
+                : cameraCutsElapsedTicks / TimeSpan.TicksPerMillisecond;
             bool controlReturned = matchesActive
-                && cameraCutsElapsed > (long)vars.SeqCameraCutsGuardTicks;
+                && cameraCutsElapsedTicks > (long)vars.SeqCameraCutsGuardTicks;
             string sequenceName = player == IntPtr.Zero
                 ? ""
                 : vars.ReadSequenceName(player);
@@ -901,7 +905,7 @@ init
                 "[BMW-seq] camera-cuts player=0x" + player.ToInt64().ToString("X")
                 + " active=0x" + activePlayer.ToInt64().ToString("X")
                 + " match=" + matchesActive
-                + " elapsedMs=" + cameraCutsElapsed
+                + " elapsedMs=" + cameraCutsElapsedMs
                 + " controlReturned=" + controlReturned
                 + " name=" + sequenceName);
             if (controlReturned)
@@ -910,7 +914,7 @@ init
                 vars.Log(
                     "[BMW-seq] end reason=camera-cuts player=0x"
                     + player.ToInt64().ToString("X")
-                    + " elapsedMs=" + cameraCutsElapsed
+                    + " elapsedMs=" + cameraCutsElapsedMs
                     + " name=" + sequenceName);
             }
         }

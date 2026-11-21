@@ -370,7 +370,7 @@ if (-not $aslText.Contains('FunctionFlag("SeqCameraCutsFlag", "*LevelSequencePla
 }
 if (-not $aslText.Contains('SeqCameraCutsGuardTicks') -or
     -not $aslText.Contains('bool controlReturned = matchesActive') -or
-    -not $aslText.Contains('cameraCutsElapsed > (long)vars.SeqCameraCutsGuardTicks;')) {
+    -not $aslText.Contains('cameraCutsElapsedTicks > (long)vars.SeqCameraCutsGuardTicks;')) {
     throw "Generated ASL does not use the camera-cuts control-return guard."
 }
 if ($aslText.Contains('CalliopeLevelSequenceActor') -or
@@ -392,6 +392,9 @@ if ($aslText.Contains('"[BMW-loading] cutscene loading:')) {
 }
 if (-not $aslText.Contains('cutsceneSequence')) {
     throw "Generated ASL does not classify LevelSequencePlayer playback by sequence name."
+}
+if (-not $aslText.Contains('sequenceName.IndexOf("LSM_", StringComparison.OrdinalIgnoreCase)')) {
+    throw "Generated ASL does not recognize LSM_ movie sequences."
 }
 
 $binkPlayMatch = [regex]::Match(
