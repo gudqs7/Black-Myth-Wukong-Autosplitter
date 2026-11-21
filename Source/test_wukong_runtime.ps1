@@ -114,11 +114,17 @@ if ($defaultSettings.Count -ne $englishSettings.Count) {
     throw "Chinese and English settings have different item counts."
 }
 
-$lssSettingIds = @($chineseLss.SelectNodes('//AutoSplitterSettings/CustomSettings/Setting') | ForEach-Object { $_.id })
-$xmlSettingIds = @($defaultSettings | ForEach-Object { $_.Id })
-$settingIdDiff = @(Compare-Object $xmlSettingIds $lssSettingIds)
-if ($settingIdDiff.Count -ne 0) {
-    throw "LSS custom settings do not match settings XML: $($settingIdDiff | Out-String)"
+foreach ($lssPair in @(
+    @{ Name = 'Chinese'; Document = $chineseLss },
+    @{ Name = 'English'; Document = $englishLss }
+)) {
+    $autoSplitterNodes = @($lssPair.Document.SelectNodes('/Run/AutoSplitterSettings'))
+    if ($autoSplitterNodes.Count -ne 1) {
+        throw "$($lssPair.Name) LSS must contain one AutoSplitterSettings node."
+    }
+    if ($autoSplitterNodes[0].HasChildNodes) {
+        throw "$($lssPair.Name) LSS AutoSplitterSettings must be empty like bmw.lss."
+    }
 }
 
 $expectedMain = @{
