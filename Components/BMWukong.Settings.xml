@@ -78,12 +78,12 @@
             <Setting Id="Montage_UGuid.LYS.bujing" Label="不净" State="true"/>
             <Setting Id="Montage_UGuid.LYS.LaoSeng" Label="不空" State="true"/>
             <Setting Id="Montage_UGuid.HFM.HuanWuZhe" Label="翠笠武师" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.Hu_Wind_Battle.HZSJ" Label="寅虎" State="true"/>
-            <Setting Id="Montage_UGuid.LYS.Mo3.OutsideTemple" Label="魔将·妄相" State="true"/>
             <Setting Id="Montage_UGuid.LYS.TuiSeng.P1" Label="不能一阶段" State="true"/>
             <Setting Id="Montage_UGuid.LYS.TuiSeng.P2" Label="不能二阶段" State="true"/>
             <Setting Id="Montage_UGuid.LYS.fsys" Label="海上僧" State="true"/>
             <Setting Id="Montage_TAMER_psd_renshenjing_02a" Label="老人参精" State="true"/>
+            <Setting Id="Montage_UGuid.LYS.RuYiLong.01" Label="辰龙" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.Hu_Wind_Battle.HZSJ" Label="寅虎" State="true"/>
         </Setting>
     </Setting>
 

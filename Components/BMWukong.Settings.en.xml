@@ -74,12 +74,12 @@
             <Setting Id="Montage_UGuid.LYS.bujing" Label="Non-Pure" State="true"/>
             <Setting Id="Montage_UGuid.LYS.LaoSeng" Label="Non-Void" State="true"/>
             <Setting Id="Montage_UGuid.HFM.HuanWuZhe" Label="Green-Capped Martialist" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.Hu_Wind_Battle.HZSJ" Label="Yin Tiger" State="true"/>
-            <Setting Id="Montage_UGuid.LYS.Mo3.OutsideTemple" Label="Captain Void-Illusion" State="true"/>
             <Setting Id="Montage_UGuid.LYS.TuiSeng.P1" Label="Non-Able (Phase 1)" State="true"/>
             <Setting Id="Montage_UGuid.LYS.TuiSeng.P2" Label="Non-Able (Phase 2)" State="true"/>
             <Setting Id="Montage_UGuid.LYS.fsys" Label="Monk from the Sea" State="true"/>
             <Setting Id="Montage_TAMER_psd_renshenjing_02a" Label="Old Ginseng Guai" State="true"/>
+            <Setting Id="Montage_UGuid.LYS.RuYiLong.01" Label="Chen Loong" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.Hu_Wind_Battle.HZSJ" Label="Yin Tiger" State="true"/>
         </Setting>
     </Setting>
     <Setting Id="Chapter4Bosses" Label="Chapter 4 - Webbed Hollow" State="true">
