@@ -630,6 +630,14 @@ init
                     vars.ActiveSequencePlayTicks = nowTicks;
                     vars.CutscenePending = true;
                 }
+                if (!string.IsNullOrEmpty(sequenceName))
+                {
+                    string sequenceSetting = "Seq_" + sequenceName;
+                    if (settings.ContainsKey(sequenceSetting))
+                    {
+                        vars.TryQueueSetting(sequenceSetting, "sequence");
+                    }
+                }
                 vars.Log(
                     "[BMW-seq] play player=0x" + player.ToInt64().ToString("X")
                     + " status=" + status

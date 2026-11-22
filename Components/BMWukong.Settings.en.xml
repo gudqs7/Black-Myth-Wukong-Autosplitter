@@ -119,11 +119,10 @@
         </Setting>
         <Setting Id="Chapter5YaoguaiKingBosses" Label="All Yaoguai Kings" State="true">
             <Setting Id="Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01" Label="Pale-Axe Stalwart" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.ZhanChe.01a" Label="Five Elemental Cart 1" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.ZhanChe.01b" Label="Five Elemental Cart 2" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.ZhanChe.01c" Label="Five Elemental Cart 3" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.ZhanChe.01d" Label="Five Elemental Cart 4" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.JDS.05" Label="Five Elemental Cart 5" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.ZhanChe.01a" Label="Five Elemental Cart (Brown Iron)" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.ZhanChe.01b" Label="Five Elemental Cart (Grey Copper)" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.ZhanChe.01c" Label="Five Elemental Cart (Red Silver)" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.JDS.05" Label="Five Elemental Cart (Before Bishui Cave)" State="true"/>
             <Setting Id="Montage_UGuid.HYS.TuDi.YS" Label="Yin-Yang Fish" State="true"/>
             <Setting Id="Dual_UGuid.HYS.XingGongXian+UGuid.HYS.XianGongXing" Label="Top Takes Bottom, Bottom Takes Top" State="true"/>
             <Setting Id="Montage_UGuid.BSD.JJS" Label="Bishui Golden-Eyed Beast" State="true"/>

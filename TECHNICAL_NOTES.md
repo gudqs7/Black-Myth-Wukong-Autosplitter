@@ -33,6 +33,13 @@ GUID-TAMER Actor 的完整查找、名称确认和 setting 转换流程见
 - 逐动作变化日志当前直接开启，只输出 `uid`、`action` 和 `deathAction`；不再输出 AnimInstance、数组头或 item 指针详情。
 - Actor 消失日志和死亡 Montage 日志仍会输出当前/最终动作与可复制设置键。
 
+### 过场序列
+
+- 配置格式为 `Seq_<sequenceName>`，例如 `Seq_LS_pw_fenghu_battlewin`。
+- 在 `LevelSequencePlayer.Play` 回调中读取当前 `sequenceName`，与设置 ID 的后缀做精确匹配。
+- 匹配成功即通过 `TryQueueSetting(..., "sequence")` 入队；`CompletedSplits` 负责阻止同一设置重复打点。
+- `*_repeat` 等变体不会自动继承基础序列设置，需要单独配置。
+
 ### 击杀慢动作
 
 读取：

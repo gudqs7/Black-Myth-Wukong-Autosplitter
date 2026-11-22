@@ -165,7 +165,7 @@ foreach ($chapter in 1..6) {
     }
 }
 
-$bossSettings = @($defaultDocument.SelectNodes('//Setting[not(Setting) and (starts-with(@Id,"Montage_") or starts-with(@Id,"Slow_") or starts-with(@Id,"Dual_") or starts-with(@Id,"Despawn_") or starts-with(@Id,"Action_") or starts-with(@Id,"UGuid.") or starts-with(@Id,"Boss_"))]'))
+$bossSettings = @($defaultDocument.SelectNodes('//Setting[not(Setting) and (starts-with(@Id,"Montage_") or starts-with(@Id,"Slow_") or starts-with(@Id,"Dual_") or starts-with(@Id,"Despawn_") or starts-with(@Id,"Action_") or starts-with(@Id,"Seq_") or starts-with(@Id,"UGuid.") or starts-with(@Id,"Boss_"))]'))
 $expectedDisabledBossIds = @(
     'Montage_UGuid.ZYS.XieZi.MRXG',
     'Montage_TAMER_hys_huijingtitan_01'
@@ -398,6 +398,18 @@ if (-not $aslText.Contains('cutsceneSequence')) {
 }
 if (-not $aslText.Contains('sequenceName.IndexOf("LSM_", StringComparison.OrdinalIgnoreCase)')) {
     throw "Generated ASL does not recognize LSM_ movie sequences."
+}
+$seqPlayMatch = [regex]::Match(
+    $aslText,
+    'if \(vars\.Resolver\.CheckFlag\("SeqPlayerPlayFlag"\)\)(?<block>.*?)if \(vars\.Resolver\.CheckFlag\("SeqPlayerStopFlag"\)\)',
+    [Text.RegularExpressions.RegexOptions]::Singleline)
+if (-not $seqPlayMatch.Success) {
+    throw "Generated ASL does not isolate the SequencePlayer Play block."
+}
+$seqPlayBlock = $seqPlayMatch.Groups['block'].Value
+if (-not $seqPlayBlock.Contains('string sequenceSetting = "Seq_" + sequenceName;') -or
+    -not $seqPlayBlock.Contains('vars.TryQueueSetting(sequenceSetting, "sequence");')) {
+    throw "Generated ASL must queue Seq_ settings by sequenceName on Play."
 }
 
 $binkPlayMatch = [regex]::Match(

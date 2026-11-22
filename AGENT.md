@@ -121,6 +121,8 @@ The test must report `WUKONG_LSS_TEST_OK`, `ASL_PARSE_OK`, and `WUKONG_RUNTIME_T
 - `Montage_UGuid.*` only accepts death-montage. `Slow_UGuid.*` only accepts
   single-Boss kill slow motion. `Despawn_UGuid.*` only splits when the Actor
   disappears, for bosses whose health bar hides mid-fight before the real kill.
+- `Seq_<sequenceName>` splits on the `LevelSequencePlayer.Play` callback
+  when the runtime sequence name matches the setting id exactly.
 - `Dual_UGuid.A+UGuid.B` requires death-montage edges from both Actors before
   queueing. Dual settings ignore slow-motion signals; the list is parsed once
   during init. Actor `bHidden` is not observed for split logic.
