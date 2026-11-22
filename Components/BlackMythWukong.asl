@@ -260,6 +260,10 @@ init
     vars.ActionSplitsByActor = new Dictionary<string, List<string>>();
     vars.ActionSplitPatterns = new Dictionary<string, string>();
     vars.ActorActionState = new Dictionary<string, string[]>();
+    vars.ActorFNameBaseCache = new Dictionary<uint, string>();
+    vars.ActorNameByPtr = new Dictionary<long, string>();
+    vars.ActorPtrsCurrent = new HashSet<long>();
+    vars.ActorPtrsPrevious = new HashSet<long>();
 
     vars.StripActorInstanceSuffix = (Func<string, string>)(token =>
     {
@@ -549,6 +553,9 @@ init
         vars.ActorSeen = new Dictionary<string, long[]>();
         vars.ObservedActors = new HashSet<string>();
         vars.ActorActionState = new Dictionary<string, string[]>();
+        vars.ActorNameByPtr = new Dictionary<long, string>();
+        vars.ActorPtrsCurrent = new HashSet<long>();
+        vars.ActorPtrsPrevious = new HashSet<long>();
         Dictionary<string, HashSet<string>> dualHits =
             (Dictionary<string, HashSet<string>>)vars.DualMontageHits;
         foreach (string setting in vars.DualSplits.Keys)
@@ -871,20 +878,62 @@ update
         int actorCount = vars.Resolver.Read<int>((IntPtr)((long)levelPtr + 0xA0));
         if (actors == IntPtr.Zero || actorCount <= 0 || actorCount > 20000) return;
 
+        byte[] actorBytes = vars.Resolver.ReadBytes(actors, actorCount * 8);
+        if (actorBytes == null || actorBytes.Length < actorCount * 8) return;
+
         Dictionary<string, long[]> nextSeen = new Dictionary<string, long[]>();
         List<string> deathMontageSplits = new List<string>();
         List<string> slowMotionCandidates = new List<string>();
         HashSet<string> previousObservedActors = (HashSet<string>)vars.ObservedActors;
         HashSet<string> observedActors = new HashSet<string>();
 
+        Dictionary<long, string> actorNameByPtr =
+            (Dictionary<long, string>)vars.ActorNameByPtr;
+        Dictionary<uint, string> actorFNameBaseCache =
+            (Dictionary<uint, string>)vars.ActorFNameBaseCache;
+        HashSet<long> currentActorPtrs =
+            (HashSet<long>)vars.ActorPtrsCurrent;
+        HashSet<long> previousActorPtrs =
+            (HashSet<long>)vars.ActorPtrsPrevious;
+        currentActorPtrs.Clear();
         for (int index = 0; index < actorCount; index++)
         {
-            IntPtr actor = vars.Resolver.Read<IntPtr>(
-                (IntPtr)((long)actors + index * 8));
-            if (actor == IntPtr.Zero) continue;
+            long actorPtrKey = BitConverter.ToInt64(
+                actorBytes, index * 8);
+            if (actorPtrKey == 0L) continue;
+            IntPtr actor = (IntPtr)actorPtrKey;
+            currentActorPtrs.Add(actorPtrKey);
 
-            string actorName = vars.Utils.FNameToString(
-                vars.Resolver.Read<ulong>((IntPtr)((long)actor + 0x18)));
+            string actorName;
+            if (!actorNameByPtr.TryGetValue(actorPtrKey, out actorName))
+            {
+                ulong actorFName = vars.Resolver.Read<ulong>(
+                    (IntPtr)((long)actor + 0x18));
+                uint fnameKey = (uint)actorFName;
+                string baseName;
+                if (!actorFNameBaseCache.TryGetValue(fnameKey, out baseName))
+                {
+                    baseName = vars.Utils.FNameToString((ulong)fnameKey);
+                    if (string.IsNullOrEmpty(baseName)) continue;
+                    actorFNameBaseCache[fnameKey] = baseName;
+                }
+
+                bool trackedName = baseName.StartsWith(
+                        "UGuid___", StringComparison.Ordinal)
+                    || baseName.IndexOf(
+                        "-TAMER_", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (!trackedName)
+                {
+                    actorNameByPtr[actorPtrKey] = "";
+                    continue;
+                }
+
+                uint actorNumber = (uint)(actorFName >> 32);
+                actorName = actorNumber == 0
+                    ? baseName
+                    : baseName + "_" + actorNumber;
+                actorNameByPtr[actorPtrKey] = actorName;
+            }
             if (string.IsNullOrEmpty(actorName)) continue;
 
             string uid = vars.ResolveActorUid(actorName);
@@ -1002,6 +1051,15 @@ update
                 vars.ActorActionState.Remove(previousUid);
             }
         }
+
+        foreach (long previousActorKey in previousActorPtrs)
+        {
+            if (!currentActorPtrs.Contains(previousActorKey))
+                actorNameByPtr.Remove(previousActorKey);
+        }
+        vars.ActorPtrsCurrent = previousActorPtrs;
+        vars.ActorPtrsPrevious = currentActorPtrs;
+
         vars.ObservedActors = observedActors;
 
         IntPtr worldSettings = vars.Resolver.Read<IntPtr>(

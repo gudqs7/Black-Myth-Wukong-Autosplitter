@@ -362,6 +362,10 @@ init
     // ActionSplitsByActor：Actor UID -> 该 Actor 的 Action_ 设置 id 列表。
     // ActionSplitPatterns：Action_ 设置 id -> @ 后面的动作匹配模式。
     // ActorActionState：Actor UID -> [Actor 指针, 当前动作]。
+    // ActorNameByPtr：Actor 指针 -> 完整对象名；空值表示已确认不是 Boss/Tamer。
+    // ActorFNameBaseCache：FName 低 32 位 -> 不含实例序号的字符串。大型世界
+    // 每轮只读取一次 Actor 指针数组，已有指针复用缓存，名称最多解析一次。
+    // ActorPtrsCurrent / ActorPtrsPrevious：复用的指针集合，用于删除已消失缓存。
     // GUID-TAMER Actor 不维护运行时别名表，而是直接按 Tamer 名匹配 Montage_TAMER_*、
     // Slow_TAMER_* 或 Despawn_TAMER_*。
     vars.CompletedSplits = new HashSet<string>();
@@ -374,6 +378,10 @@ init
     vars.ActionSplitsByActor = new Dictionary<string, List<string>>();
     vars.ActionSplitPatterns = new Dictionary<string, string>();
     vars.ActorActionState = new Dictionary<string, string[]>();
+    vars.ActorFNameBaseCache = new Dictionary<uint, string>();
+    vars.ActorNameByPtr = new Dictionary<long, string>();
+    vars.ActorPtrsCurrent = new HashSet<long>();
+    vars.ActorPtrsPrevious = new HashSet<long>();
 
     // StripActorInstanceSuffix 委托。
     // 入参：GUID-TAMER Actor 名中提取出的完整 Tamer token。
@@ -725,12 +733,15 @@ init
     // 入参：无。
     // 返回：void。
     // 原理：世界切换或 GWorld 失效时，所有 Actor 指针和出现边沿都已失去意义；
-    // 这里替换 ActorSeen/ObservedActors，并为每个 Dual_ 设置重建空命中集合。
+    // 这里替换 ActorSeen/ObservedActors/名称缓存，并为每个 Dual_ 设置重建空命中集合。
     vars.ClearActorTracking = (Action)(() =>
     {
         vars.ActorSeen = new Dictionary<string, long[]>();
         vars.ObservedActors = new HashSet<string>();
         vars.ActorActionState = new Dictionary<string, string[]>();
+        vars.ActorNameByPtr = new Dictionary<long, string>();
+        vars.ActorPtrsCurrent = new HashSet<long>();
+        vars.ActorPtrsPrevious = new HashSet<long>();
         Dictionary<string, HashSet<string>> dualHits =
             (Dictionary<string, HashSet<string>>)vars.DualMontageHits;
         foreach (string setting in vars.DualSplits.Keys)
@@ -1115,6 +1126,11 @@ update
         int actorCount = vars.Resolver.Read<int>((IntPtr)((long)levelPtr + 0xA0));
         if (actors == IntPtr.Zero || actorCount <= 0 || actorCount > 20000) return;
 
+        // Actor 指针数组一次读入，避免每个 Actor 单独发一次 ReadProcessMemory。
+        // 小型世界与旧实现等价；大型世界可把每轮上千次读取压缩为一次。
+        byte[] actorBytes = vars.Resolver.ReadBytes(actors, actorCount * 8);
+        if (actorBytes == null || actorBytes.Length < actorCount * 8) return;
+
         // 本轮扫描先把结果写入临时容器，扫描成功后再整体替换上一轮状态：
         // nextSeen 保存新的 ActorSeen，deathMontageSplits 保存本轮刚出现的死亡边沿，
         // slowMotionCandidates 保存已启用的 Slow_ Actor。
@@ -1124,16 +1140,57 @@ update
         HashSet<string> previousObservedActors = (HashSet<string>)vars.ObservedActors;
         HashSet<string> observedActors = new HashSet<string>();
 
-        // 逐个读取 Actor 指针和对象名。常规 Boss 由 UGuid___ 名称识别；
-        // 少数场景 Actor 使用 GUID-TAMER_xxx_C_n@_n，由 ResolveActorUid 直接解析。
+        // 逐个读取 Actor 的 FName。常规 Boss 由 UGuid___ 名称识别；少数场景
+        // Actor 使用 GUID-TAMER_xxx_C_n@_n，由 ResolveActorUid 直接解析。
+        // 对象名在同一个世界内不会变化，因此只在该 Actor 指针第一次出现时解析。
+        // 空缓存值是“已确认普通 Actor”的哨兵；缓存随世界切换和 Actor 消失清理。
+        Dictionary<long, string> actorNameByPtr =
+            (Dictionary<long, string>)vars.ActorNameByPtr;
+        Dictionary<uint, string> actorFNameBaseCache =
+            (Dictionary<uint, string>)vars.ActorFNameBaseCache;
+        HashSet<long> currentActorPtrs =
+            (HashSet<long>)vars.ActorPtrsCurrent;
+        HashSet<long> previousActorPtrs =
+            (HashSet<long>)vars.ActorPtrsPrevious;
+        currentActorPtrs.Clear();
         for (int index = 0; index < actorCount; index++)
         {
-            IntPtr actor = vars.Resolver.Read<IntPtr>(
-                (IntPtr)((long)actors + index * 8));
-            if (actor == IntPtr.Zero) continue;
+            long actorPtrKey = BitConverter.ToInt64(
+                actorBytes, index * 8);
+            if (actorPtrKey == 0L) continue;
+            IntPtr actor = (IntPtr)actorPtrKey;
+            currentActorPtrs.Add(actorPtrKey);
 
-            string actorName = vars.Utils.FNameToString(
-                vars.Resolver.Read<ulong>((IntPtr)((long)actor + 0x18)));
+            string actorName;
+            if (!actorNameByPtr.TryGetValue(actorPtrKey, out actorName))
+            {
+                ulong actorFName = vars.Resolver.Read<ulong>(
+                    (IntPtr)((long)actor + 0x18));
+                uint fnameKey = (uint)actorFName;
+                string baseName;
+                if (!actorFNameBaseCache.TryGetValue(fnameKey, out baseName))
+                {
+                    baseName = vars.Utils.FNameToString((ulong)fnameKey);
+                    if (string.IsNullOrEmpty(baseName)) continue;
+                    actorFNameBaseCache[fnameKey] = baseName;
+                }
+
+                bool trackedName = baseName.StartsWith(
+                        "UGuid___", StringComparison.Ordinal)
+                    || baseName.IndexOf(
+                        "-TAMER_", StringComparison.OrdinalIgnoreCase) >= 0;
+                if (!trackedName)
+                {
+                    actorNameByPtr[actorPtrKey] = "";
+                    continue;
+                }
+
+                uint actorNumber = (uint)(actorFName >> 32);
+                actorName = actorNumber == 0
+                    ? baseName
+                    : baseName + "_" + actorNumber;
+                actorNameByPtr[actorPtrKey] = actorName;
+            }
             if (string.IsNullOrEmpty(actorName)) continue;
 
             string uid = vars.ResolveActorUid(actorName);
@@ -1263,6 +1320,15 @@ update
                 vars.ActorActionState.Remove(previousUid);
             }
         }
+        // 删除本世界已消失 Actor 的名称缓存，避免对象地址以后被复用时沿用旧名称。
+        foreach (long previousActorKey in previousActorPtrs)
+        {
+            if (!currentActorPtrs.Contains(previousActorKey))
+                actorNameByPtr.Remove(previousActorKey);
+        }
+        vars.ActorPtrsCurrent = previousActorPtrs;
+        vars.ActorPtrsPrevious = currentActorPtrs;
+
         vars.ObservedActors = observedActors;
 
         // 读取世界设置和时间膨胀：ULevel+0x2A0 -> WorldSettings，

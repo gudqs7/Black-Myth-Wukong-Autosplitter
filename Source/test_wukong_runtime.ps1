@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
 验证生成的黑神话：悟空运行时文件没有注释，并编译解析 ASL。
 
@@ -330,6 +330,13 @@ if ($defaultYangjian.State -ne 'true' -or $englishYangjian.State -ne 'true') {
 }
 
 $aslText = [IO.File]::ReadAllText($aslPath)
+if (-not $aslText.Contains('byte[] actorBytes = vars.Resolver.ReadBytes(actors, actorCount * 8);')) {
+    throw "Generated ASL must bulk-read the world Actor pointer array."
+}
+if (-not $aslText.Contains('vars.ActorNameByPtr = new Dictionary<long, string>();') -or
+    -not $aslText.Contains('Dictionary<long, string> actorNameByPtr =')) {
+    throw "Generated ASL must cache Actor names by pointer in large worlds."
+}
 if (-not $aslText.Contains('vars.MinBossActorSeenTicks = TimeSpan.TicksPerMillisecond * 500;')) {
     throw "Generated ASL must use the 500ms Boss Actor observation window."
 }
