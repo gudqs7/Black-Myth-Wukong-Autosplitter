@@ -83,7 +83,9 @@
             <Setting Id="Montage_UGuid.LYS.fsys" Label="海上僧" State="true"/>
             <Setting Id="Montage_TAMER_psd_renshenjing_02a" Label="老人参精" State="true"/>
             <Setting Id="Montage_UGuid.LYS.RuYiLong.01" Label="辰龙" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.Hu_Wind_Battle.HZSJ" Label="寅虎" State="true"/>
+            <Setting Id="Seq_LS_pw_fenghu_battlewin" Label="寅虎" State="true"/>
+            <Setting Id="Montage_UGuid.EndB.YangJian" Label="梅山杨戬" State="true"/>
+            <Setting Id="Montage_UGuid.EndB.YangJian.FTXD" Label="二郎神(法天象地)" State="true"/>
         </Setting>
     </Setting>
 
@@ -91,7 +93,6 @@
         <Setting Id="Chapter4MainBosses" Label="主线 Boss" State="true">
             <Setting Id="Montage_UGuid.PSD.Erjie.Village" Label="二姐" State="true"/>
             <Setting Id="Montage_UGuid.PSD.FSC01.foshouchong" Label="右手虫" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.Wa.01" Label="毒蛙" State="true"/>
             <Setting Id="Montage_UGuid.PSD.BaJie.Mo" Label="八戒一阶段" State="true"/>
             <Setting Id="Montage_UGuid.PSD.BaJie.Ye" Label="八戒二阶段" State="true"/>
             <Setting Id="Montage_UGuid.PSD.LaoZhiZhu" Label="紫蛛儿" State="true"/>
@@ -105,6 +106,7 @@
             <Setting Id="Montage_UGuid.ZYS.MRXG" Label="晦月魔君" State="true"/>
         </Setting>
         <Setting Id="Chapter4ChiefBosses" Label="头目 Boss" State="true">
+            <Setting Id="Montage_UGuid.PSD.Wa.01" Label="毒蛙" State="true"/>
             <Setting Id="Montage_UGuid.PSD.YouYan" Label="百足虫" State="true"/>
             <Setting Id="Montage_UGuid.PSD.qinlang" Label="琴螂仙" State="true"/>
             <Setting Id="Montage_UGuid.PSD.JCZB" Label="虫总兵" State="true"/>

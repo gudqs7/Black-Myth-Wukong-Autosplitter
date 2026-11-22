@@ -79,14 +79,15 @@
             <Setting Id="Montage_UGuid.LYS.fsys" Label="Monk from the Sea" State="true"/>
             <Setting Id="Montage_TAMER_psd_renshenjing_02a" Label="Old Ginseng Guai" State="true"/>
             <Setting Id="Montage_UGuid.LYS.RuYiLong.01" Label="Chen Loong" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.Hu_Wind_Battle.HZSJ" Label="Yin Tiger" State="true"/>
+            <Setting Id="Seq_LS_pw_fenghu_battlewin" Label="Yin Tiger" State="true"/>
+            <Setting Id="Montage_UGuid.EndB.YangJian" Label="Erlang Shen" State="true"/>
+            <Setting Id="Montage_UGuid.EndB.YangJian.FTXD" Label="Erlang Shen (Cosmic Form)" State="true"/>
         </Setting>
     </Setting>
     <Setting Id="Chapter4Bosses" Label="Chapter 4 - Webbed Hollow" State="true">
         <Setting Id="Chapter4MainBosses" Label="Main Bosses" State="true">
             <Setting Id="Montage_UGuid.PSD.Erjie.Village" Label="The Second Sister" State="true"/>
             <Setting Id="Montage_UGuid.PSD.FSC01.foshouchong" Label="Buddha&apos;s Right Hand" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.Wa.01" Label="Baw-Li-Guhh-Baw" State="true"/>
             <Setting Id="Montage_UGuid.PSD.BaJie.Mo" Label="Zhu Bajie (Phase 1)" State="true"/>
             <Setting Id="Montage_UGuid.PSD.BaJie.Ye" Label="Zhu Bajie (Phase 2)" State="true"/>
             <Setting Id="Montage_UGuid.PSD.LaoZhiZhu" Label="Violet Spider" State="true"/>
@@ -100,6 +101,7 @@
             <Setting Id="Montage_UGuid.ZYS.MRXG" Label="The Duskveil" State="true"/>
         </Setting>
         <Setting Id="Chapter4ChiefBosses" Label="Yaoguai Chiefs" State="true">
+            <Setting Id="Montage_UGuid.PSD.Wa.01" Label="Baw-Li-Guhh-Baw" State="true"/>
             <Setting Id="Montage_UGuid.PSD.YouYan" Label="Centipede Guai" State="true"/>
             <Setting Id="Montage_UGuid.PSD.qinlang" Label="Elder Amourworm" State="true"/>
             <Setting Id="Montage_UGuid.PSD.JCZB" Label="Commander Beetle" State="true"/>
