@@ -366,6 +366,8 @@ init
     // ActorFNameBaseCache：FName 低 32 位 -> 不含实例序号的字符串。大型世界
     // 每轮只读取一次 Actor 指针数组，已有指针复用缓存，名称最多解析一次。
     // ActorPtrsCurrent / ActorPtrsPrevious：复用的指针集合，用于删除已消失缓存。
+    // SeenTamerTokens：已经打印过初见日志的 TAMER token；按不区分大小写去重，
+    // 脚本生命周期内每个 token 只打印一次。
     // GUID-TAMER Actor 不维护运行时别名表，而是直接按 Tamer 名匹配 Montage_TAMER_*、
     // Slow_TAMER_* 或 Despawn_TAMER_*。
     vars.CompletedSplits = new HashSet<string>();
@@ -382,6 +384,7 @@ init
     vars.ActorNameByPtr = new Dictionary<long, string>();
     vars.ActorPtrsCurrent = new HashSet<long>();
     vars.ActorPtrsPrevious = new HashSet<long>();
+    vars.SeenTamerTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     // StripActorInstanceSuffix 委托。
     // 入参：GUID-TAMER Actor 名中提取出的完整 Tamer token。
@@ -405,7 +408,8 @@ init
     // 原理：常规 Boss 使用 UGuid___... 名称；GUID-TAMER Actor 先尝试完整
     // TAMER_xxx_C_n 设置，再回退到基础 TAMER_xxx。检查范围包括 Montage_、
     // Slow_、Despawn_ 和 Action_；只有存在对应设置才返回，因此普通 Tamer
-    // 单位不会进入出现/消失日志。
+    // 单位不会进入出现/消失日志。每个 TAMER token 第一次进入 ResolveActorUid
+    // 时额外打印 baseToken 和 token，便于核对实例后缀与设置 ID。
     vars.ResolveActorUid = (Func<string, string>)(actorName =>
     {
         if (string.IsNullOrEmpty(actorName)) return "";
@@ -425,14 +429,19 @@ init
             || settings.ContainsKey("Slow_" + token)
             || settings.ContainsKey("Despawn_" + token)
             || vars.ActionSplitsByActor.ContainsKey(token);
-        if (fullTracked) return token;
-
         string baseToken = vars.StripActorInstanceSuffix(token);
         bool baseTracked = settings.ContainsKey("Montage_" + baseToken)
             || settings.ContainsKey("Slow_" + baseToken)
             || settings.ContainsKey("Despawn_" + baseToken)
             || vars.ActionSplitsByActor.ContainsKey(baseToken);
-        return baseTracked ? baseToken : "";
+        HashSet<string> seenTamerTokens = (HashSet<string>)vars.SeenTamerTokens;
+        if (seenTamerTokens.Add(token))
+        {
+            vars.Log(
+                "[BMW-splitter] tamer first seen: baseToken=" + baseToken
+                + " token=" + token);
+        }
+        return fullTracked ? token : (baseTracked ? baseToken : "");
     });
 
     // IsSettingEnabled 委托。

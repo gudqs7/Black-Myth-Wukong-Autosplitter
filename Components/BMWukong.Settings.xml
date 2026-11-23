@@ -8,7 +8,7 @@
 
     <Setting Id="Chapter1Bosses" Label="第一章 - 黑风山" State="true">
         <Setting Id="Chapter1MainBosses" Label="主线 Boss" State="true">
-            <Setting Id="Montage_UGuid.HFS.Niu.Teacher" Label="轱护院" State="true"/>
+            <Setting Id="Montage_UGuid.HFS.Niu.Teacher" Label="牯护院" State="true"/>
             <Setting Id="Montage_UGuid.HFS.GuangZhi" Label="广智" State="true"/>
             <Setting Id="Montage_UGuid.HFS.TongChi01" Label="幽魂" State="true"/>
             <Setting Id="Montage_UGuid.HFS.DBL0" Label="灵虚子" State="true"/>
@@ -23,7 +23,7 @@
             <Setting Id="Montage_UGuid.HFS.WoodDragon" Label="赤髯龙" State="true"/>
         </Setting>
         <Setting Id="Chapter1ChiefBosses" Label="头目 Boss" State="true">
-            <Setting Id="Montage_UGuid.HFS.WaBig" Label="波里个浪" State="true"/>
+            <Setting Id="Montage_UGuid.HFS.WaBig" Label="波里个浪(白板)" State="true"/>
         </Setting>
     </Setting>
 
@@ -46,7 +46,7 @@
             <Setting Id="Montage_UGuid.HFM.Shawuliang" Label="虎伥" State="true"/>
             <Setting Id="Montage_UGuid.HFM.BaShanHu" Label="疯虎" State="true"/>
             <Setting Id="Montage_UGuid.HFM.StoneMan.Fight" Label="石中人" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.Wa.01" Label="浪里个波" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.Wa.01" Label="浪里个波(雷蛙)" State="true"/>
             <Setting Id="Montage_UGuid.HFM.Suoyang" Label="地狼" State="true"/>
             <Setting Id="Montage_UGuid.HFM.LaPapesse" Label="石母" State="true"/>
             <Setting Id="Montage_TAMER_hfm_hou_01a" Label="百目真人" State="true"/>
@@ -74,7 +74,7 @@
         <Setting Id="Chapter3ChiefBosses" Label="头目 Boss" State="true">
             <Setting Id="Montage_UGuid.LYS.Mo4" Label="魔将·莲眼" State="true"/>
             <Setting Id="Montage_UGuid.LYS.Mo3.FM" Label="无量蝠" State="true"/>
-            <Setting Id="Montage_UGuid.LYS.XueWa" Label="浪里个浪" State="true"/>
+            <Setting Id="Montage_UGuid.LYS.XueWa" Label="浪里个浪(冰蛙)" State="true"/>
             <Setting Id="Montage_UGuid.LYS.bujing" Label="不净" State="true"/>
             <Setting Id="Montage_UGuid.LYS.LaoSeng" Label="不空" State="true"/>
             <Setting Id="Montage_UGuid.HFM.HuanWuZhe" Label="翠笠武师" State="true"/>
@@ -106,12 +106,14 @@
             <Setting Id="Montage_UGuid.ZYS.MRXG" Label="晦月魔君" State="true"/>
         </Setting>
         <Setting Id="Chapter4ChiefBosses" Label="头目 Boss" State="true">
-            <Setting Id="Montage_UGuid.PSD.Wa.01" Label="毒蛙" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.Wa.01" Label="波里个波(毒蛙)" State="true"/>
             <Setting Id="Montage_UGuid.PSD.YouYan" Label="百足虫" State="true"/>
             <Setting Id="Montage_UGuid.PSD.qinlang" Label="琴螂仙" State="true"/>
             <Setting Id="Montage_UGuid.PSD.JCZB" Label="虫总兵" State="true"/>
+            <Setting Id="Montage_TAMER_psd_zhusun_03" Label="蘑女" State="true"/>
             <Setting Id="Montage_UGuid.ZYS.DaoShi.Fight" Label="靡道人一阶段" State="true"/>
             <Setting Id="Montage_UGuid.ZYS.Daoshi.P2" Label="靡道人二阶段" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.WLG" Label="王灵官(四妹任务)" State="false"/>
         </Setting>
     </Setting>
 
@@ -128,15 +130,16 @@
             <Setting Id="Montage_UGuid.HYS.ZhanChe.01a" Label="五行战车(褐铁)" State="true"/>
             <Setting Id="Montage_UGuid.HYS.ZhanChe.01b" Label="五行战车(灰铜)" State="true"/>
             <Setting Id="Montage_UGuid.HYS.ZhanChe.01c" Label="五行战车(红银)" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.JDS.05" Label="五行战车(碧水洞前)" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.JDS.05" Label="五行战车(赤金)" State="true"/>
             <Setting Id="Montage_UGuid.HYS.TuDi.YS" Label="阴阳鱼" State="true"/>
             <Setting Id="Dual_UGuid.HYS.XingGongXian+UGuid.HYS.XianGongXing" Label="兴烘掀、掀烘兴" State="true"/>
             <Setting Id="Montage_UGuid.BSD.JJS" Label="璧水金睛兽" State="true"/>
         </Setting>
         <Setting Id="Chapter5ChiefBosses" Label="头目 Boss" State="true">
             <Setting Id="Montage_UGuid.HYS.HMS.Outside" Label="石父" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.Wa.01" Label="波浪浪" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.Wa.01" Label="波浪浪(火蛙)" State="true"/>
             <Setting Id="Montage_UGuid.HYS.YSCheng" Label="海罗刹" State="true"/>
+            <Setting Id="Montage_TAMER_pds_lingzhijing_03a" Label="九叶灵芝精" State="true"/>
             <Setting Id="Montage_TAMER_HFM_ShiTongLing_02a" Label="燧统领" State="true"/>
             <Setting Id="Montage_TAMER_hys_shixianfeng_02" Label="燧先锋" State="true"/>
             <Setting Id="Montage_TAMER_hys_huolingsha_01" Label="火灵元母" State="true"/>
@@ -156,7 +159,7 @@
             <Setting Id="Action_UGuid.SL.sgd@*break*" Label="大石敢当" State="true"/>
         </Setting>
         <Setting Id="Chapter6ChiefBosses" Label="头目 Boss" State="true">
-            <Setting Id="Montage_UGuid.SZLC.Wa.01" Label="浪波波" State="true"/>
+            <Setting Id="Montage_UGuid.SZLC.Wa.01" Label="浪波波(石蛙)" State="true"/>
             <Setting Id="Montage_UGuid.BYS.HMS.02" Label="石子" State="true"/>
             <Setting Id="Montage_UGuid.BYS.Shitongling.03" Label="毒统领" State="true"/>
             <Setting Id="Montage_UGuid.BYS.hema.king" Label="水木兽" State="true"/>

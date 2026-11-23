@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 验证生成的黑神话：悟空运行时文件没有注释，并编译解析 ASL。
 
@@ -168,7 +168,8 @@ foreach ($chapter in 1..6) {
 $bossSettings = @($defaultDocument.SelectNodes('//Setting[not(Setting) and (starts-with(@Id,"Montage_") or starts-with(@Id,"Slow_") or starts-with(@Id,"Dual_") or starts-with(@Id,"Despawn_") or starts-with(@Id,"Action_") or starts-with(@Id,"Seq_") or starts-with(@Id,"UGuid.") or starts-with(@Id,"Boss_"))]'))
 $expectedDisabledBossIds = @(
     'Montage_UGuid.ZYS.XieZi.MRXG',
-    'Montage_TAMER_hys_huijingtitan_01'
+    'Montage_TAMER_hys_huijingtitan_01',
+    'Montage_UGuid.PSD.WLG'
 )
 $disabledBossSettings = @($bossSettings | Where-Object { $_.State -ne 'true' })
 $unexpectedDisabledBossSettings = @($disabledBossSettings | Where-Object { $_.Id -notin $expectedDisabledBossIds })
@@ -198,9 +199,12 @@ $expectedParents = @{
     'Montage_UGuid.LYS.fsys' = 'Chapter3ChiefBosses'
     'Montage_UGuid.PSD.YouYan' = 'Chapter4ChiefBosses'
     'Montage_UGuid.PSD.JCZB' = 'Chapter4ChiefBosses'
+    'Montage_TAMER_psd_zhusun_03' = 'Chapter4ChiefBosses'
+    'Montage_UGuid.PSD.WLG' = 'Chapter4ChiefBosses'
     'Montage_UGuid.ZYS.DaoShi.Fight' = 'Chapter4ChiefBosses'
     'Montage_UGuid.ZYS.Daoshi.P2' = 'Chapter4ChiefBosses'
     'Montage_UGuid.HYS.YSCheng' = 'Chapter5ChiefBosses'
+    'Montage_TAMER_pds_lingzhijing_03a' = 'Chapter5ChiefBosses'
     'Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01' = 'Chapter5YaoguaiKingBosses'
     'Montage_UGuid.BYS.HMS.02' = 'Chapter6ChiefBosses'
     'Montage_UGuid.BYS.Shitongling.03' = 'Chapter6ChiefBosses'
@@ -287,7 +291,9 @@ $expectedDirectTamerSettings = @(
     'Montage_TAMER_hys_shixianfeng_02',
     'Montage_TAMER_hys_huolingsha_01',
     'Montage_TAMER_psd_renshenjing_02a',
-    'Montage_TAMER_hys_huijingtitan_01'
+    'Montage_TAMER_hys_huijingtitan_01',
+    'Montage_TAMER_psd_zhusun_03',
+    'Montage_TAMER_pds_lingzhijing_03a'
 )
 foreach ($id in $expectedDirectTamerSettings) {
     if ($null -eq $defaultDocument.SelectSingleNode("//Setting[@Id='$id']")) {
@@ -595,6 +601,12 @@ if (-not $aslText.Contains('if (source != "despawn"')) {
 if (-not $aslText.Contains('"[BMW-splitter] actor appeared: uid="') -or -not $aslText.Contains('"[BMW-splitter] actor despawn observed: uid="') -or -not $aslText.Contains('vars.ObservedActors')) {
     throw "Generated ASL must retain appearance/despawn logs for all tracked Boss actors: $aslPath"
 }
+if (-not $aslText.Contains('vars.SeenTamerTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase)') -or
+    -not $aslText.Contains('if (seenTamerTokens.Add(token))') -or
+    -not $aslText.Contains('"[BMW-splitter] tamer first seen: baseToken="') -or
+    -not $aslText.Contains('+ " token=" + token')) {
+    throw "Generated ASL does not deduplicate and log first-seen TAMER baseToken/token: $aslPath"
+}
 if (-not $aslText.Contains('vars.StripActorInstanceSuffix = (Func<string, string>)') -or
     -not $aslText.Contains('vars.ResolveActorUid = (Func<string, string>)') -or
     -not $aslText.Contains('actorName.IndexOf("-TAMER_", StringComparison.OrdinalIgnoreCase)') -or
@@ -613,7 +625,9 @@ foreach ($directId in @(
     'Montage_TAMER_hys_shixianfeng_02',
     'Montage_TAMER_hys_huolingsha_01',
     'Montage_TAMER_psd_renshenjing_02a',
-    'Montage_TAMER_hys_huijingtitan_01'
+    'Montage_TAMER_hys_huijingtitan_01',
+    'Montage_TAMER_psd_zhusun_03',
+    'Montage_TAMER_pds_lingzhijing_03a'
 )) {
     if ($null -eq $defaultDocument.SelectSingleNode("//Setting[@Id='$directId']")) {
         throw "Generated settings are missing direct Tamer Boss id ${directId}: $aslPath"

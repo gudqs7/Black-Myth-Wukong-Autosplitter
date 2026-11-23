@@ -264,6 +264,7 @@ init
     vars.ActorNameByPtr = new Dictionary<long, string>();
     vars.ActorPtrsCurrent = new HashSet<long>();
     vars.ActorPtrsPrevious = new HashSet<long>();
+    vars.SeenTamerTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     vars.StripActorInstanceSuffix = (Func<string, string>)(token =>
     {
@@ -295,14 +296,19 @@ init
             || settings.ContainsKey("Slow_" + token)
             || settings.ContainsKey("Despawn_" + token)
             || vars.ActionSplitsByActor.ContainsKey(token);
-        if (fullTracked) return token;
-
         string baseToken = vars.StripActorInstanceSuffix(token);
         bool baseTracked = settings.ContainsKey("Montage_" + baseToken)
             || settings.ContainsKey("Slow_" + baseToken)
             || settings.ContainsKey("Despawn_" + baseToken)
             || vars.ActionSplitsByActor.ContainsKey(baseToken);
-        return baseTracked ? baseToken : "";
+        HashSet<string> seenTamerTokens = (HashSet<string>)vars.SeenTamerTokens;
+        if (seenTamerTokens.Add(token))
+        {
+            vars.Log(
+                "[BMW-splitter] tamer first seen: baseToken=" + baseToken
+                + " token=" + token);
+        }
+        return fullTracked ? token : (baseTracked ? baseToken : "");
     });
 
     vars.IsSettingEnabled = (Func<string, bool, bool>)((id, defaultValue) =>
