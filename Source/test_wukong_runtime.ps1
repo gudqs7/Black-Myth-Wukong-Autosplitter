@@ -406,11 +406,8 @@ if (-not $aslText.Contains('"[BMW-loading] isLoading=" + loading')) {
 if ($aslText.Contains('"[BMW-loading] cutscene loading:')) {
     throw "Generated ASL still contains the redundant cutscene loading transition log."
 }
-if (-not $aslText.Contains('cutsceneSequence')) {
-    throw "Generated ASL does not classify LevelSequencePlayer playback by sequence name."
-}
-if (-not $aslText.Contains('sequenceName.IndexOf("LSM_", StringComparison.OrdinalIgnoreCase)')) {
-    throw "Generated ASL does not recognize LSM_ movie sequences."
+if (-not $aslText.Contains('bool cutsceneSequence = !string.IsNullOrEmpty(sequenceName);')) {
+    throw "Generated ASL does not classify all non-empty LevelSequencePlayer names as cutscenes."
 }
 $seqPlayMatch = [regex]::Match(
     $aslText,

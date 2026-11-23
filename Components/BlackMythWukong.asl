@@ -629,12 +629,7 @@ init
             {
                 byte status = vars.ReadSequenceStatus(player);
                 string sequenceName = vars.ReadSequenceName(player);
-                bool cutsceneSequence = sequenceName.IndexOf(
-                        "LS_", StringComparison.OrdinalIgnoreCase) >= 0
-                    || sequenceName.IndexOf("LSM_", StringComparison.OrdinalIgnoreCase) >= 0
-                    || sequenceName.IndexOf("cpt", StringComparison.OrdinalIgnoreCase) >= 0
-                    || sequenceName.IndexOf("CG", StringComparison.OrdinalIgnoreCase) >= 0
-                    || sequenceName.IndexOf("Seq", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool cutsceneSequence = !string.IsNullOrEmpty(sequenceName);
                 bool participates = status == 1 && cutsceneSequence;
 
                 if (participates)
@@ -654,8 +649,6 @@ init
                 vars.Log(
                     "[BMW-seq] play player=0x" + player.ToInt64().ToString("X")
                     + " status=" + status
-                    + " cutscene=" + cutsceneSequence
-                    + " participates=" + participates
                     + " name=" + sequenceName);
             }
         }
