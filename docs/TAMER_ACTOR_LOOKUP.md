@@ -145,7 +145,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 
 4. 确认 `WUKONG_LSS_TEST_OK`、`ASL_PARSE_OK`、`WUKONG_RUNTIME_TEST_OK`。
 5. 使用 `-SyncLiveSplit` 同步，随后核对 SHA-256。
-6. 完全退出并重启 LiveSplit；热重载可能留下未初始化的 ASL `vars` 字段。
+6. LiveSplit 会自动重新加载修改后的 ASL；无需完全退出并重启 LiveSplit。
 
 ## 6. 注意事项
 

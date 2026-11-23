@@ -72,9 +72,9 @@ Before overwriting a local runtime file, the script compares SHA-256 and
 `LastWriteTime`. A newer differing local file must be inspected and merged back
 into `Source/Runtime` first. After copying, SHA-256 equality is verified.
 
-- Adding or removing ASL `vars` fields/delegates changes the initialization
-  shape. Fully exit and restart LiveSplit before validation; hot reload can
-  leave new fields null and cause `NullReferenceException`.
+- LiveSplit automatically reloads the ASL when the file changes. A full
+  LiveSplit exit/restart is never required for ASL changes, including when
+  adding or removing `vars` fields or delegates.
 - Keep validated action diagnostics out of production. The action-change log
   should stay minimal (`uid`, `action`, `deathAction`); do not restore periodic
   Montage-state, AnimInstance, array-header, or item-pointer logging.

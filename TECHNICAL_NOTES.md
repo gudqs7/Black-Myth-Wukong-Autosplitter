@@ -116,8 +116,8 @@ Dual_UGuid.A+UGuid.B
 
 ## 维护与发布经验
 
-- 新增 ASL `vars` 字段或委托后，必须完全退出并重启 LiveSplit 再验证；LiveSplit
-  热重载可能留下空字段并产生 `NullReferenceException`。
+- ASL 文件变化后 LiveSplit 会自动重新加载脚本；新增或删除 `vars` 字段、委托时
+  也不需要完全退出并重启 LiveSplit。
 - Montage 数组 `count > 0` 不代表一定读到了动作：需检查 item 内候选指针并校验
   对象类名包含 `AnimMontage`。当前已验证兼容 `item+0` 与 `item+0x18`。
 - 动作诊断只用于定位阶段。生产日志保留 `uid`、`action`、`deathAction` 即可；
