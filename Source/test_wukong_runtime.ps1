@@ -336,6 +336,16 @@ if ($defaultYangjian.State -ne 'true' -or $englishYangjian.State -ne 'true') {
 }
 
 $aslText = [IO.File]::ReadAllText($aslPath)
+$lineBreakCount = ([regex]::Matches($aslText, "`r?`n")).Count
+if ($lineBreakCount -lt 200) {
+    throw "Generated ASL was over-compacted and is no longer readable: $aslPath"
+}
+if ([regex]::IsMatch($aslText, "`r?`n`r?`n")) {
+    throw "Generated ASL must not contain blank lines: $aslPath"
+}
+if ([regex]::IsMatch($aslText, "(?m)^\s*\{\s*$")) {
+    throw "Generated ASL must inline standalone opening braces: $aslPath"
+}
 if (-not $aslText.Contains('byte[] actorBytes = vars.Resolver.ReadBytes(actors, actorCount * 8);')) {
     throw "Generated ASL must bulk-read the world Actor pointer array."
 }
@@ -367,7 +377,7 @@ if (-not $aslText.Contains('vars.StartArmed')) {
 if (-not $aslText.Contains('current.World != "MGD_PersistentLevel"')) {
     throw "Generated ASL does not restrict auto-start to the MGD start world."
 }
-if (-not $aslText.Contains('bool nativeLoading = (bool)vars.NativeLoadingPending;')) {
+if (-not $aslText.Contains('bool loading = (bool)current.WorldPending || (bool)vars.NativeLoadingPending || cutsceneLoading;')) {
     throw "Generated ASL does not include native loading in isLoading."
 }
 if (-not $aslText.Contains('vars.Events = vars.Uhara.CreateTool("UnrealEngine", "Events");')) {
@@ -406,8 +416,10 @@ if (-not $aslText.Contains('"[BMW-loading] isLoading=" + loading')) {
 if ($aslText.Contains('"[BMW-loading] cutscene loading:')) {
     throw "Generated ASL still contains the redundant cutscene loading transition log."
 }
-if (-not $aslText.Contains('bool cutsceneSequence = !string.IsNullOrEmpty(sequenceName);')) {
-    throw "Generated ASL does not classify all non-empty LevelSequencePlayer names as cutscenes."
+if (-not $aslText.Contains('vars.CutsceneSequenceWhitelist = new HashSet<string>') -or
+    -not $aslText.Contains('"LS_lys_cpt010_seq021"') -or
+    -not $aslText.Contains('!vars.CutsceneSequenceWhitelist.Contains(sequenceName)')) {
+    throw "Generated ASL does not exclude sequences in CutsceneSequenceWhitelist from cutscenes."
 }
 $seqPlayMatch = [regex]::Match(
     $aslText,
@@ -599,7 +611,7 @@ if (-not $aslText.Contains('"[BMW-splitter] actor appeared: uid="') -or -not $as
     throw "Generated ASL must retain appearance/despawn logs for all tracked Boss actors: $aslPath"
 }
 if (-not $aslText.Contains('vars.SeenTamerTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase)') -or
-    -not $aslText.Contains('if (seenTamerTokens.Add(token))') -or
+    -not $aslText.Contains('if (vars.SeenTamerTokens.Add(token))') -or
     -not $aslText.Contains('"[BMW-splitter] tamer first seen: baseToken="') -or
     -not $aslText.Contains('+ " token=" + token')) {
     throw "Generated ASL does not deduplicate and log first-seen TAMER baseToken/token: $aslPath"
@@ -705,9 +717,11 @@ foreach ($fieldName in $removedFields) {
     }
 }
 
-$startupIndex = $aslText.IndexOf("`nstartup", [StringComparison]::Ordinal)
-$initIndex = $aslText.IndexOf("`ninit", [StringComparison]::Ordinal)
-if ($startupIndex -lt 0 -or $initIndex -le $startupIndex) {
+$startupMatch = [regex]::Match($aslText, '\bstartup\s*\{')
+$initMatch = [regex]::Match($aslText, '\binit\s*\{')
+$startupIndex = $startupMatch.Index
+$initIndex = $initMatch.Index
+if (-not $startupMatch.Success -or -not $initMatch.Success -or $initMatch.Index -le $startupMatch.Index) {
     throw "Could not locate startup/init lifecycle blocks: $aslPath"
 }
 $startupText = $aslText.Substring($startupIndex, $initIndex - $startupIndex)

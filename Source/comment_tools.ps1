@@ -191,6 +191,110 @@ function Normalize-CommentStrippedText {
 
 <#
 .SYNOPSIS
+以可读方式压缩已移除注释的 C#/ASL 发布文本。
+
+.PARAMETER Text
+需要压缩且已移除注释的 C#/ASL 文本。
+
+.OUTPUTS
+删除空行，并把单独的开括号或 else/catch/finally 接到上一行；
+其余源码换行和字符串内容保持不变。
+#>
+function Compact-CSharpText {
+    param(
+        [Parameter(Mandatory = $true)]
+        [AllowEmptyString()]
+        [string]$Text
+    )
+
+    $normalized = $Text.Replace("`r`n", "`n").Replace("`r", "`n")
+    $sourceLines = $normalized.Split("`n")
+    $outputLines = New-Object System.Collections.Generic.List[string]
+
+    foreach ($line in $sourceLines) {
+        $rightTrimmed = $line.TrimEnd()
+        $content = $rightTrimmed.Trim()
+        if ($content.Length -eq 0) {
+            continue
+        }
+
+        if ($content -eq "{") {
+            if ($outputLines.Count -eq 0) {
+                $outputLines.Add($rightTrimmed)
+            }
+            else {
+                $outputLines[$outputLines.Count - 1] += " {"
+            }
+            continue
+        }
+
+        $joinToPrevious = $content -eq "else" -or
+            $content.StartsWith("else ", [StringComparison]::Ordinal) -or
+            $content -eq "catch" -or
+            $content.StartsWith("catch ", [StringComparison]::Ordinal) -or
+            $content -eq "finally"
+        if ($joinToPrevious -and
+            $outputLines.Count -gt 0 -and
+            $outputLines[$outputLines.Count - 1].TrimEnd() -eq "}") {
+            $outputLines[$outputLines.Count - 1] += " " + $content
+            continue
+        }
+
+        $outputLines.Add($rightTrimmed)
+    }
+
+    $maxLineLength = 180
+    for ($i = 1; $i -lt $outputLines.Count; ) {
+        $previous = $outputLines[$i - 1].TrimEnd()
+        $current = $outputLines[$i].Trim()
+        $separator = if ($previous.EndsWith("(") -or $previous.EndsWith("[")) {
+            ""
+        }
+        elseif ($current.StartsWith(".") -or
+            $current.StartsWith(")") -or $current.StartsWith("]") -or
+            $current.StartsWith(",") -or $current.StartsWith(";")) {
+            ""
+        }
+        else {
+            " "
+        }
+        $combined = $previous + $separator + $current
+        $previousTrimStart = $previous.TrimStart()
+        $loopHeaderContinuation =
+            ($previousTrimStart.StartsWith("for (") -or
+                $previousTrimStart.StartsWith("while (") -or
+                $previousTrimStart.StartsWith("foreach (")) -and
+            -not $previous.EndsWith("{") -and
+            -not $previous.EndsWith(")")
+        $shouldJoin = -not $current.StartsWith("}") -and (
+            $current.StartsWith("+") -or
+            $current.StartsWith(".") -or
+            $current.StartsWith("||") -or
+            $current.StartsWith("&&") -or
+            $current.StartsWith("?") -or
+            $current.StartsWith(":") -or
+            $previous.EndsWith("=") -or
+            $previous.EndsWith("(") -or
+            $previous.EndsWith(",") -or
+            $previous.EndsWith("?") -or
+            $previous.EndsWith(":") -or
+            $previous.EndsWith("+") -or
+            $previous.EndsWith("&&") -or
+            $previous.EndsWith("||") -or
+            $loopHeaderContinuation)
+        if ($shouldJoin -and $combined.Length -le $maxLineLength) {
+            $outputLines[$i - 1] = $combined
+            $outputLines.RemoveAt($i)
+            continue
+        }
+        $i++
+    }
+
+    return ($outputLines -join [Environment]::NewLine) + [Environment]::NewLine
+}
+
+<#
+.SYNOPSIS
 移除 PowerShell 行注释、块注释和 here-string 内容之外的注释，
 同时保留引号字符串内容。
 

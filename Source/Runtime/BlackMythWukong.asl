@@ -176,8 +176,7 @@ init
             IntPtr component = vars.Resolver.Read<IntPtr>(
                 (IntPtr)((long)componentItems + index * 8));
             if (component == IntPtr.Zero) continue;
-            string componentClass = vars.ReadClassName(component);
-            if (!componentClass.Contains("ACharacterComponent")) continue;
+            if (!vars.ReadClassName(component).Contains("ACharacterComponent")) continue;
 
             mesh = vars.Resolver.Read<IntPtr>((IntPtr)((long)component + 0x40));
             anim = mesh == IntPtr.Zero
@@ -434,8 +433,7 @@ init
             || settings.ContainsKey("Slow_" + baseToken)
             || settings.ContainsKey("Despawn_" + baseToken)
             || vars.ActionSplitsByActor.ContainsKey(baseToken);
-        HashSet<string> seenTamerTokens = (HashSet<string>)vars.SeenTamerTokens;
-        if (seenTamerTokens.Add(token))
+        if (vars.SeenTamerTokens.Add(token))
         {
             vars.Log(
                 "[BMW-splitter] tamer first seen: baseToken=" + baseToken
@@ -519,10 +517,8 @@ init
                 continue;
             }
 
-            Dictionary<string, string[]> dualSplits =
-                (Dictionary<string, string[]>)vars.DualSplits;
-            if (dualSplits.ContainsKey(setting)) continue;
-            dualSplits[setting] = uids;
+            if (vars.DualSplits.ContainsKey(setting)) continue;
+            vars.DualSplits[setting] = uids;
             vars.DualMontageHits[setting] =
                 new HashSet<string>();
 
@@ -577,10 +573,8 @@ init
                 continue;
             }
 
-            Dictionary<string, string> patterns =
-                (Dictionary<string, string>)vars.ActionSplitPatterns;
-            if (patterns.ContainsKey(setting)) continue;
-            patterns[setting] = pattern;
+            if (vars.ActionSplitPatterns.ContainsKey(setting)) continue;
+            vars.ActionSplitPatterns[setting] = pattern;
 
             Dictionary<string, List<string>> settingsByActor =
                 (Dictionary<string, List<string>>)vars.ActionSplitsByActor;
@@ -798,6 +792,11 @@ init
     current.WorldPending = true;
 
     // 6. 过场状态与 Bink 诊断日志。
+    // 白名单中的 Sequence 只用于配置打点，不计入 CG/加载暂停。
+    vars.CutsceneSequenceWhitelist = new HashSet<string>
+    {
+        "LS_lys_cpt010_seq021", // 第三章开头马猴爬山
+    };
     // FunctionFlag 记录事件边沿，FunctionParentPtr 暴露触发函数所属对象。
     // 只有 name=BinkMoviePlayer_Chapter 的章节末尾 Bink 参与 isLoading。
     vars.Events.FunctionFlag("SeqPlayerPlayFlag", "*LevelSequencePlayer*", null, "Play");
@@ -842,8 +841,8 @@ init
     vars.UpdateCutsceneHooks = (Action)(() =>
     {
         long nowTicks = DateTime.UtcNow.Ticks;
-        // SequencePlayer.Play 是主过场信号：状态字节为 1，且名称包含 LS_/LSM_/cpt/CG/Seq
-        // 时才锁存。名称过滤避免暂停页或普通动画序列被误当成剧情过场。
+        // SequencePlayer.Play 是主过场信号：状态字节为 1，且名称非空、不在
+        // CG 白名单时才锁存；白名单用于排除实际不是过场的序列。
         if (vars.Resolver.CheckFlag("SeqPlayerPlayFlag"))
         {
             IntPtr player = (IntPtr)current.SeqPlayerPlayInstance;
@@ -851,7 +850,8 @@ init
             {
                 byte status = vars.ReadSequenceStatus(player);
                 string sequenceName = vars.ReadSequenceName(player);
-                bool cutsceneSequence = !string.IsNullOrEmpty(sequenceName);
+                bool cutsceneSequence = !string.IsNullOrEmpty(sequenceName)
+                    && !vars.CutsceneSequenceWhitelist.Contains(sequenceName);
                 bool participates = status == 1 && cutsceneSequence;
 
                 if (participates)
@@ -1098,9 +1098,8 @@ update
 
         // 世界名或 GWorld 地址变化代表对象代际已更换；清空 Actor 缓存和待处理点，
         // 但保留当前 Dual_ 配置。Startup 世界同时设置自动开始武装位。
-        IntPtr previousWorldPtr = (IntPtr)vars.LastWorldPtr;
         string previousWorld = (string)vars.LastWorld;
-        if (worldName != previousWorld || worldPtr != previousWorldPtr)
+        if (worldName != previousWorld || worldPtr != (IntPtr)vars.LastWorldPtr)
         {
             if (!string.IsNullOrEmpty(previousWorld))
             {
@@ -1202,10 +1201,9 @@ update
             bool firstObserved = !previousObservedActors.Contains(uid);
             if (firstObserved)
             {
-                string actorClass = vars.ReadClassName(actor);
                 vars.Log(
                     "[BMW-splitter] actor appeared: uid=" + uid
-                    + " class=" + actorClass
+                    + " class=" + vars.ReadClassName(actor)
                     + " name=" + actorName
                     + " actor=0x" + actor.ToString("X")
                     + " world=" + worldName);
@@ -1437,10 +1435,9 @@ split
     }
     if (timer.CurrentPhase != TimerPhase.Running) return false;
 
-    Queue<string> pending = (Queue<string>)vars.PendingSplits;
-    while (pending.Count > 0)
+    while (vars.PendingSplits.Count > 0)
     {
-        string setting = pending.Dequeue();
+        string setting = vars.PendingSplits.Dequeue();
         if (vars.IsSettingEnabled(setting, false))
         {
             vars.Log("[BMW-splitter] split: " + setting);
@@ -1459,12 +1456,10 @@ split
 // 便于区分世界加载、原生加载和过场加载。
 isLoading
 {
-    bool worldLoading = (bool)current.WorldPending;
-    bool nativeLoading = (bool)vars.NativeLoadingPending;
     bool cutsceneLoading =
         vars.IsSettingEnabled("RemoveCutscenes", true)
         && (bool)vars.CutscenePending;
-    bool loading = worldLoading || nativeLoading || cutsceneLoading;
+    bool loading = (bool)current.WorldPending || (bool)vars.NativeLoadingPending || cutsceneLoading;
 
     if (loading != (bool)vars.LastLoading)
     {
@@ -1472,7 +1467,7 @@ isLoading
         vars.Log(
             "[BMW-loading] isLoading=" + loading
             + " world=" + (string)current.World
-            + " native=" + nativeLoading
+            + " native=" + (bool)vars.NativeLoadingPending
             + " cutscene=" + cutsceneLoading);
     }
     return loading;

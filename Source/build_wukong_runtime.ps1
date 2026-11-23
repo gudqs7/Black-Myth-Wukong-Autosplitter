@@ -74,11 +74,12 @@ foreach ($asset in $runtimeAssets) {
     $sourceText = [IO.File]::ReadAllText($sourcePath)
     if ($asset.CommentType -eq "CSharp") {
         $runtimeText = Remove-CSharpComments -Text $sourceText
+        $runtimeText = Compact-CSharpText -Text $runtimeText
     }
     else {
         $runtimeText = Remove-XmlComments -Text $sourceText
+        $runtimeText = Normalize-CommentStrippedText -Text $runtimeText
     }
-    $runtimeText = Normalize-CommentStrippedText -Text $runtimeText
 
     $targetPath = Join-Path $OutputDirectory $asset.TargetName
     Write-Utf8NoBom -Path $targetPath -Text $runtimeText
