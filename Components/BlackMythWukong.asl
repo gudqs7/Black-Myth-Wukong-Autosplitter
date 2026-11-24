@@ -13,6 +13,9 @@ startup {
         settingsPath = Path.Combine(componentDir, "BMWukong.Settings.xml");
     vars.SettingsPath = settingsPath;
     vars.Uhara.Settings.CreateFromXml(settingsPath);
+    vars.Uhara.Log("[BMW-loading] settings loaded: " + (string)vars.SettingsPath);
+}
+init {
     string fileLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", "BlackMythWukong.log");
     bool fileLogEnabled = false;
     try {
@@ -33,9 +36,6 @@ startup {
             catch {}
         }
     });
-    vars.Log("[BMW-loading] settings loaded: " + settingsPath);
-}
-init {
     vars.Utils = vars.Uhara.CreateTool("UnrealEngine", "Utilities");
     if (vars.Utils.GWorld == IntPtr.Zero || vars.Utils.GEngine == IntPtr.Zero || vars.Utils.FNames == IntPtr.Zero) {
         throw new Exception("Unreal utilities could not resolve GWorld/GEngine/FNames");

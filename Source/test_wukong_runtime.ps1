@@ -789,15 +789,17 @@ if (-not $startupText.Contains($settingsLoadInvocation)) {
 if ($initText.Contains($settingsLoadInvocation)) {
     throw "Settings must not be loaded during init: $aslPath"
 }
-$settingsInitIndex = $startupText.IndexOf($settingsLoadInvocation, [StringComparison]::Ordinal)
-$fileLogCacheIndex = $startupText.IndexOf('bool fileLogEnabled = false;', [StringComparison]::Ordinal)
-$logDelegateIndex = $startupText.IndexOf('vars.Log = (Action<string>)', [StringComparison]::Ordinal)
-if ($logDelegateIndex -lt 0 -or $logDelegateIndex -le $settingsInitIndex -or
-    $fileLogCacheIndex -le $settingsInitIndex -or $fileLogCacheIndex -ge $logDelegateIndex) {
-    throw "Log delegate must be created after settings initialization and cached LogEnabled: $aslPath"
+if ($startupText.Contains('settings.ContainsKey("LogEnabled")') -or
+    $startupText.Contains('vars.Log = (Action<string>)')) {
+    throw "Startup receives ASLSettingsBuilder and must not read LogEnabled or create the file-log delegate: $aslPath"
 }
-if ([regex]::Matches($startupText, 'settings\.ContainsKey\("LogEnabled"\)').Count -ne 1) {
-    throw "LogEnabled must be read once and cached during startup: $aslPath"
+$fileLogCacheIndex = $initText.IndexOf('bool fileLogEnabled = false;', [StringComparison]::Ordinal)
+$logDelegateIndex = $initText.IndexOf('vars.Log = (Action<string>)', [StringComparison]::Ordinal)
+if ($fileLogCacheIndex -lt 0 -or $logDelegateIndex -lt 0 -or $fileLogCacheIndex -ge $logDelegateIndex) {
+    throw "Log delegate must be created after cached LogEnabled in init: $aslPath"
+}
+if ([regex]::Matches($initText, 'settings\.ContainsKey\("LogEnabled"\)').Count -ne 1) {
+    throw "LogEnabled must be read once and cached from ASLSettingsReader during init: $aslPath"
 }
 if ($startupText.Contains('vars.GetActorSetting = (Func<string, string>)')) {
     throw "Actor setting resolution must not capture ASLSettingsBuilder during startup: $aslPath"

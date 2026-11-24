@@ -52,8 +52,19 @@ startup
 
     vars.SettingsPath = settingsPath;
     vars.Uhara.Settings.CreateFromXml(settingsPath);
-
-    // Log 委托在 settings 初始化后创建，因此可以在 startup 时缓存 LogEnabled。
+    vars.Uhara.Log("[BMW-loading] settings loaded: " + (string)vars.SettingsPath);
+}
+// LiveSplit 生命周期钩子：init
+// 作用：解析 UE 基础对象、创建内存读取和打点委托、注册过场 Hook，并初始化
+// 所有跨 update 的缓存与队列。
+// 入参：没有显式参数；ASL 运行时已绑定 state 声明的黑猴进程并刷新初始状态。
+// 返回：null；关键工具解析失败时抛出异常，阻止使用不完整偏移继续运行。
+// 原理：固定偏移只对当前游戏构建有效；ASL 委托每轮可能重新编译，因此可变状态
+// 必须保存在 vars，current/old 只承载 LiveSplit 生命周期之间的小型状态。
+init
+{
+    // startup 里的 settings 是 ASLSettingsBuilder，只能注册设置；init 起传入的
+    // settings 才是 ASLSettingsReader，因此 LogEnabled 必须在这里读取。
     // 运行中切换该设置后需要重新加载 ASL 才会生效。
     string fileLogPath = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory,
@@ -67,10 +78,11 @@ startup
     }
     catch {}
 
+    // Log 委托。
     // 入参：message，已经格式化好的一行日志。
     // 返回：void；uHara 或文件日志异常都在内部吞掉。
-    // 原理：日志始终交给 uHara；仅当缓存的 LogEnabled 为 true 时，再把同一行
-    // 追加到 Logs\BlackMythWukong.log，写失败不能中断计时。
+    // 原理：日志始终交给 uHara；仅当启动时缓存的 LogEnabled 为 true 时，再把
+    // 同一行追加到 Logs\BlackMythWukong.log，写失败不能中断计时。
     vars.Log = (Action<string>)(message =>
     {
         string line = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")
@@ -95,17 +107,6 @@ startup
         }
     });
 
-    vars.Log("[BMW-loading] settings loaded: " + settingsPath);
-}
-// LiveSplit 生命周期钩子：init
-// 作用：解析 UE 基础对象、创建内存读取和打点委托、注册过场 Hook，并初始化
-// 所有跨 update 的缓存与队列。
-// 入参：没有显式参数；ASL 运行时已绑定 state 声明的黑猴进程并刷新初始状态。
-// 返回：null；关键工具解析失败时抛出异常，阻止使用不完整偏移继续运行。
-// 原理：固定偏移只对当前游戏构建有效；ASL 委托每轮可能重新编译，因此可变状态
-// 必须保存在 vars，current/old 只承载 LiveSplit 生命周期之间的小型状态。
-init
-{
     // 初始化顺序：
     // 1. 解析 GWorld/GEngine/FNamePool、Events 和原生加载状态槽。
     // 2. 建立通用对象、FString、Sequence 状态和镜头节点读取委托。
