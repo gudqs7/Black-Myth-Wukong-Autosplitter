@@ -3,12 +3,6 @@ state("b1-WinGDK-Shipping") {}
 startup {
     string componentDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Components");
     Assembly.Load(File.ReadAllBytes(Path.Combine(componentDir, "uhara10-BMW"))).CreateInstance("Main");
-    vars.Log = (Action<string>)(message => {
-        try {
-            vars.Uhara.Log(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + " " + message);
-        }
-        catch {}
-    });
     string culture = System.Globalization.CultureInfo.CurrentCulture.Name;
     string settingsPath = Path.Combine(componentDir, "BMWukong.Settings." + culture + ".xml");
     if (!File.Exists(settingsPath)) {
@@ -19,6 +13,26 @@ startup {
         settingsPath = Path.Combine(componentDir, "BMWukong.Settings.xml");
     vars.SettingsPath = settingsPath;
     vars.Uhara.Settings.CreateFromXml(settingsPath);
+    string fileLogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", "BlackMythWukong.log");
+    bool fileLogEnabled = false;
+    try {
+        fileLogEnabled = settings.ContainsKey("LogEnabled") && (bool)settings["LogEnabled"];
+    }
+    catch {}
+    vars.Log = (Action<string>)(message => {
+        string line = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + " " + message;
+        try {
+            vars.Uhara.Log(line);
+        }
+        catch {}
+        if (fileLogEnabled) {
+            try {
+                Directory.CreateDirectory(Path.GetDirectoryName(fileLogPath));
+                File.AppendAllText(fileLogPath, line + Environment.NewLine, System.Text.Encoding.UTF8);
+            }
+            catch {}
+        }
+    });
     vars.Log("[BMW-loading] settings loaded: " + settingsPath);
 }
 init {

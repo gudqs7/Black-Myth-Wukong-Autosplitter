@@ -134,7 +134,9 @@ The test must report `WUKONG_LSS_TEST_OK`, `ASL_PARSE_OK`, and `WUKONG_RUNTIME_T
   Boss alias table; the setting id itself is the Actor-to-config mapping.
 - All Boss settings default to `State="true"`. Production logging includes all
   UGuid appearance/despawn edges plus loading/cutscene transitions, queued and
-  actual splits, and exceptions.
+  actual splits, and exceptions. `LogEnabled` defaults to false; when enabled,
+  each `vars.Log` line is also appended to
+  `LiveSplit/Logs/BlackMythWukong.log`.
 - `AutoSplitEnabled` is the master automatic-split switch and defaults to true.
 - `RemoveCutscenes` defaults to true. Cutscene state is captured through uHara
   `UnrealEngine/Events` hooks on `LevelSequencePlayer`. Bink participates in

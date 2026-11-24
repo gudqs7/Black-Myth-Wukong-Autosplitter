@@ -31,23 +31,8 @@ startup
     string componentDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Components");
 
     // 从组件目录加载独立的 uHara 副本。必须在创建 Log 委托前完成，因为所有
-    // 黑猴日志统一交给 vars.Uhara.Log，避免再维护第二套文件日志路径。
+    // 黑猴日志统一交给 vars.Uhara.Log，文件日志也复用同一个 Log 委托。
     Assembly.Load(File.ReadAllBytes(Path.Combine(componentDir, "uhara10-BMW"))).CreateInstance("Main");
-
-    // Log 委托。
-    // 入参：message，已经格式化好的一行日志。
-    // 返回：void；uHara 日志异常在内部吞掉。
-    // 原理：日志统一写入 uHara 的日志目标；写日志失败不能中断计时。
-    vars.Log = (Action<string>)(message =>
-    {
-        try
-        {
-            vars.Uhara.Log(
-                DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")
-                + " " + message);
-        }
-        catch {}
-    });
 
     // 设置解析顺序：
     // 1. 完整区域名，例如 BMWukong.Settings.zh-CN.xml。
@@ -67,6 +52,49 @@ startup
 
     vars.SettingsPath = settingsPath;
     vars.Uhara.Settings.CreateFromXml(settingsPath);
+
+    // Log 委托在 settings 初始化后创建，因此可以在 startup 时缓存 LogEnabled。
+    // 运行中切换该设置后需要重新加载 ASL 才会生效。
+    string fileLogPath = Path.Combine(
+        AppDomain.CurrentDomain.BaseDirectory,
+        "Logs",
+        "BlackMythWukong.log");
+    bool fileLogEnabled = false;
+    try
+    {
+        fileLogEnabled = settings.ContainsKey("LogEnabled")
+            && (bool)settings["LogEnabled"];
+    }
+    catch {}
+
+    // 入参：message，已经格式化好的一行日志。
+    // 返回：void；uHara 或文件日志异常都在内部吞掉。
+    // 原理：日志始终交给 uHara；仅当缓存的 LogEnabled 为 true 时，再把同一行
+    // 追加到 Logs\BlackMythWukong.log，写失败不能中断计时。
+    vars.Log = (Action<string>)(message =>
+    {
+        string line = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")
+            + " " + message;
+        try
+        {
+            vars.Uhara.Log(line);
+        }
+        catch {}
+
+        if (fileLogEnabled)
+        {
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(fileLogPath));
+                File.AppendAllText(
+                    fileLogPath,
+                    line + Environment.NewLine,
+                    System.Text.Encoding.UTF8);
+            }
+            catch {}
+        }
+    });
+
     vars.Log("[BMW-loading] settings loaded: " + settingsPath);
 }
 // LiveSplit 生命周期钩子：init

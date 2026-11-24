@@ -1,11 +1,12 @@
 <Settings>
+    <Setting Id="LogEnabled" Label="Write Logs" State="false"/>
     <Setting Id="AutoSplitEnabled" Label="Auto Splits Enabled" State="true"/>
     <Setting Id="RemoveCutscenes" Label="CG Load Removal" State="true"/>
-    <Setting Id="Prologue" Label="Prologue - Mount Huaguo" State="true">
-        <Setting Id="Despawn_UGuid.MGD.yangjian.start" Label="Erlang, the Sacred Divinity" State="true"/>
-    </Setting>
-    <Setting Id="Chapter1Bosses" Label="Chapter 1 - Black Wind Mountain" State="true">
-        <Setting Id="Chapter1MainBosses" Label="Main Bosses" State="true">
+    <Setting Id="MainlineBosses" Label="Mainline" State="true">
+        <Setting Id="MainPrologue" Label="Prologue - Mount Huaguo" State="true">
+            <Setting Id="Despawn_UGuid.MGD.yangjian.start" Label="Erlang, the Sacred Divinity" State="true"/>
+        </Setting>
+        <Setting Id="MainChapter1" Label="Chapter 1 - Black Wind Mountain" State="true">
             <Setting Id="Montage_UGuid.HFS.Niu.Teacher" Label="Bullguard" State="true"/>
             <Setting Id="Montage_UGuid.HFS.GuangZhi" Label="Guangzhi" State="true"/>
             <Setting Id="Montage_UGuid.HFS.TongChi01" Label="Wandering Wight" State="true"/>
@@ -16,41 +17,13 @@
             <Setting Id="Montage_UGuid.HFS.XiongR0" Label="Black Wind King" State="true"/>
             <Setting Id="Montage_UGuid.HFS.XiongX0" Label="Black Bear Guai" State="true"/>
         </Setting>
-        <Setting Id="Chapter1YaoguaiKingBosses" Label="All Yaoguai Kings" State="true">
-            <Setting Id="Montage_UGuid.HFS.JCZL" Label="Elder Jinchi" State="true"/>
-            <Setting Id="Montage_UGuid.HFS.WoodDragon" Label="Red Loong" State="true"/>
-        </Setting>
-        <Setting Id="Chapter1ChiefBosses" Label="Yaoguai Chiefs" State="true">
-            <Setting Id="Montage_UGuid.HFS.WaBig" Label="Baw-Li-Guhh-Lang (No Element)" State="true"/>
-        </Setting>
-    </Setting>
-    <Setting Id="Chapter2Bosses" Label="Chapter 2 - Yellow Wind Ridge" State="true">
-        <Setting Id="Chapter2MainBosses" Label="Main Bosses" State="true">
+        <Setting Id="MainChapter2" Label="Chapter 2 - Yellow Wind Ridge" State="true">
             <Setting Id="Montage_UGuid.HFM.FuZiShu.ZS0" Label="Second Prince of Flowing Sands" State="true"/>
             <Setting Id="Montage_UGuid.HFM.ShiXianFeng" Label="Stone Vanguard" State="true"/>
             <Setting Id="Montage_UGuid.HFM.HuXianFeng.Hu0" Label="Tiger Vanguard" State="true"/>
             <Setting Id="Montage_UGuid.HFM.HFDS.H0" Label="Yellow Wind Sage" State="true"/>
         </Setting>
-        <Setting Id="Chapter2YaoguaiKingBosses" Label="All Yaoguai Kings" State="true">
-            <Setting Id="Montage_UGuid.HFM.ShuWang_01a.SW0" Label="First Prince of Flowing Sands (Sand King Alive)" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.ShiGanDang.1" Label="Shigandang" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.HuangPaoZhu.Battle" Label="Yellow-Robed Squire" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.Hu.01" Label="&quot;Tiger Vanguard&quot;" State="true"/>
-            <Setting Id="Montage_UGuid.LSH.DuJiaoXian" Label="Fuban" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.LiLong" Label="Black Loong" State="true"/>
-        </Setting>
-        <Setting Id="Chapter2ChiefBosses" Label="Yaoguai Chiefs" State="true">
-            <Setting Id="Montage_UGuid.HFM.Shawuliang" Label="Tiger&apos;s Acolyte" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.BaShanHu" Label="Mad Tiger" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.StoneMan.Fight" Label="Man-in-Stone" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.Wa.01" Label="Lang-Li-Guhh-Baw (Thunder Frog)" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.Suoyang" Label="Earth Wolf" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.LaPapesse" Label="Mother of Stones" State="true"/>
-            <Setting Id="Montage_TAMER_hfm_hou_01a" Label="Gore-Eye Daoist" State="true"/>
-        </Setting>
-    </Setting>
-    <Setting Id="Chapter3Bosses" Label="Chapter 3 - The New West" State="true">
-        <Setting Id="Chapter3MainBosses" Label="Main Bosses" State="true">
+        <Setting Id="MainChapter3" Label="Chapter 3 - The New West" State="true">
             <Setting Id="Action_UGuid.LYS.XueHou.NM@AM_lys_xuehou_leave_01" Label="Macaque Chief (Phase 1 - Escape)" State="true"/>
             <Setting Id="Montage_UGuid.LYS.XueHou.NM" Label="Macaque Chief (Phase 1 - Death)" State="true"/>
             <Setting Id="Montage_UGuid.LYS.KJL.Long" Label="Kang-Jin Loong" State="true"/>
@@ -64,10 +37,81 @@
             <Setting Id="Montage_UGuid.LYS.RBM" Label="Macaque Chief (Phase 3)" State="true"/>
             <Setting Id="Montage_UGuid.LYS.HuangMei.Small" Label="Yellowbrow (Phase 2)" State="true"/>
         </Setting>
-        <Setting Id="Chapter3YaoguaiKingBosses" Label="All Yaoguai Kings" State="true">
+        <Setting Id="MainChapter4" Label="Chapter 4 - Webbed Hollow" State="true">
+            <Setting Id="Montage_UGuid.PSD.Erjie.Village" Label="The Second Sister" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.FSC01.foshouchong" Label="Buddha's Right Hand" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.BaJie.Mo" Label="Zhu Bajie (Phase 1)" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.BaJie.Ye" Label="Zhu Bajie (Phase 2)" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.LaoZhiZhu" Label="Violet Spider" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.BaiYanMoJun" Label="Hundred-Eyed Daoist Master" State="true"/>
+        </Setting>
+        <Setting Id="MainChapter5" Label="Chapter 5 - Flaming Mountains" State="true">
+            <Setting Id="Dual_UGuid.HYS.JiRuHuo01+UGuid.HYS.KuaiRuFeng01" Label="Quick as Fire, Fast as Wind" State="true"/>
+            <Setting Id="Montage_TAMER_hys_huijingtitan_01" Label="Jin Niu" State="false"/>
+            <Setting Id="Dual_UGuid.HYS.WuLiYun+UGuid.HYS.YunLiWu" Label="Cloudy Mist, Misty Cloud" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.HongHaiEr" Label="Red Boy" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.YeChaWang" Label="Yaksha King" State="true"/>
+        </Setting>
+        <Setting Id="MainChapter6" Label="Chapter 6 - Mount Huaguo" State="true">
+            <Setting Id="Montage_UGuid.BYS.WLG.01" Label="Supreme Inspector" State="true"/>
+            <Setting Id="Montage_UGuid.BYS.Xiniu" Label="Gold Armored Rhino" State="true"/>
+            <Setting Id="Montage_UGuid.BYS.Xuelu" Label="Cloudtreading Deer" State="true"/>
+            <Setting Id="Montage_UGuid.BYS.TangLang" Label="Emerald-Armed Mantis" State="true"/>
+            <Setting Id="Montage_UGuid.MGD.Yuan" Label="The Stone Monkey" State="true"/>
+            <Setting Id="Montage_UGuid.MGD.JSDS.P2" Label="The Great Sage's Broken Shell (Manual)" State="true"/>
+        </Setting>
+    </Setting>
+    <Setting Id="AllYaoguaiKings" Label="All Yaoguai Kings" State="true">
+        <Setting Id="AllYaoguaiKingsChapter1" Label="Chapter 1 - Black Wind Mountain" State="true">
+            <Setting Id="Montage_UGuid.HFS.JCZL" Label="Elder Jinchi" State="true"/>
+            <Setting Id="Montage_UGuid.HFS.WoodDragon" Label="Red Loong" State="true"/>
+        </Setting>
+        <Setting Id="AllYaoguaiKingsChapter2" Label="Chapter 2 - Yellow Wind Ridge" State="true">
+            <Setting Id="Montage_UGuid.HFM.ShuWang_01a.SW0" Label="First Prince of Flowing Sands (Sand King Alive)" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.ShiGanDang.1" Label="Shigandang" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.HuangPaoZhu.Battle" Label="Yellow-Robed Squire" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.Hu.01" Label="&quot;Tiger Vanguard&quot;" State="true"/>
+            <Setting Id="Montage_UGuid.LSH.DuJiaoXian" Label="Fuban" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.LiLong" Label="Black Loong" State="true"/>
+        </Setting>
+        <Setting Id="AllYaoguaiKingsChapter3" Label="Chapter 3 - The New West" State="true">
             <Setting Id="Montage_UGuid.LYS.JianLong.Fight" Label="Cyan Loong" State="true"/>
         </Setting>
-        <Setting Id="Chapter3ChiefBosses" Label="Yaoguai Chiefs" State="true">
+        <Setting Id="AllYaoguaiKingsChapter4" Label="Chapter 4 - Webbed Hollow" State="true">
+            <Setting Id="Montage_UGuid.PSD.WuLong" Label="Venom Daoist (First Encounter)" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.WuLong.4H" Label="Venom Daoist (Before Purple Cloud Mountain)" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.Dage" Label="Yellow Loong" State="true"/>
+            <Setting Id="Montage_UGuid.ZYS.XieZi.MRXG" Label="The Scorpionlord" State="false"/>
+            <Setting Id="Montage_UGuid.ZYS.MRXG" Label="The Duskveil" State="true"/>
+        </Setting>
+        <Setting Id="AllYaoguaiKingsChapter5" Label="Chapter 5 - Flaming Mountains" State="true">
+            <Setting Id="Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01" Label="Pale-Axe Stalwart" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.ZhanChe.01a" Label="Five Elemental Cart (Brown Iron)" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.ZhanChe.01b" Label="Five Elemental Cart (Grey Copper)" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.ZhanChe.01c" Label="Five Elemental Cart (Red Silver)" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.JDS.05" Label="Five Elemental Cart (Red Gold)" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.TuDi.YS" Label="Yin-Yang Fish" State="true"/>
+            <Setting Id="Dual_UGuid.HYS.XingGongXian+UGuid.HYS.XianGongXing" Label="Top Takes Bottom, Bottom Takes Top" State="true"/>
+            <Setting Id="Montage_UGuid.BSD.JJS" Label="Bishui Golden-Eyed Beast" State="true"/>
+        </Setting>
+        <Setting Id="AllYaoguaiKingsChapter6" Label="Chapter 6 - Mount Huaguo" State="true">
+            <Setting Id="Action_UGuid.SL.sgd@*break*" Label="Giant Shigandang" State="true"/>
+        </Setting>
+    </Setting>
+    <Setting Id="OtherChiefsBosses" Label="Other Yaoguai Chiefs" State="true">
+        <Setting Id="OtherChiefsChapter1" Label="Chapter 1 - Black Wind Mountain" State="true">
+            <Setting Id="Montage_UGuid.HFS.WaBig" Label="Baw-Li-Guhh-Lang (No Element)" State="true"/>
+        </Setting>
+        <Setting Id="OtherChiefsChapter2" Label="Chapter 2 - Yellow Wind Ridge" State="true">
+            <Setting Id="Montage_UGuid.HFM.Shawuliang" Label="Tiger's Acolyte" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.BaShanHu" Label="Mad Tiger" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.StoneMan.Fight" Label="Man-in-Stone" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.Wa.01" Label="Lang-Li-Guhh-Baw (Thunder Frog)" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.Suoyang" Label="Earth Wolf" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.LaPapesse" Label="Mother of Stones" State="true"/>
+            <Setting Id="Montage_TAMER_hfm_hou_01a" Label="Gore-Eye Daoist" State="true"/>
+        </Setting>
+        <Setting Id="OtherChiefsChapter3" Label="Chapter 3 - The New West" State="true">
             <Setting Id="Montage_UGuid.LYS.Mo4" Label="Captain Lotus-Vision" State="true"/>
             <Setting Id="Montage_UGuid.LYS.Mo3.FM" Label="Apramana Bat" State="true"/>
             <Setting Id="Montage_UGuid.LYS.XueWa" Label="Lang-Li-Guhh-Lang (Ice Frog)" State="true"/>
@@ -83,24 +127,7 @@
             <Setting Id="Montage_UGuid.EndB.YangJian" Label="Erlang Shen" State="true"/>
             <Setting Id="Montage_UGuid.EndB.YangJian.FTXD" Label="Erlang Shen (Cosmic Form)" State="true"/>
         </Setting>
-    </Setting>
-    <Setting Id="Chapter4Bosses" Label="Chapter 4 - Webbed Hollow" State="true">
-        <Setting Id="Chapter4MainBosses" Label="Main Bosses" State="true">
-            <Setting Id="Montage_UGuid.PSD.Erjie.Village" Label="The Second Sister" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.FSC01.foshouchong" Label="Buddha&apos;s Right Hand" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.BaJie.Mo" Label="Zhu Bajie (Phase 1)" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.BaJie.Ye" Label="Zhu Bajie (Phase 2)" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.LaoZhiZhu" Label="Violet Spider" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.BaiYanMoJun" Label="Hundred-Eyed Daoist Master" State="true"/>
-        </Setting>
-        <Setting Id="Chapter4YaoguaiKingBosses" Label="All Yaoguai Kings" State="true">
-            <Setting Id="Montage_UGuid.PSD.WuLong" Label="Venom Daoist (First Encounter)" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.WuLong.4H" Label="Venom Daoist (Before Purple Cloud Mountain)" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.Dage" Label="Yellow Loong" State="true"/>
-            <Setting Id="Montage_UGuid.ZYS.XieZi.MRXG" Label="The Scorpionlord" State="false"/>
-            <Setting Id="Montage_UGuid.ZYS.MRXG" Label="The Duskveil" State="true"/>
-        </Setting>
-        <Setting Id="Chapter4ChiefBosses" Label="Yaoguai Chiefs" State="true">
+        <Setting Id="OtherChiefsChapter4" Label="Chapter 4 - Webbed Hollow" State="true">
             <Setting Id="Montage_UGuid.PSD.Wa.01" Label="Baw-Li-Guhh-Baw (Poison Frog)" State="true"/>
             <Setting Id="Montage_UGuid.PSD.YouYan" Label="Centipede Guai" State="true"/>
             <Setting Id="Montage_UGuid.PSD.qinlang" Label="Elder Amourworm" State="true"/>
@@ -110,26 +137,7 @@
             <Setting Id="Montage_UGuid.ZYS.Daoshi.P2" Label="Daoist Mi (Phase 2)" State="true"/>
             <Setting Id="Montage_UGuid.PSD.WLG" Label="Supreme Inspector (Fourth Sister Quest)" State="false"/>
         </Setting>
-    </Setting>
-    <Setting Id="Chapter5Bosses" Label="Chapter 5 - Flaming Mountains" State="true">
-        <Setting Id="Chapter5MainBosses" Label="Main Bosses" State="true">
-            <Setting Id="Dual_UGuid.HYS.JiRuHuo01+UGuid.HYS.KuaiRuFeng01" Label="Quick as Fire, Fast as Wind" State="true"/>
-            <Setting Id="Montage_TAMER_hys_huijingtitan_01" Label="Jin Niu" State="false"/>
-            <Setting Id="Dual_UGuid.HYS.WuLiYun+UGuid.HYS.YunLiWu" Label="Cloudy Mist, Misty Cloud" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.HongHaiEr" Label="Red Boy" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.YeChaWang" Label="Yaksha King" State="true"/>
-        </Setting>
-        <Setting Id="Chapter5YaoguaiKingBosses" Label="All Yaoguai Kings" State="true">
-            <Setting Id="Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01" Label="Pale-Axe Stalwart" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.ZhanChe.01a" Label="Five Elemental Cart (Brown Iron)" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.ZhanChe.01b" Label="Five Elemental Cart (Grey Copper)" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.ZhanChe.01c" Label="Five Elemental Cart (Red Silver)" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.JDS.05" Label="Five Elemental Cart (Red Gold)" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.TuDi.YS" Label="Yin-Yang Fish" State="true"/>
-            <Setting Id="Dual_UGuid.HYS.XingGongXian+UGuid.HYS.XianGongXing" Label="Top Takes Bottom, Bottom Takes Top" State="true"/>
-            <Setting Id="Montage_UGuid.BSD.JJS" Label="Bishui Golden-Eyed Beast" State="true"/>
-        </Setting>
-        <Setting Id="Chapter5ChiefBosses" Label="Yaoguai Chiefs" State="true">
+        <Setting Id="OtherChiefsChapter5" Label="Chapter 5 - Flaming Mountains" State="true">
             <Setting Id="Montage_UGuid.HYS.HMS.Outside" Label="Father of Stones" State="true"/>
             <Setting Id="Montage_UGuid.HYS.Wa.01" Label="Baw-Lang-Lang (Fire Frog)" State="true"/>
             <Setting Id="Montage_UGuid.HYS.YSCheng" Label="Sea Rakshasa" State="true"/>
@@ -138,20 +146,7 @@
             <Setting Id="Montage_TAMER_hys_shixianfeng_02" Label="Flint Vanguard" State="true"/>
             <Setting Id="Montage_TAMER_hys_huolingsha_01" Label="Mother of Flamlings" State="true"/>
         </Setting>
-    </Setting>
-    <Setting Id="Chapter6Bosses" Label="Chapter 6 - Mount Huaguo" State="true">
-        <Setting Id="Chapter6MainBosses" Label="Main Bosses" State="true">
-            <Setting Id="Montage_UGuid.BYS.WLG.01" Label="Supreme Inspector" State="true"/>
-            <Setting Id="Montage_UGuid.BYS.Xiniu" Label="Gold Armored Rhino" State="true"/>
-            <Setting Id="Montage_UGuid.BYS.Xuelu" Label="Cloudtreading Deer" State="true"/>
-            <Setting Id="Montage_UGuid.BYS.TangLang" Label="Emerald-Armed Mantis" State="true"/>
-            <Setting Id="Montage_UGuid.MGD.Yuan" Label="The Stone Monkey" State="true"/>
-            <Setting Id="Montage_UGuid.MGD.JSDS.P2" Label="The Great Sage&apos;s Broken Shell (Manual)" State="true"/>
-        </Setting>
-        <Setting Id="Chapter6YaoguaiKingBosses" Label="All Yaoguai Kings" State="true">
-            <Setting Id="Action_UGuid.SL.sgd@*break*" Label="Giant Shigandang" State="true"/>
-        </Setting>
-        <Setting Id="Chapter6ChiefBosses" Label="Yaoguai Chiefs" State="true">
+        <Setting Id="OtherChiefsChapter6" Label="Chapter 6 - Mount Huaguo" State="true">
             <Setting Id="Montage_UGuid.SZLC.Wa.01" Label="Lang-Baw-Baw (Stone Frog)" State="true"/>
             <Setting Id="Montage_UGuid.BYS.HMS.02" Label="Son of Stones" State="true"/>
             <Setting Id="Montage_UGuid.BYS.Shitongling.03" Label="Poison Chief" State="true"/>

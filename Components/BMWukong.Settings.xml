@@ -1,13 +1,12 @@
 <Settings>
+    <Setting Id="LogEnabled" Label="记录日志(2026-11-24)" State="false"/>
     <Setting Id="AutoSplitEnabled" Label="自动打点总开关" State="true"/>
     <Setting Id="RemoveCutscenes" Label="CG 动画去加载" State="true"/>
-
-    <Setting Id="Prologue" Label="序章 - 花果山" State="true">
-        <Setting Id="Despawn_UGuid.MGD.yangjian.start" Label="二郎神" State="true"/>
-    </Setting>
-
-    <Setting Id="Chapter1Bosses" Label="第一章 - 黑风山" State="true">
-        <Setting Id="Chapter1MainBosses" Label="主线 Boss" State="true">
+    <Setting Id="MainlineBosses" Label="主线" State="true">
+        <Setting Id="MainPrologue" Label="序章 - 花果山" State="true">
+            <Setting Id="Despawn_UGuid.MGD.yangjian.start" Label="二郎神" State="true"/>
+        </Setting>
+        <Setting Id="MainChapter1" Label="第一章 - 黑风山" State="true">
             <Setting Id="Montage_UGuid.HFS.Niu.Teacher" Label="牯护院" State="true"/>
             <Setting Id="Montage_UGuid.HFS.GuangZhi" Label="广智" State="true"/>
             <Setting Id="Montage_UGuid.HFS.TongChi01" Label="幽魂" State="true"/>
@@ -18,43 +17,13 @@
             <Setting Id="Montage_UGuid.HFS.XiongR0" Label="黑风大王" State="true"/>
             <Setting Id="Montage_UGuid.HFS.XiongX0" Label="黑熊精" State="true"/>
         </Setting>
-        <Setting Id="Chapter1YaoguaiKingBosses" Label="全妖王 Boss" State="true">
-            <Setting Id="Montage_UGuid.HFS.JCZL" Label="金池长老" State="true"/>
-            <Setting Id="Montage_UGuid.HFS.WoodDragon" Label="赤髯龙" State="true"/>
-        </Setting>
-        <Setting Id="Chapter1ChiefBosses" Label="头目 Boss" State="true">
-            <Setting Id="Montage_UGuid.HFS.WaBig" Label="波里个浪(白板)" State="true"/>
-        </Setting>
-    </Setting>
-
-    <Setting Id="Chapter2Bosses" Label="第二章 - 黄风岭" State="true">
-        <Setting Id="Chapter2MainBosses" Label="主线 Boss" State="true">
+        <Setting Id="MainChapter2" Label="第二章 - 黄风岭" State="true">
             <Setting Id="Montage_UGuid.HFM.FuZiShu.ZS0" Label="沙二郎" State="true"/>
             <Setting Id="Montage_UGuid.HFM.ShiXianFeng" Label="石先锋" State="true"/>
             <Setting Id="Montage_UGuid.HFM.HuXianFeng.Hu0" Label="虎先锋" State="true"/>
             <Setting Id="Montage_UGuid.HFM.HFDS.H0" Label="黄风大圣" State="true"/>
         </Setting>
-        <Setting Id="Chapter2YaoguaiKingBosses" Label="全妖王 Boss" State="true">
-            <Setting Id="Montage_UGuid.HFM.ShuWang_01a.SW0" Label="沙大郎(沙国王没死版)" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.ShiGanDang.1" Label="石敢当" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.HuangPaoZhu.Battle" Label="黄袍员外" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.Hu.01" Label="“虎先锋”" State="true"/>
-            <Setting Id="Montage_UGuid.LSH.DuJiaoXian" Label="蝜蝂" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.LiLong" Label="小骊龙" State="true"/>
-        </Setting>
-        <Setting Id="Chapter2ChiefBosses" Label="头目 Boss" State="true">
-            <Setting Id="Montage_UGuid.HFM.Shawuliang" Label="虎伥" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.BaShanHu" Label="疯虎" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.StoneMan.Fight" Label="石中人" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.Wa.01" Label="浪里个波(雷蛙)" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.Suoyang" Label="地狼" State="true"/>
-            <Setting Id="Montage_UGuid.HFM.LaPapesse" Label="石母" State="true"/>
-            <Setting Id="Montage_TAMER_hfm_hou_01a" Label="百目真人" State="true"/>
-        </Setting>
-    </Setting>
-
-    <Setting Id="Chapter3Bosses" Label="第三章 - 小西天" State="true">
-        <Setting Id="Chapter3MainBosses" Label="主线 Boss" State="true">
+        <Setting Id="MainChapter3" Label="第三章 - 小西天" State="true">
             <Setting Id="Action_UGuid.LYS.XueHou.NM@AM_lys_xuehou_leave_01" Label="马猴一阶段(逃跑)" State="true"/>
             <Setting Id="Montage_UGuid.LYS.XueHou.NM" Label="马猴一阶段(死亡)" State="true"/>
             <Setting Id="Montage_UGuid.LYS.KJL.Long" Label="亢金龙" State="true"/>
@@ -68,10 +37,81 @@
             <Setting Id="Montage_UGuid.LYS.RBM" Label="马猴三阶段" State="true"/>
             <Setting Id="Montage_UGuid.LYS.HuangMei.Small" Label="黄眉二" State="true"/>
         </Setting>
-        <Setting Id="Chapter3YaoguaiKingBosses" Label="全妖王 Boss" State="true">
+        <Setting Id="MainChapter4" Label="第四章 - 盘丝岭" State="true">
+            <Setting Id="Montage_UGuid.PSD.Erjie.Village" Label="二姐" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.FSC01.foshouchong" Label="右手虫" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.BaJie.Mo" Label="八戒一阶段" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.BaJie.Ye" Label="八戒二阶段" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.LaoZhiZhu" Label="紫蛛儿" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.BaiYanMoJun" Label="百眼魔君" State="true"/>
+        </Setting>
+        <Setting Id="MainChapter5" Label="第五章 - 火焰山" State="true">
+            <Setting Id="Dual_UGuid.HYS.JiRuHuo01+UGuid.HYS.KuaiRuFeng01" Label="急如火·快如风" State="true"/>
+            <Setting Id="Montage_TAMER_hys_huijingtitan_01" Label="金妞" State="false"/>
+            <Setting Id="Dual_UGuid.HYS.WuLiYun+UGuid.HYS.YunLiWu" Label="云里雾·雾里云" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.HongHaiEr" Label="红孩儿" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.YeChaWang" Label="夜叉王" State="true"/>
+        </Setting>
+        <Setting Id="MainChapter6" Label="第六章 - 花果山" State="true">
+            <Setting Id="Montage_UGuid.BYS.WLG.01" Label="王灵官" State="true"/>
+            <Setting Id="Montage_UGuid.BYS.Xiniu" Label="金甲犀" State="true"/>
+            <Setting Id="Montage_UGuid.BYS.Xuelu" Label="步云鹿" State="true"/>
+            <Setting Id="Montage_UGuid.BYS.TangLang" Label="碧臂螂" State="true"/>
+            <Setting Id="Montage_UGuid.MGD.Yuan" Label="石猿" State="true"/>
+            <Setting Id="Montage_UGuid.MGD.JSDS.P2" Label="大圣残躯" State="true"/>
+        </Setting>
+    </Setting>
+    <Setting Id="AllYaoguaiKings" Label="全妖王" State="true">
+        <Setting Id="AllYaoguaiKingsChapter1" Label="第一章 - 黑风山" State="true">
+            <Setting Id="Montage_UGuid.HFS.JCZL" Label="金池长老" State="true"/>
+            <Setting Id="Montage_UGuid.HFS.WoodDragon" Label="赤髯龙" State="true"/>
+        </Setting>
+        <Setting Id="AllYaoguaiKingsChapter2" Label="第二章 - 黄风岭" State="true">
+            <Setting Id="Montage_UGuid.HFM.ShuWang_01a.SW0" Label="沙大郎(沙国王没死版)" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.ShiGanDang.1" Label="石敢当" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.HuangPaoZhu.Battle" Label="黄袍员外" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.Hu.01" Label="“虎先锋”" State="true"/>
+            <Setting Id="Montage_UGuid.LSH.DuJiaoXian" Label="蝜蝂" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.LiLong" Label="小骊龙" State="true"/>
+        </Setting>
+        <Setting Id="AllYaoguaiKingsChapter3" Label="第三章 - 小西天" State="true">
             <Setting Id="Montage_UGuid.LYS.JianLong.Fight" Label="青背龙" State="true"/>
         </Setting>
-        <Setting Id="Chapter3ChiefBosses" Label="头目 Boss" State="true">
+        <Setting Id="AllYaoguaiKingsChapter4" Label="第四章 - 盘丝岭" State="true">
+            <Setting Id="Montage_UGuid.PSD.WuLong" Label="黑手道人(初见)" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.WuLong.4H" Label="黑手道人(进紫云山前)" State="true"/>
+            <Setting Id="Montage_UGuid.PSD.Dage" Label="小黄龙" State="true"/>
+            <Setting Id="Montage_UGuid.ZYS.XieZi.MRXG" Label="毒敌大王" State="false"/>
+            <Setting Id="Montage_UGuid.ZYS.MRXG" Label="晦月魔君" State="true"/>
+        </Setting>
+        <Setting Id="AllYaoguaiKingsChapter5" Label="第五章 - 火焰山" State="true">
+            <Setting Id="Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01" Label="皓斧力士" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.ZhanChe.01a" Label="五行战车(褐铁)" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.ZhanChe.01b" Label="五行战车(灰铜)" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.ZhanChe.01c" Label="五行战车(红银)" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.JDS.05" Label="五行战车(赤金)" State="true"/>
+            <Setting Id="Montage_UGuid.HYS.TuDi.YS" Label="阴阳鱼" State="true"/>
+            <Setting Id="Dual_UGuid.HYS.XingGongXian+UGuid.HYS.XianGongXing" Label="兴烘掀、掀烘兴" State="true"/>
+            <Setting Id="Montage_UGuid.BSD.JJS" Label="璧水金睛兽" State="true"/>
+        </Setting>
+        <Setting Id="AllYaoguaiKingsChapter6" Label="第六章 - 花果山" State="true">
+            <Setting Id="Action_UGuid.SL.sgd@*break*" Label="大石敢当" State="true"/>
+        </Setting>
+    </Setting>
+    <Setting Id="OtherChiefsBosses" Label="其余头目" State="true">
+        <Setting Id="OtherChiefsChapter1" Label="第一章 - 黑风山" State="true">
+            <Setting Id="Montage_UGuid.HFS.WaBig" Label="波里个浪(白板)" State="true"/>
+        </Setting>
+        <Setting Id="OtherChiefsChapter2" Label="第二章 - 黄风岭" State="true">
+            <Setting Id="Montage_UGuid.HFM.Shawuliang" Label="虎伥" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.BaShanHu" Label="疯虎" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.StoneMan.Fight" Label="石中人" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.Wa.01" Label="浪里个波(雷蛙)" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.Suoyang" Label="地狼" State="true"/>
+            <Setting Id="Montage_UGuid.HFM.LaPapesse" Label="石母" State="true"/>
+            <Setting Id="Montage_TAMER_hfm_hou_01a" Label="百目真人" State="true"/>
+        </Setting>
+        <Setting Id="OtherChiefsChapter3" Label="第三章 - 小西天" State="true">
             <Setting Id="Montage_UGuid.LYS.Mo4" Label="魔将·莲眼" State="true"/>
             <Setting Id="Montage_UGuid.LYS.Mo3.FM" Label="无量蝠" State="true"/>
             <Setting Id="Montage_UGuid.LYS.XueWa" Label="浪里个浪(冰蛙)" State="true"/>
@@ -87,25 +127,7 @@
             <Setting Id="Montage_UGuid.EndB.YangJian" Label="梅山杨戬" State="true"/>
             <Setting Id="Montage_UGuid.EndB.YangJian.FTXD" Label="二郎神(法天象地)" State="true"/>
         </Setting>
-    </Setting>
-
-    <Setting Id="Chapter4Bosses" Label="第四章 - 盘丝岭" State="true">
-        <Setting Id="Chapter4MainBosses" Label="主线 Boss" State="true">
-            <Setting Id="Montage_UGuid.PSD.Erjie.Village" Label="二姐" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.FSC01.foshouchong" Label="右手虫" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.BaJie.Mo" Label="八戒一阶段" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.BaJie.Ye" Label="八戒二阶段" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.LaoZhiZhu" Label="紫蛛儿" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.BaiYanMoJun" Label="百眼魔君" State="true"/>
-        </Setting>
-        <Setting Id="Chapter4YaoguaiKingBosses" Label="全妖王 Boss" State="true">
-            <Setting Id="Montage_UGuid.PSD.WuLong" Label="黑手道人(初见)" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.WuLong.4H" Label="黑手道人(进紫云山前)" State="true"/>
-            <Setting Id="Montage_UGuid.PSD.Dage" Label="小黄龙" State="true"/>
-            <Setting Id="Montage_UGuid.ZYS.XieZi.MRXG" Label="毒敌大王" State="false"/>
-            <Setting Id="Montage_UGuid.ZYS.MRXG" Label="晦月魔君" State="true"/>
-        </Setting>
-        <Setting Id="Chapter4ChiefBosses" Label="头目 Boss" State="true">
+        <Setting Id="OtherChiefsChapter4" Label="第四章 - 盘丝岭" State="true">
             <Setting Id="Montage_UGuid.PSD.Wa.01" Label="波里个波(毒蛙)" State="true"/>
             <Setting Id="Montage_UGuid.PSD.YouYan" Label="百足虫" State="true"/>
             <Setting Id="Montage_UGuid.PSD.qinlang" Label="琴螂仙" State="true"/>
@@ -115,27 +137,7 @@
             <Setting Id="Montage_UGuid.ZYS.Daoshi.P2" Label="靡道人二阶段" State="true"/>
             <Setting Id="Montage_UGuid.PSD.WLG" Label="王灵官(四妹任务)" State="false"/>
         </Setting>
-    </Setting>
-
-    <Setting Id="Chapter5Bosses" Label="第五章 - 火焰山" State="true">
-        <Setting Id="Chapter5MainBosses" Label="主线 Boss" State="true">
-            <Setting Id="Dual_UGuid.HYS.JiRuHuo01+UGuid.HYS.KuaiRuFeng01" Label="急如火·快如风" State="true"/>
-            <Setting Id="Montage_TAMER_hys_huijingtitan_01" Label="金妞" State="false"/>
-            <Setting Id="Dual_UGuid.HYS.WuLiYun+UGuid.HYS.YunLiWu" Label="云里雾·雾里云" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.HongHaiEr" Label="红孩儿" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.YeChaWang" Label="夜叉王" State="true"/>
-        </Setting>
-        <Setting Id="Chapter5YaoguaiKingBosses" Label="全妖王 Boss" State="true">
-            <Setting Id="Action_UGuid.HYS.JDS.01@AM_hys_niumo_quest_trans_01" Label="皓斧力士" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.ZhanChe.01a" Label="五行战车(褐铁)" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.ZhanChe.01b" Label="五行战车(灰铜)" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.ZhanChe.01c" Label="五行战车(红银)" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.JDS.05" Label="五行战车(赤金)" State="true"/>
-            <Setting Id="Montage_UGuid.HYS.TuDi.YS" Label="阴阳鱼" State="true"/>
-            <Setting Id="Dual_UGuid.HYS.XingGongXian+UGuid.HYS.XianGongXing" Label="兴烘掀、掀烘兴" State="true"/>
-            <Setting Id="Montage_UGuid.BSD.JJS" Label="璧水金睛兽" State="true"/>
-        </Setting>
-        <Setting Id="Chapter5ChiefBosses" Label="头目 Boss" State="true">
+        <Setting Id="OtherChiefsChapter5" Label="第五章 - 火焰山" State="true">
             <Setting Id="Montage_UGuid.HYS.HMS.Outside" Label="石父" State="true"/>
             <Setting Id="Montage_UGuid.HYS.Wa.01" Label="波浪浪(火蛙)" State="true"/>
             <Setting Id="Montage_UGuid.HYS.YSCheng" Label="海罗刹" State="true"/>
@@ -144,21 +146,7 @@
             <Setting Id="Montage_TAMER_hys_shixianfeng_02" Label="燧先锋" State="true"/>
             <Setting Id="Montage_TAMER_hys_huolingsha_01" Label="火灵元母" State="true"/>
         </Setting>
-    </Setting>
-
-    <Setting Id="Chapter6Bosses" Label="第六章 - 花果山" State="true">
-        <Setting Id="Chapter6MainBosses" Label="主线 Boss" State="true">
-            <Setting Id="Montage_UGuid.BYS.WLG.01" Label="王灵官" State="true"/>
-            <Setting Id="Montage_UGuid.BYS.Xiniu" Label="金甲犀" State="true"/>
-            <Setting Id="Montage_UGuid.BYS.Xuelu" Label="步云鹿" State="true"/>
-            <Setting Id="Montage_UGuid.BYS.TangLang" Label="碧臂螂" State="true"/>
-            <Setting Id="Montage_UGuid.MGD.Yuan" Label="石猿" State="true"/>
-            <Setting Id="Montage_UGuid.MGD.JSDS.P2" Label="大圣残躯" State="true"/>
-        </Setting>
-        <Setting Id="Chapter6YaoguaiKingBosses" Label="全妖王 Boss" State="true">
-            <Setting Id="Action_UGuid.SL.sgd@*break*" Label="大石敢当" State="true"/>
-        </Setting>
-        <Setting Id="Chapter6ChiefBosses" Label="头目 Boss" State="true">
+        <Setting Id="OtherChiefsChapter6" Label="第六章 - 花果山" State="true">
             <Setting Id="Montage_UGuid.SZLC.Wa.01" Label="浪波波(石蛙)" State="true"/>
             <Setting Id="Montage_UGuid.BYS.HMS.02" Label="石子" State="true"/>
             <Setting Id="Montage_UGuid.BYS.Shitongling.03" Label="毒统领" State="true"/>

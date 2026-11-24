@@ -114,6 +114,14 @@ if ($null -eq $defaultAutoSplit -or $defaultAutoSplit.State -ne "true") {
 if ($null -eq $englishAutoSplit -or $englishAutoSplit.State -ne "true") {
     throw "AutoSplitEnabled must exist and default to true in BMWukong.Settings.en.xml"
 }
+$defaultLog = $defaultDocument.SelectSingleNode('//Setting[@Id="LogEnabled"]')
+$englishLog = $englishDocument.SelectSingleNode('//Setting[@Id="LogEnabled"]')
+if ($null -eq $defaultLog -or $defaultLog.State -ne 'false') {
+    throw "LogEnabled must exist and default to false in BMWukong.Settings.xml"
+}
+if ($null -eq $englishLog -or $englishLog.State -ne 'false') {
+    throw "LogEnabled must exist and default to false in BMWukong.Settings.en.xml"
+}
 
 $defaultSettings = @($defaultDocument.SelectNodes('//Setting'))
 $englishSettings = @($englishDocument.SelectNodes('//Setting'))
@@ -142,23 +150,49 @@ $expectedMain = @{
     5 = @('Dual_UGuid.HYS.JiRuHuo01+UGuid.HYS.KuaiRuFeng01','Montage_TAMER_hys_huijingtitan_01','Dual_UGuid.HYS.WuLiYun+UGuid.HYS.YunLiWu','Montage_UGuid.HYS.HongHaiEr','Montage_UGuid.HYS.YeChaWang')
     6 = @('Montage_UGuid.BYS.WLG.01','Montage_UGuid.BYS.Xiniu','Montage_UGuid.BYS.Xuelu','Montage_UGuid.BYS.TangLang','Montage_UGuid.MGD.Yuan','Montage_UGuid.MGD.JSDS.P2')
 }
-foreach ($chapter in 1..6) {
-    $chapterId = "Chapter${chapter}Bosses"
-    $chapterNode = $defaultDocument.SelectSingleNode("//Setting[@Id='$chapterId']")
-    if ($null -eq $chapterNode -or $chapterNode.State -ne 'true') {
-        throw "Missing or disabled chapter wrapper: $chapterId"
+$categoryIds = @('MainlineBosses','AllYaoguaiKings','OtherChiefsBosses')
+$topCategories = @($defaultDocument.SelectNodes('/Settings/Setting[Setting]'))
+if ($topCategories.Count -ne $categoryIds.Count -or
+    (($topCategories.Id -join '|') -ne ($categoryIds -join '|'))) {
+    throw "Boss settings must use exactly three top-level categories: $($topCategories.Id -join ', ')"
+}
+$expectedCategoryLabels = @{
+    MainlineBosses = '主线'
+    AllYaoguaiKings = '全妖王'
+    OtherChiefsBosses = '其余头目'
+}
+foreach ($categoryId in $categoryIds) {
+    $category = $defaultDocument.SelectSingleNode("/Settings/Setting[@Id='$categoryId']")
+    if ($null -eq $category -or $category.State -ne 'true') {
+        throw "Missing or disabled top-level boss category: $categoryId"
     }
-    foreach ($groupSuffix in @('MainBosses','YaoguaiKingBosses','ChiefBosses')) {
-        $groupId = "Chapter${chapter}${groupSuffix}"
-        $group = $chapterNode.SelectSingleNode("./Setting[@Id='$groupId']")
+    if ($category.Label -ne $expectedCategoryLabels[$categoryId]) {
+        throw "Unexpected top-level category label for ${categoryId}: $($category.Label)"
+    }
+}
+$mainCategory = $defaultDocument.SelectSingleNode("/Settings/Setting[@Id='MainlineBosses']")
+$prologueNode = $mainCategory.SelectSingleNode("./Setting[@Id='MainPrologue']")
+if ($null -eq $prologueNode -or $prologueNode.State -ne 'true' -or
+    $prologueNode.SelectNodes('./Setting').Count -eq 0) {
+    throw "Mainline category is missing the non-empty prologue chapter."
+}
+foreach ($chapter in 1..6) {
+    $chapterGroups = @(
+        @{ Category = 'MainlineBosses'; Id = "MainChapter$chapter" },
+        @{ Category = 'AllYaoguaiKings'; Id = "AllYaoguaiKingsChapter$chapter" },
+        @{ Category = 'OtherChiefsBosses'; Id = "OtherChiefsChapter$chapter" }
+    )
+    foreach ($entry in $chapterGroups) {
+        $group = $defaultDocument.SelectSingleNode("/Settings/Setting[@Id='$($entry.Category)']/Setting[@Id='$($entry.Id)']")
         if ($null -eq $group -or $group.State -ne 'true') {
-            throw "Missing or disabled chapter boss category: $groupId"
+            throw "Missing or disabled chapter boss category: $($entry.Id)"
         }
         if ($group.SelectNodes('./Setting').Count -eq 0) {
-            throw "Chapter boss category is empty: $groupId"
+            throw "Chapter boss category is empty: $($entry.Id)"
         }
     }
-    $actualMain = @($chapterNode.SelectSingleNode("./Setting[@Id='Chapter${chapter}MainBosses']").SelectNodes('./Setting') | ForEach-Object { ($_.Id -replace '^Action_(UGuid\.[^@]+)@.*$', '$1') -replace '^(Montage_|Slow_|Despawn_|Dual_)', '' })
+    $mainChapter = $defaultDocument.SelectSingleNode("/Settings/Setting[@Id='MainlineBosses']/Setting[@Id='MainChapter$chapter']")
+    $actualMain = @($mainChapter.SelectNodes('./Setting') | ForEach-Object { ($_.Id -replace '^Action_(UGuid\.[^@]+)@.*$', '$1') -replace '^(Montage_|Slow_|Despawn_|Dual_)', '' })
     $expectedMainIds = @($expectedMain[$chapter] | ForEach-Object { ($_ -replace '^Action_(UGuid\.[^@]+)@.*$', '$1') -replace '^(Montage_|Slow_|Despawn_|Dual_)', '' })
     if (($actualMain -join '|') -ne ($expectedMainIds -join '|')) {
         throw "Main Boss classification changed unexpectedly for chapter $chapter"
@@ -222,10 +256,17 @@ $expectedParents = @{
     'Montage_UGuid.ZYS.MRXG' = 'Chapter4YaoguaiKingBosses'
     'Montage_UGuid.HYS.TuDi.YS' = 'Chapter5YaoguaiKingBosses'
 }
+function Convert-LegacyBossGroupId([string]$id) {
+    if ($id -match '^Chapter([1-6])MainBosses$') { return "MainChapter$($matches[1])" }
+    if ($id -match '^Chapter([1-6])YaoguaiKingBosses$') { return "AllYaoguaiKingsChapter$($matches[1])" }
+    if ($id -match '^Chapter([1-6])ChiefBosses$') { return "OtherChiefsChapter$($matches[1])" }
+    return $id
+}
 foreach ($expected in $expectedParents.GetEnumerator()) {
     $node = $defaultDocument.SelectSingleNode("//Setting[@Id='$($expected.Key)']")
-    if ($null -eq $node -or $node.ParentNode.Id -ne $expected.Value) {
-        throw "Unexpected boss category for $($expected.Key): expected $($expected.Value)"
+    $expectedGroupId = Convert-LegacyBossGroupId $expected.Value
+    if ($null -eq $node -or $node.ParentNode.Id -ne $expectedGroupId) {
+        throw "Unexpected boss category for $($expected.Key): expected $expectedGroupId"
     }
 }
 
@@ -527,7 +568,22 @@ if (-not $aslText.Contains('vars.Uhara.Log(')) {
 if (-not $aslText.Contains('DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff")')) {
     throw "Generated ASL must prefix uHara log messages with a millisecond timestamp: $aslPath"
 }
-if ($aslText.Contains('BMW-Hook-AutoSplitter.log') -or $aslText.Contains('vars.LogPath')) {
+if (-not $aslText.Contains('Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs", "BlackMythWukong.log")') -and
+    -not ($aslText.Contains('"Logs"') -and $aslText.Contains('"BlackMythWukong.log"'))) {
+    throw "Generated ASL does not target the LiveSplit Logs directory: $aslPath"
+}
+if (-not $aslText.Contains('settings.ContainsKey("LogEnabled")') -or
+    -not $aslText.Contains('(bool)settings["LogEnabled"]')) {
+    throw "Generated ASL does not gate file logging with LogEnabled: $aslPath"
+}
+if ($aslText.Contains('vars.IsFileLogEnabled') -or $aslText.Contains('vars.FileLogEnabled')) {
+    throw "Generated ASL must read LogEnabled directly from settings: $aslPath"
+}
+if (-not $aslText.Contains('File.AppendAllText(') -or
+    -not $aslText.Contains('Directory.CreateDirectory(Path.GetDirectoryName(fileLogPath))')) {
+    throw "Generated ASL does not append enabled logs to the Logs directory: $aslPath"
+}
+if ($aslText.Contains('BMW-Hook-AutoSplitter.log')) {
     throw "Generated ASL must not keep the legacy private log file: $aslPath"
 }
 if (-not $aslText.Contains('"[BMW-action] actor action changed: uid="')) {
@@ -732,6 +788,16 @@ if (-not $startupText.Contains($settingsLoadInvocation)) {
 }
 if ($initText.Contains($settingsLoadInvocation)) {
     throw "Settings must not be loaded during init: $aslPath"
+}
+$settingsInitIndex = $startupText.IndexOf($settingsLoadInvocation, [StringComparison]::Ordinal)
+$fileLogCacheIndex = $startupText.IndexOf('bool fileLogEnabled = false;', [StringComparison]::Ordinal)
+$logDelegateIndex = $startupText.IndexOf('vars.Log = (Action<string>)', [StringComparison]::Ordinal)
+if ($logDelegateIndex -lt 0 -or $logDelegateIndex -le $settingsInitIndex -or
+    $fileLogCacheIndex -le $settingsInitIndex -or $fileLogCacheIndex -ge $logDelegateIndex) {
+    throw "Log delegate must be created after settings initialization and cached LogEnabled: $aslPath"
+}
+if ([regex]::Matches($startupText, 'settings\.ContainsKey\("LogEnabled"\)').Count -ne 1) {
+    throw "LogEnabled must be read once and cached during startup: $aslPath"
 }
 if ($startupText.Contains('vars.GetActorSetting = (Func<string, string>)')) {
     throw "Actor setting resolution must not capture ASLSettingsBuilder during startup: $aslPath"
